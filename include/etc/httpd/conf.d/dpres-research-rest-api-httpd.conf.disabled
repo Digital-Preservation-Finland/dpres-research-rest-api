@@ -1,0 +1,23 @@
+# This file contains default settings to run dpres-research-rest-api
+# on the Apache server using mod_wsgi.
+
+# RHEL has restrictive permissions in the default directory,
+# so put the socket here instead
+WSGISocketPrefix /var/run/wsgi
+
+# Web application is served on the port 5555, which is used
+# by nginx reverse proxy
+Listen 5555
+
+<VirtualHost 0.0.0.0:5555>
+
+        WSGIDaemonProcess dpres-research-rest-api threads=5 user=spock group=spock
+        WSGIScriptAlias / /usr/lib/python2.7/site-packages/dpres_research_rest_api/wsgi.py
+
+        <Directory /usr/lib/python2.7/site-packages/dpres_research_rest_api>
+                WSGIProcessGroup dpres-research-rest-api
+                WSGIApplicationGroup %{GLOBAL}
+                Order deny,allow
+                Allow from all
+        </Directory>
+</VirtualHost>
