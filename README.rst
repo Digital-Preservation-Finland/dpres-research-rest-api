@@ -40,10 +40,10 @@ Apache, Shibboleth, Ansible, mod_wsgi and mod_ssl have to be installed::
 
 Installation:
 
-Install ansible playbook::
+Install and execute ansible playbook for the rest API::
 
-        git clone https://source.csc.fi/scm/git/pas/ansible-dpres-admin-apache
-        cd ansible-dpres-admin-apache/
+        git clone https://source.csc.fi/scm/git/pas/ansible-dpres-research-rest-api-apache
+        cd ansible-dpres-research-rest-api-apache/
         sudo ansible-playbook -i "localhost," -c local dpres-rest-api.yml
 
 Install dpres-research-rest-api::
