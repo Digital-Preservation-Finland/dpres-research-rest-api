@@ -38,9 +38,6 @@ def bad_request(error):
 def validate(pid):
     """Handles validation of a dataset.
 
-    Receives a POST message which contains an identifier of
-    a dataset to validate.
-
-    :pid: PID of the dataset
+    :pid: PID of the dataset to be validated
     """
     return jsonify({'status':'0', 'identifier': pid  }), 200

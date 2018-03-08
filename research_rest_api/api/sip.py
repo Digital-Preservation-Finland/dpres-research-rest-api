@@ -36,5 +36,8 @@ def bad_request(error):
 
 @SIP_API.route('/<path:pid>/sip', methods=['POST'])
 def sip(pid):
-    """Triggers SIP creation for a dataset identified by pid"""
+    """Triggers SIP creation for a dataset identified by pid
+    
+    :pid: PID of the dataset to be packaged into SIP
+    """
     return "", 200
