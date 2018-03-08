@@ -38,10 +38,9 @@ def bad_request(error):
 def validate(pid):
     """Handles validation of a dataset.
 
-    Receives a post message which contains key 'message'.
-    Updates the status to METAX and sends an email to the contact
-    person.
+    Receives a POST message which contains an identifier of
+    a dataset to validate.
 
     :pid: PID of the dataset
     """
-    return jsonify({'message': 'Hello World ' + pid + ' !'})
+    return jsonify({'status':'0', 'identifier': pid  }), 200

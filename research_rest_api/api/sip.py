@@ -36,5 +36,5 @@ def bad_request(error):
 
 @SIP_API.route('/<path:pid>/sip', methods=['POST'])
 def sip(pid):
-    """Simple hello world service for testing the application"""
-    return jsonify({'message': 'Hello World!'})
+    """Triggers SIP creation for a dataset identified by pid"""
+    return "", 200
