@@ -40,4 +40,5 @@ def sip(pid):
     
     :pid: PID of the dataset to be packaged into SIP
     """
-    return "", 200
+    # Just playing around
+    abort(400, "Unknown dataset identifier: " + str(pid))

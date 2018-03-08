@@ -40,4 +40,5 @@ def validate(pid):
 
     :pid: PID of the dataset to be validated
     """
-    return jsonify({'status':'0', 'identifier': pid  }), 200
+    # Just playing around
+    return jsonify({'status':'1', 'identifier': pid, 'message': 'Validation failed'}), 200
