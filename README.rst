@@ -57,10 +57,10 @@ Install dpres-research-rest-api::
 
 Updating source files:
 
-To update changes in dpres-admin-rest-api::
+To update changes in dpres-research-rest-api::
 
         git pull
-        sudo rm -r /usr/lib/python2.7/site-packages/admin_rest_api/
+        sudo rm -r /usr/lib/python2.7/site-packages/research_rest_api/
         sudo make install
         sudo apachectl restart
 
