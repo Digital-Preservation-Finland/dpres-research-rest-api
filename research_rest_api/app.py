@@ -1,46 +1,40 @@
 """Application instance factory"""
 
 from flask import Flask
-
-from werkzeug.contrib.fixers import ProxyFix
-
-import logging
+from flask import jsonify
+from siptools_research import preserve_dataset
 
 
 def create_app():
     """Configure and return a Flask application instance.
 
-    :debug: Will the created app run in debug mode
     :returns: Instance of flask.Flask()
 
     """
-    logger = logging.getLogger('research-rest-api')
-
     app = Flask(__name__)
 
-    # http://flask.pocoo.org/docs/0.11/deploying/wsgi-standalone/#proxy-setups
-    # http://werkzeug.pocoo.org/docs/0.11/contrib/fixers/#werkzeug.contrib.fixers.ProxyFix
-    app.wsgi_app = ProxyFix(app.wsgi_app)
+    @app.route('/validate/<dataset_id>')
+    def validate(dataset_id):
+        """Dummy function that returns hard-coded json-message
 
-    try:
-        app.config.from_pyfile('/etc/research-rest-api/research-rest-api.conf')
-    except IOError:
-        logger.info(
-            "research-rest-api.conf doesn't exist; using default settings")
-        app.config.from_object('research_rest_api.default_config')
+        :returns: Dymmy json message
+        """
+        # TODO: Implement dataset validation triggering
+        return jsonify({'dataset_id': dataset_id, 'status': 'valid'})
 
-#    app.debug = debug
+    @app.route('/preserve/<dataset_id>')
+    def preserve(dataset_id):
+        """Trigger packaging of dataset.
 
-    if not app.config.get("HOME_ROOT_PATH", None):
-        raise RuntimeError("HOME_ROOT_PATH variable not defined!")
+        :returns: json message
+        """
 
-    from research_rest_api.api.test import API_TEST
-    app.register_blueprint(API_TEST)
+        # Trigger dataset preservation using function provided by
+        # siptools_research package
+        preserve_dataset(dataset_id,
+                         '/etc/siptools_research.conf')
 
-    from research_rest_api.api.validate import VALIDATE_API
-    app.register_blueprint(VALIDATE_API)
-
-    from research_rest_api.api.sip import SIP_API
-    app.register_blueprint(SIP_API)
+        # TODO: What should this response be?
+        return jsonify({'dataset_id': dataset_id, 'status': 'packaging'})
 
     return app

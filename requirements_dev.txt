@@ -1,11 +1,1 @@
-flask>=0.11
-mongomock==1.0
-pymongo
-python-dateutil
-requests
-pytest
-coverage>=3.7.1
-pytest-coverage
-flask-mail
-flask-cors
-flask-sso
+flask
