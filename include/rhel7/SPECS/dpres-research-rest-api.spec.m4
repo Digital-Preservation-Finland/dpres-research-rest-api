@@ -29,6 +29,7 @@ REST API for metadata validation and SIP creation triggering
 
 %prep
 find %{_sourcedir}
+
 %setup -n %{file_prefix}-v%{file_version}%{?file_release_tag}-%{file_build_number}-g%{file_commit_ref}
 
 %build
@@ -38,15 +39,16 @@ rm -rf $RPM_BUILD_ROOT
 make install PREFIX="%{_prefix}" ROOT="%{buildroot}"
 
 %post
-# do nothing
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
 %files -f INSTALLED_FILES
+
 %defattr(-,root,root,-)
-%config(noreplace) /etc/dpres-research-rest-api/dpres-research-rest-api.conf
-/etc/httpd/conf.d/dpres-research-rest-api-httpd.conf.disabled
+
+%config(noreplace)
+/etc/httpd/conf.d/dpres-research-rest-api-httpd.conf
 
 # TODO: For now changelog must be last, because it is generated automatically
 # from git log command. Appending should be fixed to happen only after %changelog macro
