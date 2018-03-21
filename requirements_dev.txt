@@ -1,1 +1,29 @@
 flask
+coverage
+git+https://source.csc.fi/scm/git/pas/dpres-siptools-research@TPASPKT-89#egg=siptools_research
+
+
+# required by dpres-siptools-research
+# TODO: These should be installed automatically installed as requirements of dpres-siptools-research
+git+https://source.csc.fi/scm/git/pas/dpres-signature
+git+https://source.csc.fi/scm/git/pas/dpres-siptools@develop#egg=siptools
+git+https://source.csc.fi/scm/git/pas/addml@develop
+
+
+# siptools requirements
+# TODO: These should be installed automatically installed as requirements of dpres-siptools
+git+https://source.csc.fi/scm/git/pas/xml-helpers@develop#egg=xml_helpers
+git+https://source.csc.fi/scm/git/pas/mets@develop#egg=mets
+git+https://source.csc.fi/scm/git/pas/premis@develop#egg=premis
+git+https://source.csc.fi/scm/git/pas/nisomix@develop#egg=nisomix
+git+https://source.csc.fi/scm/git/pas/dpres-signature@develop#egg=dpres_signature
+git+https://source.csc.fi/scm/git/pas/dpres-ipt@develop#egg=ipt
+file-magic
+M2Crypto
+dateutils
+python-mimeparse
+
+
+# mets requirements
+# TODO: These should be installed automatically installed as requirements of mets
+dateutils
