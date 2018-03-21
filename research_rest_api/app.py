@@ -23,7 +23,7 @@ def create_app():
         # TODO: Implement dataset validation triggering
         return flask.jsonify({'dataset_id': dataset_id, 'status': 'valid'})
 
-    @app.route('/preserve/<dataset_id>')
+    @app.route('/dataset/<dataset_id>/preserve')
     def preserve(dataset_id):
         """Trigger packaging of dataset.
 
@@ -31,12 +31,8 @@ def create_app():
         """
 
         # Trigger dataset preservation using function provided by
-        # siptools_research package. Run the function in background.
-        thread = threading.Thread(target=preserve_dataset,
-                                  args=(dataset_id,
-                                        '/etc/siptools_research.conf'))
-        thread.daemon = True
-        thread.start()
+        # siptools_research package.
+        preserve_dataset(dataset_id, '/etc/siptools_research.conf')
 
         # TODO: What should this response be?
         return flask.jsonify({'dataset_id': dataset_id, 'status': 'packaging'})
