@@ -1,7 +1,8 @@
+#pylint: disable=unused-variable
 """Application instance factory"""
 
-from flask import Flask
-from flask import jsonify
+import threading
+import flask
 from siptools_research import preserve_dataset
 
 
@@ -11,7 +12,7 @@ def create_app():
     :returns: Instance of flask.Flask()
 
     """
-    app = Flask(__name__)
+    app = flask.Flask(__name__)
 
     @app.route('/validate/<dataset_id>')
     def validate(dataset_id):
@@ -20,7 +21,7 @@ def create_app():
         :returns: Dymmy json message
         """
         # TODO: Implement dataset validation triggering
-        return jsonify({'dataset_id': dataset_id, 'status': 'valid'})
+        return flask.jsonify({'dataset_id': dataset_id, 'status': 'valid'})
 
     @app.route('/preserve/<dataset_id>')
     def preserve(dataset_id):
@@ -30,11 +31,40 @@ def create_app():
         """
 
         # Trigger dataset preservation using function provided by
-        # siptools_research package
-        preserve_dataset(dataset_id,
-                         '/etc/siptools_research.conf')
+        # siptools_research package. Run the function in background.
+        thread = threading.Thread(target=preserve_dataset,
+                                  args=(dataset_id,
+                                        '/etc/siptools_research.conf'))
+        thread.daemon = True
+        thread.start()
 
         # TODO: What should this response be?
-        return jsonify({'dataset_id': dataset_id, 'status': 'packaging'})
+        return flask.jsonify({'dataset_id': dataset_id, 'status': 'packaging'})
+
+
+    @app.route('/')
+    def index():
+        """Accessing the root URL will return a Bad Request error."""
+        flask.abort(400)
+
+
+    @app.errorhandler(404)
+    def page_not_found(error):
+        """JSON response handler for the 404 - Not found errors"""
+
+        response = flask.jsonify({"code": 404, "error": str(error)})
+        response.status_code = 404
+
+        return response
+
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        """JSON response handler for the 400 - Bad request errors"""
+
+        response = flask.jsonify({"code": 400, "error": str(error)})
+        response.status_code = 400
+
+        return response
 
     return app
