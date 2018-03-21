@@ -1,1 +1,7 @@
 *.pyc
+.coverage
+.pytest_cache
+coverage.xml
+htmlcov
+junit.xml
+
