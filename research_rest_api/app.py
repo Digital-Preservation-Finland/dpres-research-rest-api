@@ -13,6 +13,10 @@ def create_app():
 
     """
     app = flask.Flask(__name__)
+    try:
+        app.config.from_pyfile('tests/data/research_rest_api.conf')
+    except IOError:
+		app.config.from_object('research_rest_api.default_config')
 
 
     @app.route('/dataset/<dataset_id>/validate')
@@ -37,7 +41,7 @@ def create_app():
 
         # Trigger dataset preservation using function provided by
         # siptools_research package.
-        preserve_dataset(dataset_id, '/etc/siptools_research.conf')
+        preserve_dataset(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
 
         response = flask.jsonify({'dataset_id': dataset_id,
                                   'status': 'packaging'})
