@@ -1,7 +1,7 @@
 flask
 coverage
 pytest-cov
-git+https://source.csc.fi/scm/git/pas/dpres-siptools-research@TPASPKT-89#egg=siptools_research
+git+https://source.csc.fi/scm/git/pas/dpres-siptools-research#egg=siptools_research
 
 
 # required by dpres-siptools-research
