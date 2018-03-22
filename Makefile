@@ -5,7 +5,7 @@ ETC=${ROOT}/etc
 SHAREDIR=${ROOT}${PREFIX}/share/dpres-research-rest-api
 
 APACHE_CONF_DIR=${ETC}/httpd/conf.d
-APACHE_CONF_FILE=${APACHE_CONF_DIR}/dpres-research-rest-api-httpd.conf.disabled
+APACHE_CONF_FILE=${APACHE_CONF_DIR}/dpres-research-rest-api-httpd.conf
 
 all: info
 
@@ -64,7 +64,7 @@ clean-rpm:
 
 rpm-sources:
 	create-archive.sh
-	preprocess-spec-m4-macros.sh include/rhel6
+	preprocess-spec-m4-macros.sh include/rhel7
 
 rpm: rpm-sources
 	build-rpm.sh
