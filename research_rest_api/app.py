@@ -1,7 +1,6 @@
 #pylint: disable=unused-variable
 """Application instance factory"""
 
-import threading
 import flask
 from siptools_research import preserve_dataset
 
@@ -16,7 +15,7 @@ def create_app():
     try:
         app.config.from_pyfile('tests/data/research_rest_api.conf')
     except IOError:
-		app.config.from_object('research_rest_api.default_config')
+        app.config.from_object('research_rest_api.default_config')
 
 
     @app.route('/dataset/<dataset_id>/validate')
