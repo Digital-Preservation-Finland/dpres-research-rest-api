@@ -6,8 +6,14 @@ def test_index():
     :returns: None
     """
 
-    # Test that request without trailing slash is redirected
-    with create_app().test_client() as client:
+    # Create app and change the default config file path
+    app = create_app()
+    app.config.update(
+        SIPTOOLS_RESEARCH_CONF='tests/data/siptools_research.conf'
+    )
+
+    # Test the response
+    with app.test_client() as client:
         response = client.get('/')
 
     assert response.status_code == 400
@@ -18,8 +24,14 @@ def test_dataset_preserve():
     :returns: None
     """
 
-    # Test that request without trailing slash is redirected
-    with create_app().test_client() as client:
+    # Create app and change the default config file path
+    app = create_app()
+    app.config.update(
+        SIPTOOLS_RESEARCH_CONF='tests/data/siptools_research.conf'
+    )
+
+    # Test the response
+    with app.test_client() as client:
         response = client.get('/dataset/1/preserve')
 
-    assert response.status_code == 202
+        assert response.status_code == 202
