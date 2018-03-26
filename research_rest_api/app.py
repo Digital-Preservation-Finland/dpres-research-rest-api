@@ -38,7 +38,7 @@ def create_app():
 
         response = flask.jsonify({'dataset_id': dataset_id,
                                   'is_valid': validity,
-                                  'error': error})
+                                  'error': str(error)})
 
         response.status_code = 200
         return response
