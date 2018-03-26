@@ -3,6 +3,7 @@
 
 import flask
 from siptools_research import preserve_dataset
+from siptools_research import validate_metadata
 
 
 def create_app():
@@ -24,9 +25,21 @@ def create_app():
 
         :returns: HTTP Response
         """
+        # Validate dataset metadata
+        validation_result = validate_metadata(dataset_id,
+                                              app.config.get('SIPTOOLS_RESEARCH_CONF'))
+
+        if validation_result is True:
+            validity = True
+            error = ''
+        else:
+            validity = False
+            error = validation_result
+
         response = flask.jsonify({'dataset_id': dataset_id,
-                                  'status': 'validated',
-                                  'validation_result': True})
+                                  'is_valid': validity,
+                                  'error': error})
+
         response.status_code = 200
         return response
 
