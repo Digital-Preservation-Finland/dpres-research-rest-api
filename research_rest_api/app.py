@@ -4,6 +4,7 @@
 import flask
 from siptools_research import preserve_dataset
 from siptools_research import validate_metadata
+from flask_cors import CORS
 
 
 def create_app():
@@ -18,8 +19,10 @@ def create_app():
     except IOError:
         app.config.from_object('research_rest_api.default_config')
 
+    CORS(app, resources={r"/*": {"origins": "*"}},
+         supports_credentials=True)
 
-    @app.route('/dataset/<dataset_id>/validate')
+    @app.route('/dataset/<dataset_id>/validate', methods=['POST'])
     def validate(dataset_id):
         """Validates dataset.
 
@@ -43,8 +46,7 @@ def create_app():
         response.status_code = 200
         return response
 
-
-    @app.route('/dataset/<dataset_id>/preserve')
+    @app.route('/dataset/<dataset_id>/preserve', methods=['POST'])
     def preserve(dataset_id):
         """Trigger packaging of dataset.
 
@@ -61,12 +63,10 @@ def create_app():
 
         return response
 
-
     @app.route('/')
     def index():
         """Accessing the root URL will return a Bad Request error."""
         flask.abort(400)
-
 
     @app.errorhandler(404)
     def page_not_found(error):
@@ -79,7 +79,6 @@ def create_app():
         response.status_code = 404
 
         return response
-
 
     @app.errorhandler(400)
     def bad_request(error):
