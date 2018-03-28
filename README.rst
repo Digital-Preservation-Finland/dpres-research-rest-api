@@ -24,6 +24,13 @@ To run this you need to have standard Python tools installed (e.g. pip).
 3. Run the REST API::
 
 	FLASK_APP=run.py python -mflask run
+	
+	OR
+	
+	run the mockup which just returns always 200:
+	
+	cd tests/mockup_api
+	FLASK_APP=mockup.py python -mflask run --port=5001 --host=0.0.0.0
 
 Usage on Pouta test server
 -------------------
