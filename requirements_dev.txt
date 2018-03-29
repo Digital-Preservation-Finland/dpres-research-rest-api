@@ -2,6 +2,7 @@ flask
 flask_cors
 coverage
 pytest-cov
+httpretty
 git+https://source.csc.fi/scm/git/pas/dpres-siptools-research#egg=siptools_research
 
 
