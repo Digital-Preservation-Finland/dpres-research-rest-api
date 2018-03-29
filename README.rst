@@ -2,13 +2,67 @@ dpres-research-rest-api - REST API for metadata validation and triggering SIP cr
 ======================================================================================
 
 
-This web application provides a REST API that allows:
+This web application provides a REST API that allows user to trigger dataset validation/preservation using packaging service. The web application must be installed on same server as the packaging service.
 
-1. users to validate the files and related metadata in IDA
-2. Trigger a SIP creation process
+
+Installation
+------------
+
+RPM package can be installed from dpres-rpms.csc.fi::
+
+   yum install dpres-research-rest-api
+
+Installation from git::
+   pip install -r requirements_dev.txt
+   make install
+
+By default REST API listens to port 80. This can be changed by configuring
+apache configuration file: /etc/httpd/conf.d/dpres-research-rest-api-httpd.conf
 
 Usage
--------------------
+-----
+
+Dataset validation
+^^^^^^^^^^^^^^^^^^
+Validation is triggered with HTTP request::
+
+   POST http://localhost/dataset/<dataset_id>/validate
+
+The request returns message::
+
+   HTTP/1.0 202 ACCEPTED
+   Content-Type: application/json
+
+   {
+       "dataset_id": "<dataset_id>",
+       "error": "<error_message>"
+       "is_valid": <validation_result>
+   }
+
+<validation result> is ``true`` if dataset metadata is valid, and ``false`` is metadata is invalid or missing. The <error_message> is empty if dataset metadata is valid.
+
+
+Dataset preservation
+^^^^^^^^^^^^^^^^^^^^
+Dataset packaging and preservation is triggered with request::
+
+  POST http://localhost/dataset/<dataset_id>/preserve
+
+The request returns message::
+
+   HTTP/1.0 202 ACCEPTED
+   Content-Type: application/json
+
+   {
+       "dataset_id": "<dataset_id>",
+       "status": packaging
+   }
+
+The request is asyncronous and it does not provide information about success of packaging.
+
+
+Testing
+-------
 To run this you need to have standard Python tools installed (e.g. pip).
 
 1. Enable virtualenv, before any of steps below::
@@ -24,54 +78,10 @@ To run this you need to have standard Python tools installed (e.g. pip).
 3. Run the REST API::
 
 	FLASK_APP=run.py python -mflask run
-	
+
 	OR
-	
+
 	run the mockup which just returns always 200:
-	
+
 	cd tests/mockup_api
 	FLASK_APP=mockup.py python -mflask run --port=5001 --host=0.0.0.0
-
-Usage on Pouta test server
--------------------
-
-Prerequisites:
-
-Apache, Shibboleth, Ansible, mod_wsgi and mod_ssl have to be installed::
-
-        sudo yum install ansible
-        sudo yum install httpd
-        sudo yum install shibboleth
-        sudo yum install mod_wsgi
-        sudo yum install mod_ssl
-
-Installation:
-
-Install and execute ansible playbook for the rest API::
-
-        git clone https://source.csc.fi/scm/git/pas/ansible-dpres-research-rest-api-apache
-        cd ansible-dpres-research-rest-api-apache/
-        sudo ansible-playbook -i "localhost," -c local dpres-rest-api.yml
-
-Install dpres-research-rest-api::
-
-        git clone https://source.csc.fi/scm/git/pas/dpres-research-rest-api
-        cd dpres-research-rest-api/
-        git checkout develop
-        sudo pip install -r requirements_dev.txt
-        sudo make install
-
-
-Updating source files:
-
-To update changes in dpres-research-rest-api::
-
-        git pull
-        sudo rm -r /usr/lib/python2.7/site-packages/research_rest_api/
-        sudo make install
-        sudo apachectl restart
-
-Start, stop and restart apache server::
-        sudo apachectl start
-        sudo apachectl stop
-        sudo apachectl restart
