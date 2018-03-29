@@ -32,7 +32,7 @@ def test_dataset_preserve():
 
     # Test the response
     with app.test_client() as client:
-        response = client.get('/dataset/1/preserve')
+        response = client.post('/dataset/1/preserve')
 
         assert response.status_code == 202
 
@@ -51,6 +51,6 @@ def test_dataset_validate():
 
     # Test the response
     with app.test_client() as client:
-        response = client.get('/dataset/1/validate')
+        response = client.post('/dataset/1/validate')
 
         assert response.status_code == 200
