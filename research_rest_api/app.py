@@ -29,8 +29,9 @@ def create_app():
         :returns: HTTP Response
         """
         # Validate dataset metadata
-        validation_result = validate_metadata(dataset_id,
-                                              app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        validation_result = validate_metadata(
+            dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
+        )
 
         if validation_result is True:
             validity = True

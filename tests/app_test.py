@@ -98,4 +98,32 @@ def test_dataset_validate():
 
     # Check the body of response
     response_body = json.loads(response.data)
-    assert response_body["is_valid"] == True
+    assert response_body["is_valid"] is True
+
+
+@httpretty.activate
+def test_dataset_validate_unavailable():
+    """Test validation of dataset unavailable from Metax.
+
+    :returns: None
+    """
+
+    # Create app and change the default config file path
+    app = create_app()
+    app.config.update(
+        SIPTOOLS_RESEARCH_CONF='tests/data/siptools_research.conf'
+    )
+
+    # Mock Metax
+    mock_metax()
+
+    # Test the response
+    with app.test_client() as client:
+        response = client.post('/dataset/not_available_id/validate')
+    assert response.status_code == 200
+
+    # Check the body of response
+    response_body = json.loads(response.data)
+    assert response_body["dataset_id"] == "not_available_id"
+    assert response_body["error"] ==\
+        "Could not find metadata for dataset: not_available_id"
