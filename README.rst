@@ -13,6 +13,7 @@ RPM package can be installed from dpres-rpms.csc.fi::
    yum install dpres-research-rest-api
 
 Installation from git::
+
    pip install -r requirements_dev.txt
    make install
 
