@@ -4,6 +4,7 @@
 import flask
 from siptools_research import preserve_dataset
 from siptools_research import validate_metadata
+from siptools_research.utils.metax import Metax
 from flask_cors import CORS
 
 
@@ -36,9 +37,15 @@ def create_app():
         if validation_result is True:
             validity = True
             error = ''
+            status_code = 10
         else:
             validity = False
             error = validation_result
+            status_code = 9
+
+        metax_client = Metax(app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        metax_client.set_preservation_state(dataset_id, status_code,
+                                            str(error))
 
         response = flask.jsonify({'dataset_id': dataset_id,
                                   'is_valid': validity,
