@@ -38,18 +38,20 @@ def create_app():
             validity = True
             error = ''
             status_code = 10
+            description = "Metadata passed validation"
         else:
             validity = False
             error = validation_result
             status_code = 9
+            description = "Metadata did not pass validation: %s" % error
 
+        # Update preservation status in Metax
         metax_client = Metax(app.config.get('SIPTOOLS_RESEARCH_CONF'))
-        metax_client.set_preservation_state(dataset_id, status_code,
-                                            str(error))
+        metax_client.set_preservation_state(dataset_id, status_code, error)
 
         response = flask.jsonify({'dataset_id': dataset_id,
                                   'is_valid': validity,
-                                  'error': str(error)})
+                                  'error': error})
 
         response.status_code = 200
         return response
