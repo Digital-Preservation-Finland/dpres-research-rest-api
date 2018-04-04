@@ -5,6 +5,7 @@ import flask
 from siptools_research import preserve_dataset
 from siptools_research import validate_metadata
 from siptools_research.utils.metax import Metax
+from siptools_research.utils.metax import DatasetNotFoundError
 from flask_cors import CORS
 
 
@@ -41,13 +42,16 @@ def create_app():
             description = "Metadata passed validation"
         else:
             validity = False
-            error = validation_result
+            error = validation_result.message
             status_code = 9
             description = "Metadata did not pass validation: %s" % error
 
-        # Update preservation status in Metax
-        metax_client = Metax(app.config.get('SIPTOOLS_RESEARCH_CONF'))
-        metax_client.set_preservation_state(dataset_id, status_code, error)
+        # Update preservation status in Metax. Skip the update if validation
+        # failed because dataset was not found in Metax.
+        if not isinstance(validation_result, DatasetNotFoundError):
+            metax_client = Metax(app.config.get('SIPTOOLS_RESEARCH_CONF'))
+            metax_client.set_preservation_state(dataset_id, status_code,
+                                                description)
 
         response = flask.jsonify({'dataset_id': dataset_id,
                                   'is_valid': validity,

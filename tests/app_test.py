@@ -3,11 +3,11 @@ import json
 from research_rest_api.app import create_app
 import httpretty
 
-def httpretty_register_file(uri, filename):
+def httpretty_register_file(uri, filename, method=httpretty.GET):
     """Helper function that reads file and registers it to httpretty."""
     with open(filename) as open_file:
         body = open_file.read()
-        httpretty.register_uri(httpretty.GET, uri, body)
+        httpretty.register_uri(method, uri, body)
 
 
 def mock_metax():
@@ -21,6 +21,10 @@ def mock_metax():
 
     httpretty_register_file('https://metax-test.csc.fi/rest/v1/datasets/1',
                             'tests/data/metax_metadata/valid_dataset.json')
+
+    httpretty_register_file('https://metax-test.csc.fi/rest/v1/datasets/1',
+                            'tests/data/metax_metadata/valid_dataset.json',
+                            method=httpretty.PATCH)
 
     httpretty_register_file(
         'https://metax-test.csc.fi/rest/v1/files/pid:urn:1',
