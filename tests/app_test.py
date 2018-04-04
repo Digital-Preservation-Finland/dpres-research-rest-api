@@ -36,6 +36,14 @@ def mock_metax():
         'tests/data/metax_metadata/valid_file2.json'
     )
 
+    httpretty_register_file('https://metax-test.csc.fi/rest/v1/datasets/2',
+                            'tests/data/metax_metadata/invalid_dataset.json')
+
+    httpretty_register_file('https://metax-test.csc.fi/rest/v1/datasets/2',
+                            'tests/data/metax_metadata/invalid_dataset.json',
+                            method=httpretty.PATCH)
+
+
 
 def test_index():
     """Test the application index page.
@@ -103,6 +111,47 @@ def test_dataset_validate():
     # Check the body of response
     response_body = json.loads(response.data)
     assert response_body["is_valid"] is True
+    assert response_body["error"] == ""
+
+    # Check that preservation_state was updated
+    assert httpretty.last_request().method == "PATCH"
+    assert httpretty.last_request().body == \
+        '{"preservation_state_description": "Metadata passed validation", '\
+        '"preservation_state": 10}'
+
+
+@httpretty.activate
+def test_dataset_validate_invalid():
+    """Test the validate method for invalid dataset.
+
+    :returns: None
+    """
+
+    # Create app and change the default config file path
+    app = create_app()
+    app.config.update(
+        SIPTOOLS_RESEARCH_CONF='tests/data/siptools_research.conf'
+    )
+
+    # Mock Metax
+    mock_metax()
+
+    # Test the response
+    with app.test_client() as client:
+        response = client.post('/dataset/2/validate')
+    assert response.status_code == 200
+
+    # Check the body of response
+    response_body = json.loads(response.data)
+    assert response_body["is_valid"] is False
+    assert response_body["error"] == "'description' is a required property"
+
+    # Check that preservation_state was updated
+    assert httpretty.last_request().method == "PATCH"
+    assert httpretty.last_request().body == \
+        '{"preservation_state_description": "Metadata did not pass '\
+        'validation: \'description\' is a required property", '\
+        '"preservation_state": 9}'
 
 
 @httpretty.activate
@@ -131,3 +180,7 @@ def test_dataset_validate_unavailable():
     assert response_body["dataset_id"] == "not_available_id"
     assert response_body["error"] ==\
         "Could not find metadata for dataset: not_available_id"
+
+    # Last HTTP request should be GET, since preservation_state is not updated
+    # by PATCH request
+    assert httpretty.last_request().method == "GET"
