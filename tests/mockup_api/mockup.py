@@ -36,6 +36,20 @@ def preserve(dataset_id):
     return response
 
 
+@app.route('/dataset/<dataset_id>/propose', methods=['POST'])
+def propose(dataset_id):
+        """Trigger packaging of dataset.
+
+        :returns: HTTP Response
+        """
+
+        response = flask.jsonify({'dataset_id': dataset_id,
+                                  'proposed': True,
+                                  'error': ""})
+        response.status_code = 200
+        return response
+
+
 @app.route('/')
 def index():
     """Accessing the root URL will return a Bad Request error."""
