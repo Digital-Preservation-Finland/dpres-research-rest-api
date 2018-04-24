@@ -36,8 +36,8 @@ def preserve(dataset_id):
     return response
 
 
-@app.route('/dataset/<dataset_id>/propose', methods=['POST'])
-def propose(dataset_id):
+@app.route('/dataset/<dataset_id>/generate_metadata', methods=['POST'])
+def generate_metadata(dataset_id):
         """Trigger packaging of dataset.
 
         :returns: HTTP Response
