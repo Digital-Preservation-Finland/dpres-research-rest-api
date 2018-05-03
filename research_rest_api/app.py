@@ -82,8 +82,8 @@ def create_app():
 
         return response
 
-    @app.route('/dataset/<dataset_id>/generate_metatdata', methods=['POST'])
-    def generate_metatdata(dataset_id):
+    @app.route('/dataset/<dataset_id>/genmetadata', methods=['POST'])
+    def genmetadata(dataset_id):
         """Trigger packaging of dataset.
 
         :returns: HTTP Response

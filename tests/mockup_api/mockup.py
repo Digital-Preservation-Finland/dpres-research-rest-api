@@ -2,11 +2,18 @@
 """Application instance factory"""
 
 import flask
+from flask import current_app, abort
+from requests import patch
+from requests.exceptions import ConnectionError
+from requests.auth import HTTPBasicAuth
+
 from flask_cors import CORS
 
 app = flask.Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}},
      supports_credentials=True)
+
+app.config.from_object('mockup_api.default_config')
 
 
 @app.route('/dataset/<dataset_id>/validate', methods=['POST'])
@@ -15,6 +22,11 @@ def validate(dataset_id):
 
     :returns: HTTP Response
     """
+    data = {}
+    data['preservation_state'] = 70
+    data['preservation_description'] = 'Valid metadata'
+    set_preservation_state(dataset_id, data)
+
     response = flask.jsonify({'dataset_id': dataset_id,
                               'is_valid': True,
                               'error': ""})
@@ -29,6 +41,11 @@ def preserve(dataset_id):
 
     :returns: HTTP Response
     """
+    data = {}
+    data['preservation_state'] = 90
+    data['preservation_description'] = 'In packaging service'
+    set_preservation_state(dataset_id, data)
+
     response = flask.jsonify({'dataset_id': dataset_id,
                               'status': 'packaging'})
     response.status_code = 202
@@ -36,18 +53,38 @@ def preserve(dataset_id):
     return response
 
 
-@app.route('/dataset/<dataset_id>/generate_metadata', methods=['POST'])
-def generate_metadata(dataset_id):
-        """Trigger packaging of dataset.
+@app.route('/dataset/<dataset_id>/genmetadata', methods=['POST'])
+def genmetadata(dataset_id):
+    """Trigger packaging of dataset.
 
-        :returns: HTTP Response
-        """
+    :returns: HTTP Response
+    """
+    data = {}
+    data['preservation_state'] = 20
+    data['preservation_description'] = 'Technical metadata generated'
+    set_preservation_state(dataset_id, data)
 
-        response = flask.jsonify({'dataset_id': dataset_id,
-                                  'proposed': True,
-                                  'error': ""})
-        response.status_code = 200
-        return response
+    response = flask.jsonify({'dataset_id': dataset_id,
+                              'proposed': True,
+                              'error': ""})
+    response.status_code = 200
+    return response
+
+
+def set_preservation_state(dataset_id, data):
+    try:
+        r = patch("".join([current_app.config['METAX_API_HOST'],
+                           current_app.config['METAX_BASE_PATH'],
+                           "datasets/", dataset_id]),
+                  json=data,
+                  verify=current_app.config['METAX_SSL_VERIFICATION'],
+                  auth=HTTPBasicAuth('tpas', 'y6WZzVwfY4XPsRhV'))
+        if r.status_code == 404:
+            abort(404)
+        elif r.status_code >= 300:
+            abort(500)
+    except ConnectionError:
+        abort(503)
 
 
 @app.route('/')
