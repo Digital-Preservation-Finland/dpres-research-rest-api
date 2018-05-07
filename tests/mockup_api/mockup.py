@@ -23,13 +23,23 @@ def validate(dataset_id):
     :returns: HTTP Response
     """
     data = {}
-    data['preservation_state'] = 70
-    data['preservation_description'] = 'Valid metadata'
+    # Set defaults
+    is_valid = True
+    preservation_state = 70
+    preservation_description = 'Metadata passed validation'
+    error = ''
+    if int(dataset_id) == int(app.config.get('VALIDATION_FAILS_DATASET_ID')):
+        error = 'Something went wrong'
+        preservation_state = 50
+        preservation_description = 'Metadata did not pass validation: ' + error
+        is_valid = False
+    data['preservation_state'] = preservation_state
+    data['preservation_description'] = preservation_description
     set_preservation_state(dataset_id, data)
 
     response = flask.jsonify({'dataset_id': dataset_id,
-                              'is_valid': True,
-                              'error': ""})
+                              'is_valid': is_valid,
+                              'error': error})
 
     response.status_code = 200
     return response

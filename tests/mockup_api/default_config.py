@@ -16,6 +16,8 @@ METAX_API_HOST = "http://localhost:8888"
 # default: "/"
 METAX_BASE_PATH = "/rest/v1/"
 
+VALIDATION_FAILS_DATASET_ID = 1
+
 # default: False
 METAX_SSL_VERIFICATION = False
 
