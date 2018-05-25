@@ -2,6 +2,7 @@
 """Application instance factory"""
 
 import flask
+from siptools_research import generate_metadata
 from siptools_research import preserve_dataset
 from siptools_research import validate_metadata
 from siptools_research.utils.metax import Metax
@@ -84,14 +85,12 @@ def create_app():
 
     @app.route('/dataset/<dataset_id>/genmetadata', methods=['POST'])
     def genmetadata(dataset_id):
-        """Trigger packaging of dataset.
+        """Generate technical metadata and store it to Metax.
 
         :returns: HTTP Response
         """
-
-        response = flask.jsonify({'dataset_id': dataset_id,
-                                  'proposed': True,
-                                  'error': ""})
+        generate_metadata(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        response = flask.jsonify({'dataset_id': dataset_id})
         response.status_code = 200
         return response
 
