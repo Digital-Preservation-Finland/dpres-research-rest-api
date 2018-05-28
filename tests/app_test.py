@@ -32,8 +32,20 @@ def mock_metax():
     )
 
     httpretty_register_file(
+        'https://metax-test.csc.fi/rest/v1/files/pid:urn:1',
+        'tests/data/metax_metadata/valid_file1.json',
+        method=httpretty.PATCH
+    )
+
+    httpretty_register_file(
         'https://metax-test.csc.fi/rest/v1/files/pid:urn:2',
         'tests/data/metax_metadata/valid_file2.json'
+    )
+
+    httpretty_register_file(
+        'https://metax-test.csc.fi/rest/v1/files/pid:urn:2',
+        'tests/data/metax_metadata/valid_file2.json',
+        method=httpretty.PATCH
     )
 
     httpretty_register_file('https://metax-test.csc.fi/rest/v1/datasets/2',
@@ -43,6 +55,15 @@ def mock_metax():
                             'tests/data/metax_metadata/invalid_dataset.json',
                             method=httpretty.PATCH)
 
+
+def mock_ida():
+    """Mock Metax using HTTPretty. Serve on valid metadata for dataset "1", and
+    associated file "pid:urn:1" and "pid:urn:2".
+    """
+    httpretty_register_file('https://86.50.169.61:4433/files/pid:urn:1/download',
+                            'tests/data/ida_files/valid_utf8')
+    httpretty_register_file('https://86.50.169.61:4433/files/pid:urn:2/download',
+                            'tests/data/ida_files/valid_utf8')
 
 
 def test_index():
@@ -85,6 +106,32 @@ def test_dataset_preserve():
         response = client.post('/dataset/1/preserve')
 
     assert response.status_code == 202
+
+
+@httpretty.activate
+def test_dataset_genmetadata():
+    """Test the genmetadata method.
+
+    :returns: None
+    """
+
+    # Create app and change the default config file path
+    app = create_app()
+    app.config.update(
+        SIPTOOLS_RESEARCH_CONF='tests/data/siptools_research.conf'
+    )
+
+    # Mock Metax
+    mock_metax()
+
+    # Mock Ida
+    mock_ida()
+
+    # Test the response
+    with app.test_client() as client:
+        response = client.post('/dataset/1/genmetadata')
+
+    assert response.status_code == 200
 
 
 @httpretty.activate
