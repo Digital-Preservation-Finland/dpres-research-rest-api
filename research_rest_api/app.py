@@ -1,7 +1,7 @@
 #pylint: disable=unused-variable
 """Application instance factory"""
 
-import flask
+from flask import Flask, Blueprint, request, jsonify, current_app, abort, session, json
 from siptools_research import generate_metadata
 from siptools_research import preserve_dataset
 from siptools_research import validate_metadata
@@ -17,7 +17,7 @@ def create_app():
     :returns: Instance of flask.Flask()
 
     """
-    app = flask.Flask(__name__)
+    app = Flask(__name__)
     try:
         app.config.from_pyfile('tests/data/research_rest_api.conf')
     except IOError:
@@ -33,6 +33,7 @@ def create_app():
         :returns: HTTP Response
         """
         # Validate dataset metadata
+
         try:
             validate_metadata(
                 dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
@@ -44,12 +45,12 @@ def create_app():
         except InvalidMetadataError as exc:
             validity = False
             error = exc.message
-            status_code = 9
+            status_code = 40
             description = "Metadata did not pass validation: %s" % error
         else:
             validity = True
             error = ''
-            status_code = 10
+            status_code = 70
             description = "Metadata passed validation"
 
         # Update preservation status in Metax. Skip the update if validation
@@ -59,9 +60,9 @@ def create_app():
             metax_client.set_preservation_state(dataset_id, status_code,
                                                 description)
 
-        response = flask.jsonify({'dataset_id': dataset_id,
-                                  'is_valid': validity,
-                                  'error': error})
+        response = jsonify({'dataset_id': dataset_id,
+                            'is_valid': validity,
+                            'error': error})
 
         response.status_code = 200
         return response
@@ -77,8 +78,8 @@ def create_app():
         # siptools_research package.
         preserve_dataset(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
 
-        response = flask.jsonify({'dataset_id': dataset_id,
-                                  'status': 'packaging'})
+        response = jsonify({'dataset_id': dataset_id,
+                            'status': 'packaging'})
         response.status_code = 202
 
         return response
@@ -89,15 +90,32 @@ def create_app():
 
         :returns: HTTP Response
         """
-        generate_metadata(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
-        response = flask.jsonify({'dataset_id': dataset_id})
+        generation_message = 'Technical metadata generated'
+        preservation_state = 20
+        error_message = ''
+        success = True
+        try:
+            generate_metadata(dataset_id,
+                              app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        except Exception as exc:
+            success = False
+            preservation_state = 30
+            error_message = exc
+            generation_message = exc
+
+        metax_client = Metax(app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        metax_client.set_preservation_state(dataset_id, preservation_state,
+                                            generation_message)
+        response = jsonify({'dataset_id': dataset_id,
+                            'success': success,
+                            'error': error_message})
         response.status_code = 200
         return response
 
     @app.route('/')
     def index():
         """Accessing the root URL will return a Bad Request error."""
-        flask.abort(400)
+        abort(400)
 
     @app.errorhandler(404)
     def page_not_found(error):
@@ -106,7 +124,7 @@ def create_app():
         :returns: HTTP Response
         """
 
-        response = flask.jsonify({"code": 404, "error": str(error)})
+        response = jsonify({"code": 404, "error": str(error)})
         response.status_code = 404
 
         return response
@@ -118,7 +136,7 @@ def create_app():
         :returns: HTTP Response
         """
 
-        response = flask.jsonify({"code": 400, "error": str(error)})
+        response = jsonify({"code": 400, "error": str(error)})
         response.status_code = 400
 
         return response
