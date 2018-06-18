@@ -9,6 +9,10 @@ from siptools_research.utils.metax import Metax
 from siptools_research.utils.metax import DatasetNotFoundError
 from siptools_research.workflowtask import InvalidMetadataError
 from flask_cors import CORS
+from siptools_research.utils.metax import DS_STATE_VALID_METADATA,\
+    DS_STATE_TECHNICAL_METADATA_GENERATED,\
+    DS_STATE_METADATA_VALIDATION_FAILED,\
+    DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
 
 
 def create_app():
@@ -45,12 +49,12 @@ def create_app():
         except InvalidMetadataError as exc:
             validity = False
             error = exc.message
-            status_code = 40
+            status_code = DS_STATE_METADATA_VALIDATION_FAILED
             description = "Metadata did not pass validation: %s" % error
         else:
             validity = True
             error = ''
-            status_code = 70
+            status_code = DS_STATE_VALID_METADATA
             description = "Metadata passed validation"
 
         # Update preservation status in Metax. Skip the update if validation
@@ -91,7 +95,7 @@ def create_app():
         :returns: HTTP Response
         """
         generation_message = 'Technical metadata generated'
-        preservation_state = 20
+        preservation_state = DS_STATE_TECHNICAL_METADATA_GENERATED
         error_message = ''
         success = True
         try:
@@ -99,7 +103,7 @@ def create_app():
                               app.config.get('SIPTOOLS_RESEARCH_CONF'))
         except Exception as exc:
             success = False
-            preservation_state = 30
+            preservation_state = DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
             error_message = exc
             generation_message = exc
 
