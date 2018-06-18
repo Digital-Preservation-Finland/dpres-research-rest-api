@@ -3,24 +3,24 @@ flask_cors
 coverage
 pytest-cov
 httpretty
-git+https://source.csc.fi/scm/git/pas/dpres-siptools-research#egg=siptools_research
+git+https://gitlab.csc.fi/dpres/dpres-siptools-research.git#egg=siptools_research
 
 
 # required by dpres-siptools-research
 # TODO: These should be installed automatically installed as requirements of dpres-siptools-research
-git+https://source.csc.fi/scm/git/pas/dpres-signature
-git+https://source.csc.fi/scm/git/pas/dpres-siptools@develop#egg=siptools
-git+https://source.csc.fi/scm/git/pas/addml@develop
+git+https://gitlab.csc.fi/dpres/dpres-signature.git
+git+https://gitlab.csc.fi/dpres/dpres-siptools.git@develop#egg=siptools
+git+https://gitlab.csc.fi/dpres/addml.git@develop
 
 
 # siptools requirements
 # TODO: These should be installed automatically installed as requirements of dpres-siptools
-git+https://source.csc.fi/scm/git/pas/xml-helpers@develop#egg=xml_helpers
-git+https://source.csc.fi/scm/git/pas/mets@develop#egg=mets
-git+https://source.csc.fi/scm/git/pas/premis@develop#egg=premis
-git+https://source.csc.fi/scm/git/pas/nisomix@develop#egg=nisomix
-git+https://source.csc.fi/scm/git/pas/dpres-signature@develop#egg=dpres_signature
-git+https://source.csc.fi/scm/git/pas/dpres-ipt@develop#egg=ipt
+git+https://gitlab.csc.fi/dpres/xml-helpers.git@develop#egg=xml_helpers
+git+https://gitlab.csc.fi/dpres/mets.git@develop#egg=mets
+git+https://gitlab.csc.fi/dpres/premis.git@develop#egg=premis
+git+https://gitlab.csc.fi/dpres/nisomix.git@develop#egg=nisomix
+git+https://gitlab.csc.fi/dpres/dpres-signature.git@develop#egg=dpres_signature
+git+https://gitlab.csc.fi/dpres/dpres-ipt.git@develop#egg=ipt
 file-magic
 M2Crypto
 dateutils
