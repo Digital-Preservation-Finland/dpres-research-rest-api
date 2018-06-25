@@ -8,10 +8,7 @@ from requests.exceptions import ConnectionError
 from requests.auth import HTTPBasicAuth
 
 from flask_cors import CORS
-from siptools_research.utils.metax import DS_STATE_VALID_METADATA,\
-    DS_STATE_IN_PACKAGING_SERVICE, DS_STATE_TECHNICAL_METADATA_GENERATED,\
-    DS_STATE_METADATA_VALIDATION_FAILED
-
+import siptools_research.utils.metax as metax
 
 app = flask.Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}},
@@ -29,12 +26,12 @@ def validate(dataset_id):
     data = {}
     # Set defaults
     is_valid = True
-    preservation_state = DS_STATE_VALID_METADATA
+    preservation_state = metax.DS_STATE_VALID_METADATA
     preservation_description = 'Metadata passed validation'
     error = ''
     if int(dataset_id) == int(app.config.get('VALIDATION_FAILS_DATASET_ID')):
         error = 'Something went wrong'
-        preservation_state = DS_STATE_METADATA_VALIDATION_FAILED
+        preservation_state = metax.DS_STATE_METADATA_VALIDATION_FAILED
         preservation_description = 'Metadata did not pass validation: ' + error
         is_valid = False
     data['preservation_state'] = preservation_state
@@ -56,7 +53,7 @@ def preserve(dataset_id):
     :returns: HTTP Response
     """
     data = {}
-    data['preservation_state'] = DS_STATE_IN_PACKAGING_SERVICE
+    data['preservation_state'] = metax.DS_STATE_IN_PACKAGING_SERVICE
     data['preservation_description'] = 'In packaging service'
     set_preservation_state(dataset_id, data)
 
@@ -74,7 +71,7 @@ def genmetadata(dataset_id):
     :returns: HTTP Response
     """
     data = {}
-    data['preservation_state'] = DS_STATE_TECHNICAL_METADATA_GENERATED
+    data['preservation_state'] = metax.DS_STATE_TECHNICAL_METADATA_GENERATED
     data['preservation_description'] = 'Technical metadata generated'
     set_preservation_state(dataset_id, data)
 
