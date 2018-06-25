@@ -1,7 +1,7 @@
 #pylint: disable=unused-variable
 """Application instance factory"""
 
-from flask import Flask, Blueprint, request, jsonify, current_app, abort, session, json
+from flask import Flask, jsonify, abort
 from siptools_research import generate_metadata
 from siptools_research import preserve_dataset
 from siptools_research import validate_metadata
@@ -10,6 +10,7 @@ from siptools_research.utils.metax import DatasetNotFoundError
 from siptools_research.workflowtask import InvalidMetadataError
 from flask_cors import CORS
 import siptools_research.utils.metax as metax
+
 
 def create_app():
     """Configure and return a Flask application instance.
@@ -99,7 +100,8 @@ def create_app():
                               app.config.get('SIPTOOLS_RESEARCH_CONF'))
         except Exception as exc:
             success = False
-            preservation_state = metax.DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
+            preservation_state =\
+                metax.DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
             error_message = exc
             generation_message = exc
 
