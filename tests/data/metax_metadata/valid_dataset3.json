@@ -1,0 +1,40 @@
+{
+	"contract": {
+		"id": 1
+	},
+	"research_dataset": {
+		"provenance": [
+			{
+				"type": {
+					"pref_label": {
+						"en": "creation"
+					}
+				},
+				"temporal": {
+					"end_date": "2014-12-31T08:19:58Z",
+					"start_date": "2014-01-01T08:19:58Z"
+				},
+				"description": {
+					"en": "Description of provenance"
+				},
+                "preservation_event": {
+                    "identifier": "some:id",
+                    "pref_label": {
+                        "en": "Per serving"
+                    }
+                }
+			}
+		],
+		"files": [
+			{
+				"identifier": "pid:urn:3",
+				"use_category": {
+					"pref_label": {
+						"en": "label1"
+					}
+				}
+			}
+		]
+	}
+}
+

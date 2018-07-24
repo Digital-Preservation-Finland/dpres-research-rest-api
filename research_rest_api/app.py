@@ -40,16 +40,16 @@ def create_app():
                 dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
             )
         except DatasetNotFoundError as exc:
-            validity = False
+            is_valid = False
             error = exc.message
             status_code = None
         except InvalidMetadataError as exc:
-            validity = False
+            is_valid = False
             error = exc.message
-            status_code = metax.DS_STATE_METADATA_VALIDATION_FAILED
+            status_code = metax.DS_STATE_INVALID_METADATA
             description = "Metadata did not pass validation: %s" % error
         else:
-            validity = True
+            is_valid = True
             error = ''
             status_code = metax.DS_STATE_VALID_METADATA
             description = "Metadata passed validation"
@@ -62,7 +62,7 @@ def create_app():
                                                 description)
 
         response = jsonify({'dataset_id': dataset_id,
-                            'is_valid': validity,
+                            'is_valid': is_valid,
                             'error': error})
 
         response.status_code = 200

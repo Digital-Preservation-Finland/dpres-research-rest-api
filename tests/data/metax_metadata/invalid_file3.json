@@ -1,0 +1,15 @@
+{
+	"identifier": "pid:urn:3",
+	"file_path": "path/to/file3",
+	"parent_directory": "path/to",
+	"parent_directory": {
+		"identifier": "pid:urn:dir:wf1"
+	},
+	"checksum": {
+		"algorithm": "SHA-1",
+		"value": "1234asdf"
+	},
+	"file_characteristics": {
+		"file_created": "2014-01-17T08:19:31Z"
+	}
+}
