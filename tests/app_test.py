@@ -1,5 +1,6 @@
 """Tests for ``research_rest_api.app`` module"""
 import json
+
 from research_rest_api.app import create_app
 import httpretty
 import siptools_research.utils.metax as metax
@@ -164,10 +165,10 @@ def test_dataset_validate():
 
     # Check that preservation_state was updated
     assert httpretty.last_request().method == "PATCH"
-    assert httpretty.last_request().body == \
-        '{"preservation_description": "Metadata passed validation", '\
-        '"preservation_state": ' + metax.DS_STATE_METADATA_VALIDATION_FAILED + \
-        '}'
+    body = json.loads(httpretty.last_request().body)
+    assert body["preservation_description"] == "Metadata passed validation"
+    assert int(body["preservation_state"]) == \
+        metax.DS_STATE_VALID_METADATA
 
 
 @httpretty.activate
@@ -198,10 +199,13 @@ def test_dataset_validate_invalid():
 
     # Check that preservation_state was updated
     assert httpretty.last_request().method == "PATCH"
-    assert httpretty.last_request().body == \
-        '{"preservation_description": "Metadata did not pass '\
-        'validation: \'description\' is a required property", '\
-        '"preservation_state": ' + metax.DS_STATE_INVALID_METADATA + '}'
+    body = json.loads(httpretty.last_request().body)
+    assert body["preservation_description"] == (
+        "Metadata did not pass validation: 'description' is a required "
+        "property"
+    )
+    assert int(body["preservation_state"]) == \
+        metax.DS_STATE_METADATA_VALIDATION_FAILED
 
 
 @httpretty.activate

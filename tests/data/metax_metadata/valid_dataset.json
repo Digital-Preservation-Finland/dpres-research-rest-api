@@ -16,7 +16,13 @@
 				},
 				"description": {
 					"en": "Description of provenance"
-				}
+				},
+                "preservation_event": {
+                    "identifier": "some:id",
+                    "pref_label": {
+                        "en": "Pre-severing"
+                    }
+                }
 			}
 		],
 		"files": [

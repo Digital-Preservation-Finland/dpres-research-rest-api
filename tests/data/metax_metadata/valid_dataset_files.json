@@ -1,6 +1,5 @@
 [
 	{
-		"file_format": "application/xml",
 		"identifier": "pid:urn:1",
 		"file_path": "path/to/file1",
 		"parent_directory": "path/to",
@@ -12,11 +11,11 @@
 			"value": "1234asdf"
 		},
 		"file_characteristics": {
-			"file_created": "2014-01-17T08:19:31Z"
+			"file_created": "2014-01-17T08:19:31Z",
+		    "file_format": "application/xml"
 		}
 	},
 	{
-		"file_format": "application/xml",
 		"identifier": "pid:urn:2",
 		"file_path": "path/to/file2",
 		"parent_directory": {
@@ -27,7 +26,8 @@
 			"value": "1234lkjhg"
 		},
 		"file_characteristics": {
-			"file_created": "2014-01-17T08:19:32Z"
+			"file_created": "2014-01-17T08:19:32Z",
+		    "file_format": "application/xml"
 		}
 	}
 ]

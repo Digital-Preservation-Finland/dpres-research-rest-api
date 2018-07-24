@@ -2,9 +2,9 @@
 """Application instance factory"""
 
 from flask import Flask, jsonify, abort
-from siptools_research import generate_metadata
-from siptools_research import preserve_dataset
-from siptools_research import validate_metadata
+from siptools_research import (
+    generate_metadata, preserve_dataset, validate_metadata
+)
 from siptools_research.utils.metax import Metax
 from siptools_research.utils.metax import DatasetNotFoundError
 from siptools_research.workflowtask import InvalidMetadataError

@@ -21,10 +21,6 @@ git+https://gitlab.csc.fi/dpres/premis.git@develop#egg=premis
 git+https://gitlab.csc.fi/dpres/nisomix.git@develop#egg=nisomix
 git+https://gitlab.csc.fi/dpres/dpres-signature.git@develop#egg=dpres_signature
 git+https://gitlab.csc.fi/dpres/dpres-ipt.git@develop#egg=ipt
-file-magic
-M2Crypto
-dateutils
-python-mimeparse
 
 
 # mets requirements
