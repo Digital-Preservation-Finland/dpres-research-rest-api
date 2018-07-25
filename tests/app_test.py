@@ -117,7 +117,7 @@ def test_config(tmpdir):
 
 
 @pytest.fixture(scope="function")
-def app(test_config):
+def app(request, test_config):
     """
     Fixture that returns an instance of the REST API web app and mocks
     METAX and IDA HTTP responses
@@ -128,7 +128,11 @@ def app(test_config):
         SIPTOOLS_RESEARCH_CONF=test_config
     )
 
+    def fin():
+        httpretty.disable()
+
     httpretty.enable()
+    request.addfinalizer(fin)
 
     # Mock Metax
     mock_metax()
@@ -136,9 +140,7 @@ def app(test_config):
     # Mock Ida
     mock_ida()
 
-    yield app
-
-    httpretty.disable()
+    return app
 
 
 def test_index():
