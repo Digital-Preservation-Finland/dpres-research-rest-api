@@ -5,7 +5,7 @@ ETC=${ROOT}/etc
 SHAREDIR=${ROOT}${PREFIX}/share/dpres-research-rest-api
 
 APACHE_CONF_DIR=${ETC}/httpd/conf.d
-APACHE_CONF_FILE=${APACHE_CONF_DIR}/dpres-research-rest-api-httpd.conf
+APACHE_CONF_FILE=${APACHE_CONF_DIR}/dpres-research-rest-api-httpd.conf.disabled
 
 all: info
 

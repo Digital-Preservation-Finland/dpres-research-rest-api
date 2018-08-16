@@ -76,7 +76,7 @@ def genmetadata(dataset_id):
     set_preservation_state(dataset_id, data)
 
     response = flask.jsonify({'dataset_id': dataset_id,
-                              'proposed': True,
+                              'success': True,
                               'error': ""})
     response.status_code = 200
     return response

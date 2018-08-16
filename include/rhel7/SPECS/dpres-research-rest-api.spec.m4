@@ -46,7 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 
 %config(noreplace)
-/etc/httpd/conf.d/dpres-research-rest-api-httpd.conf
+/etc/httpd/conf.d/dpres-research-rest-api-httpd.conf.disabled
 
 # TODO: For now changelog must be last, because it is generated automatically
 # from git log command. Appending should be fixed to happen only after %changelog macro

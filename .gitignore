@@ -5,4 +5,6 @@ coverage.xml
 htmlcov
 junit.xml
 rpmbuild
+build/
+dist/
 venv/
