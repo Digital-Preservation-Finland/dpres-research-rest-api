@@ -5,7 +5,7 @@
 		"identifier": "pid:urn:dir:wf1"
 	},
 	"checksum": {
-		"algorithm": "SHA-1",
+		"algorithm": "md5",
 		"value": "1234lkjhg"
 	},
 	"file_characteristics": {

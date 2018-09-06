@@ -1,7 +1,6 @@
 """Tests for ``research_rest_api.app`` module"""
-import pytest
 import json
-
+import pytest
 from research_rest_api.app import create_app
 import httpretty
 import siptools_research.utils.metax as metax
@@ -25,6 +24,13 @@ def mock_metax():
     httpretty_register_file(
         uri='https://metax-test.csc.fi/rest/v1/datasets/1/files',
         filename='tests/data/metax_metadata/valid_dataset_files.json'
+    )
+
+    httpretty_register_file(
+        uri=('https://metax-test.csc.fi/rest/v1/datasets/'
+             '1?dataset_format=datacite'),
+        filename='tests/data/metax_metadata/valid_datacite.xml',
+        methods=[httpretty.GET]
     )
 
     httpretty_register_file(
@@ -75,10 +81,14 @@ def mock_ida():
     """Mock Metax using HTTPretty. Serve on valid metadata for dataset "1", and
     associated file "pid:urn:1" and "pid:urn:2".
     """
-    httpretty_register_file('https://86.50.169.61:4433/files/pid:urn:1/download',
-                            'tests/data/ida_files/valid_utf8')
-    httpretty_register_file('https://86.50.169.61:4433/files/pid:urn:2/download',
-                            'tests/data/ida_files/valid_utf8')
+    httpretty_register_file(
+        'https://86.50.169.61:4433/files/pid:urn:1/download',
+        'tests/data/ida_files/valid_utf8'
+    )
+    httpretty_register_file(
+        'https://86.50.169.61:4433/files/pid:urn:2/download',
+        'tests/data/ida_files/valid_utf8'
+    )
 
 
 @pytest.fixture(scope="function")
