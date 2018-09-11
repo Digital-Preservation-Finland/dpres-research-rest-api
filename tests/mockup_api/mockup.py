@@ -14,7 +14,7 @@ app = flask.Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}},
      supports_credentials=True)
 
-app.config.from_object('mockup_api.default_config')
+app.config.from_object('tests.mockup_api.default_config')
 
 
 @app.route('/dataset/<dataset_id>/validate', methods=['POST'])
@@ -71,13 +71,22 @@ def genmetadata(dataset_id):
     :returns: HTTP Response
     """
     data = {}
-    data['preservation_state'] = metax.DS_STATE_TECHNICAL_METADATA_GENERATED
-    data['preservation_description'] = 'Technical metadata generated'
+    success = True
+    error = ''
+    preservation_state = metax.DS_STATE_TECHNICAL_METADATA_GENERATED
+    preservation_description = 'Metadata generated'
+    if int(dataset_id) == int(app.config.get('PROPOSE_FAILS_DATASET_ID')):
+        error = 'Metadata generation failed'
+        preservation_state = metax.DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
+        preservation_description = 'Propose failed: ' + error
+        success = False
+    data['preservation_state'] = preservation_state
+    data['preservation_description'] = preservation_description
     set_preservation_state(dataset_id, data)
 
     response = flask.jsonify({'dataset_id': dataset_id,
-                              'success': True,
-                              'error': ""})
+                              'success': success,
+                              'error': error})
     response.status_code = 200
     return response
 
