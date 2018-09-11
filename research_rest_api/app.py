@@ -102,8 +102,8 @@ def create_app():
             success = False
             preservation_state =\
                 metax.DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
-            error_message = exc
-            generation_message = exc
+            error_message = str(exc)
+            generation_message = str(exc)
 
         metax_client = Metax(app.config.get('SIPTOOLS_RESEARCH_CONF'))
         metax_client.set_preservation_state(dataset_id, preservation_state,
