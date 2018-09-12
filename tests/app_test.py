@@ -232,14 +232,14 @@ def test_dataset_validate_invalid(app):
     # Check the body of response
     response_body = json.loads(response.data)
     assert response_body["is_valid"] is False
-    assert response_body["error"] == "'description' is a required property"
+    assert response_body["error"] == "'description' is a required property at field /research_dataset/provenance/0/"
 
     # Check that preservation_state was updated
     assert httpretty.last_request().method == "PATCH"
     body = json.loads(httpretty.last_request().body)
     assert body["preservation_description"] == (
         "Metadata did not pass validation: 'description' is a required "
-        "property"
+        "property at field /research_dataset/provenance/0/"
     )
     assert int(body["preservation_state"]) == \
         metax.DS_STATE_INVALID_METADATA
@@ -258,7 +258,7 @@ def test_dataset_validate_invalid_file(app):
     assert not response_body["is_valid"]
     assert response_body["error"] == (
         "Validation error in file metadata of path/to/file3: "
-        "'file_format' is a required property"
+        "'file_format' is a required property at field /file_characteristics/"
     )
 
 
