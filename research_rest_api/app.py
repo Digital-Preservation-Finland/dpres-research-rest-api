@@ -5,11 +5,14 @@ from flask import Flask, jsonify, abort
 from siptools_research import (
     generate_metadata, preserve_dataset, validate_metadata
 )
-from siptools_research.utils.metax import Metax
+from metax_access import (Metax, DS_STATE_INVALID_METADATA,
+                          DS_STATE_VALID_METADATA,
+                          DS_STATE_TECHNICAL_METADATA_GENERATED,
+                          DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED)
+from siptools_research.config import Configuration
 from siptools_research.utils.metax import DatasetNotFoundError
 from siptools_research.workflowtask import InvalidMetadataError
 from flask_cors import CORS
-import siptools_research.utils.metax as metax
 
 
 def create_app():
@@ -46,20 +49,24 @@ def create_app():
         except InvalidMetadataError as exc:
             is_valid = False
             error = exc.message
-            status_code = metax.DS_STATE_INVALID_METADATA
+            status_code = DS_STATE_INVALID_METADATA
             description = "Metadata did not pass validation: %s" % error
         else:
             is_valid = True
             error = ''
-            status_code = metax.DS_STATE_VALID_METADATA
+            status_code = DS_STATE_VALID_METADATA
             description = "Metadata passed validation"
 
         # Update preservation status in Metax. Skip the update if validation
         # failed because dataset was not found in Metax.
         if status_code:
-            metax_client = Metax(app.config.get('SIPTOOLS_RESEARCH_CONF'))
+            config_object = Configuration(
+                                app.config.get('SIPTOOLS_RESEARCH_CONF'))
+            metax_client = Metax(config_object.get('metax_url'),
+                                 config_object.get('metax_user'),
+                                 config_object.get('metax_password'))
             metax_client.set_preservation_state(dataset_id, status_code,
-                                                description)
+                                                system_description=description)
 
         response = jsonify({'dataset_id': dataset_id,
                             'is_valid': is_valid,
@@ -92,7 +99,7 @@ def create_app():
         :returns: HTTP Response
         """
         generation_message = 'Technical metadata generated'
-        preservation_state = metax.DS_STATE_TECHNICAL_METADATA_GENERATED
+        preservation_state = DS_STATE_TECHNICAL_METADATA_GENERATED
         error_message = ''
         success = True
         try:
@@ -101,13 +108,17 @@ def create_app():
         except Exception as exc:
             success = False
             preservation_state =\
-                metax.DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
+                DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
             error_message = str(exc)
             generation_message = str(exc)
 
-        metax_client = Metax(app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        config_object = Configuration(
+                            app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        metax_client = Metax(config_object.get('metax_url'),
+                             config_object.get('metax_user'),
+                             config_object.get('metax_password'))
         metax_client.set_preservation_state(dataset_id, preservation_state,
-                                            generation_message)
+                                            system_description=generation_message)
         response = jsonify({'dataset_id': dataset_id,
                             'success': success,
                             'error': error_message})

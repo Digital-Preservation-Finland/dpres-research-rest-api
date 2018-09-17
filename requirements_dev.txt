@@ -4,6 +4,7 @@ coverage
 pytest-cov
 httpretty
 git+https://gitlab.csc.fi/dpres/dpres-siptools-research.git#egg=siptools_research
+git+https://gitlab.csc.fi/dpres/metax-access.git#egg=metax_access
 
 
 # required by dpres-siptools-research
