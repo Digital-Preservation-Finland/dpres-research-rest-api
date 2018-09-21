@@ -8,9 +8,9 @@ from siptools_research import (
 from metax_access import (Metax, DS_STATE_INVALID_METADATA,
                           DS_STATE_VALID_METADATA,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
-                          DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED)
+                          DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED,
+                          DatasetNotFoundError)
 from siptools_research.config import Configuration
-from siptools_research.utils.metax import DatasetNotFoundError
 from siptools_research.workflowtask import InvalidMetadataError
 from flask_cors import CORS
 
