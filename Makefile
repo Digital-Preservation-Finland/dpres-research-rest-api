@@ -37,7 +37,29 @@ install:
 	echo "--"
 
 test:
-	py.test -svvvv --full-trace --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests
+	py.test -svvvv --full-trace --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/app_test.py
+
+.e2e/ansible:
+	git clone https://gitlab.csc.fi/dpres/ansible-dpres-admin-apache.git .e2e/ansible
+
+.e2e/ansible-fetch: .e2e/ansible
+	cd .e2e/ansible && \
+		git fetch --all && \
+		git checkout $(ANSIBLE_BRANCH) && \
+		git reset --hard origin/$(ANSIBLE_BRANCH) && \
+		git clean -fdx && \
+		git status
+
+e2e-localhost-cleanup: .e2e/ansible-fetch
+	cd .e2e/ansible ; ansible-playbook -i inventory/e2e-test e2e-pre-test-cleanup.yml
+
+e2e-localhost-provision: .e2e/ansible-fetch
+	cd .e2e/ansible ; ansible-playbook -i inventory/e2e-test e2e_test_site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+
+e2e-localhost-test:
+	py.test -svvv --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/e2e
+
+e2e-localhost: e2e-localhost-cleanup e2e-localhost-provision e2e-localhost-test
 
 docs:
 	make -C doc html
