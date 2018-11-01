@@ -76,6 +76,12 @@ def mock_metax():
         status=404
     )
 
+    httpretty_register_file(
+        uri="https://metax-test.csc.fi/rest/v1/contracts/contract",
+        filename="tests/data/metax_metadata/contract.json",
+        methods=[httpretty.GET]
+    )
+
 
 def mock_ida():
     """Mock Metax using HTTPretty. Serve on valid metadata for dataset "1", and

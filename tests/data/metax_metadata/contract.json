@@ -1,0 +1,9 @@
+{
+    "contract_json": {
+        "title": "Testisopimus",
+        "identifier": "contract",
+        "organization": {
+            "name": "Testiorganisaatio"
+        }
+    }
+}
