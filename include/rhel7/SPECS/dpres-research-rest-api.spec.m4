@@ -21,6 +21,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 Requires:       python python-flask python-flask-cors httpd mod_wsgi dpres-siptools-research metax-access
 Requires:       python-httpretty
+Requires:       python-mock
 
 %description
 REST API for metadata validation and SIP creation triggering

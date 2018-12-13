@@ -3,6 +3,7 @@ flask_cors
 coverage
 pytest-cov
 httpretty
+mock
 git+https://gitlab.csc.fi/dpres/dpres-siptools-research.git#egg=siptools_research
 git+https://gitlab.csc.fi/dpres/metax-access.git#egg=metax_access
 

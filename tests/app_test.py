@@ -4,6 +4,7 @@ import pytest
 from research_rest_api.app import create_app
 import httpretty
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
+import mock
 
 
 def httpretty_register_file(uri, filename, methods=None, status=200):
@@ -178,7 +179,8 @@ def test_index():
     assert response.status_code == 400
 
 
-def test_dataset_preserve(app):
+@mock.patch('research_rest_api.app.preserve_dataset')
+def test_dataset_preserve(mock_function, app):
     """Test the preserve method.
 
     :returns: None
@@ -187,6 +189,9 @@ def test_dataset_preserve(app):
     with app.test_client() as client:
         response = client.post('/dataset/1/preserve')
 
+    mock_function.assert_called_with(
+        '1', app.config.get('SIPTOOLS_RESEARCH_CONF')
+    )
     assert response.status_code == 202
 
 
