@@ -13,3 +13,10 @@ unit-test:
     - 'unit-test.sh'
   except:
     - master
+
+e2e-localhost-research-rest-api:
+  stage: local-test
+  script:
+    - 'e2e-fairdata.sh dpres-research-rest-api'
+  except:
+    - master

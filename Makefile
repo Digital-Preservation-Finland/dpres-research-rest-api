@@ -39,25 +39,46 @@ install:
 test:
 	py.test -svvvv --full-trace --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/app_test.py
 
-.e2e/ansible:
-	git clone https://gitlab.csc.fi/dpres/ansible-dpres-admin-apache.git .e2e/ansible
+.e2e/ansible-fairdata:
+	git clone https://gitlab.csc.fi/dpres/ansible-fairdata-pas.git .e2e/ansible-fairdata
 
-.e2e/ansible-fetch: .e2e/ansible
-	cd .e2e/ansible && \
+.e2e/ansible-fetch-fairdata: .e2e/ansible-fairdata
+	cd .e2e/ansible-fairdata && \
 		git fetch --all && \
 		git checkout $(ANSIBLE_BRANCH) && \
 		git reset --hard origin/$(ANSIBLE_BRANCH) && \
 		git clean -fdx && \
 		git status
 
-e2e-localhost-cleanup: .e2e/ansible-fetch
-	cd .e2e/ansible ; ansible-playbook -i inventory/e2e-test e2e-pre-test-cleanup.yml
+e2e-localhost-cleanup-fairdata: .e2e/ansible-fetch-fairdata
+	cd .e2e/ansible-fairdata ; ansible-playbook -i inventory/e2e-test e2e-pre-test-cleanup.yml
 
-e2e-localhost-provision: .e2e/ansible-fetch
-	cd .e2e/ansible ; ansible-playbook -i inventory/e2e-test e2e_test_site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+e2e-localhost-provision-fairdata: .e2e/ansible-fetch-fairdata
+	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/e2e-test e2e_test_site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+
+.e2e/ansible-preservation:
+	git clone https://gitlab.csc.fi/dpres/ansible-preservation-system.git .e2e/ansible-preservation
+
+.e2e/ansible-fetch-preservation: .e2e/ansible-preservation
+	cd .e2e/ansible-preservation && \
+		git fetch --all && \
+		git checkout $(ANSIBLE_BRANCH) && \
+		git reset --hard origin/$(ANSIBLE_BRANCH) && \
+		git clean -fdx && \
+		git status
+
+e2e-localhost-cleanup-preservation: .e2e/ansible-fetch-preservation
+	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/localhost e2e-pre-test-cleanup.yml
+
+e2e-localhost-provision-preservation: .e2e/ansible-fetch-preservation
+	cd .e2e/ansible-preservation ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/localhost testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 e2e-localhost-test:
 	py.test -svvv --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/e2e
+
+e2e-localhost-cleanup: e2e-localhost-cleanup-preservation e2e-localhost-cleanup-fairdata
+
+e2e-localhost-provision: e2e-localhost-provision-preservation e2e-localhost-provision-fairdata
 
 e2e-localhost: e2e-localhost-cleanup e2e-localhost-provision e2e-localhost-test
 
