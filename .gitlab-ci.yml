@@ -17,6 +17,6 @@ unit-test:
 e2e-localhost-research-rest-api:
   stage: local-test
   script:
-    - 'e2e-fairdata.sh dpres-research-rest-api'
+    - 'e2e-fairdata-localhost.sh dpres-research-rest-api'
   except:
     - master

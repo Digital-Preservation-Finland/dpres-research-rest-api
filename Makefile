@@ -45,8 +45,8 @@ test:
 .e2e/ansible-fetch-fairdata: .e2e/ansible-fairdata
 	cd .e2e/ansible-fairdata && \
 		git fetch --all && \
-		git checkout $(ANSIBLE_BRANCH) && \
-		git reset --hard origin/$(ANSIBLE_BRANCH) && \
+		git checkout $(FAIRDATA_ANSIBLE_BRANCH) && \
+		git reset --hard origin/$(FAIRDATA_ANSIBLE_BRANCH) && \
 		git clean -fdx && \
 		git status
 
@@ -62,8 +62,8 @@ e2e-localhost-provision-fairdata: .e2e/ansible-fetch-fairdata
 .e2e/ansible-fetch-preservation: .e2e/ansible-preservation
 	cd .e2e/ansible-preservation && \
 		git fetch --all && \
-		git checkout $(ANSIBLE_BRANCH) && \
-		git reset --hard origin/$(ANSIBLE_BRANCH) && \
+		git checkout $(PRESERVATION_ANSIBLE_BRANCH) && \
+		git reset --hard origin/$(PRESERVATION_ANSIBLE_BRANCH) && \
 		git clean -fdx && \
 		git status
 
