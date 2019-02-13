@@ -21,51 +21,42 @@ Metax(metax-mockup) and IDA services are mocked.
 
 
 def test_tpas_preservation():
-    response = post('http://metax-e2e-test.csc.fi:5555/rest/v1/reset')
+    response = post('http://localhost:5556/metax/rest/v1/reset')
     assert response.status_code == 200
-    response = get('http://admin-rest-api-e2e-test.csc.fi:5555/api/1.0/datasets/'
-                   '100')
+    response = get('http://localhost:5556/admin/api/1.0/datasets/100')
     assert response.status_code == 200
     assert response.json()['passtate'] == 0
-    response = post('http://admin-rest-api-e2e-test.csc.fi:5555/api/1.0/datasets/'
-                    '100/propose',
+    response = post('http://localhost:5556/admin/api/1.0/datasets/100/propose',
                     data={'message': 'Proposing'})
-    response = get('http://admin-rest-api-e2e-test.csc.fi:5555/api/1.0/datasets/'
-                   '100')
+    response = get('http://localhost:5556/admin/api/1.0/datasets/100')
     assert response.status_code == 200
     assert response.json()['passtate'] == 10
     assert response.json()['passtateReasonDesc'] == 'Proposing'
-    response = post('http://research-rest-api-e2e-test.csc.fi:5555/dataset/100/'
+    response = post('http://localhost:5556/packaging/api/dataset/100/'
                     'genmetadata')
     assert response.status_code == 200
-    response = get('http://admin-rest-api-e2e-test.csc.fi:5555/api/1.0/datasets/'
-                   '100')
+    response = get('http://localhost:5556/admin/api/1.0/datasets/100')
     assert response.status_code == 200
     assert response.json()['passtate'] == 20
-    response = post('http://research-rest-api-e2e-test.csc.fi:5555/dataset/100/'
-                    'validate')
+    response = post('http://localhost:5556/packaging/api/dataset/100/validate')
     assert response.status_code == 200
-    response = get('http://admin-rest-api-e2e-test.csc.fi:5555/api/1.0/datasets/'
-                   '100')
+    response = get('http://localhost:5556/admin/api/1.0/datasets/100')
     assert response.status_code == 200
     assert response.json()['passtate'] == 70
-    response = post('http://admin-rest-api-e2e-test.csc.fi:5555/api/1.0/datasets/'
-                    '100/confirm',
+    response = post('http://localhost:5556/admin/api/1.0/datasets/100/confirm',
                     data={'confirmed': 'true'})
     assert response.status_code == 200
-    response = get('http://admin-rest-api-e2e-test.csc.fi:5555/api/1.0/datasets/'
+    response = get('http://localhost:5556/admin/api/1.0/datasets/'
                    '100')
     assert response.status_code == 200
     assert response.json()['passtate'] == 75
-    response = post('http://admin-rest-api-e2e-test.csc.fi:5555/api/1.0/datasets/'
+    response = post('http://localhost:5556/admin/api/1.0/datasets/'
                     '100/preserve')
     assert response.status_code == 200
-    response = get('http://admin-rest-api-e2e-test.csc.fi:5555/api/1.0/datasets/'
-                   '100')
+    response = get('http://localhost:5556/admin/api/1.0/datasets/100')
     assert response.status_code == 200
     assert response.json()['passtate'] == 80
-    response = post('http://research-rest-api-e2e-test.csc.fi:5555/dataset/100/'
-                    'preserve')
+    response = post('http://localhost:5556/packaging/api/dataset/100/preserve')
     assert response.status_code == 202
 
     # wait until dataset marked to be in digital preservation (state = 120)
@@ -73,8 +64,7 @@ def test_tpas_preservation():
     counter = 0
     passtate = 80
     while counter < 60 and passtate != 120 and passtate != 130:
-        response = get('http://admin-rest-api-e2e-test.csc.fi:5555/api/1.0/'
-                       'datasets/100')
+        response = get('http://localhost:5556/admin/api/1.0/datasets/100')
         assert response.status_code == 200
         passtate = response.json()['passtate']
         time.sleep(5)

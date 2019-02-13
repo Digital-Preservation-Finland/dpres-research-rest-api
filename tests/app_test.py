@@ -306,19 +306,38 @@ def test_dataset_validate_invalid_file(app):
     response_body = json.loads(response.data)
     assert not response_body["is_valid"]
     assert response_body["error"] == (
-        """Validation error in metadata of path/to/file3: 'file_format' is a required property
+        """Validation error in metadata of path/to/file3: 'file_storage' is a required property
 
-Failed validating 'required' in schema['properties']['file_characteristics']:
-    {'properties': {'file_encoding': {'enum': ['ISO-8859-15',
-                                               'UTF-8',
-                                               'UTF-16',
-                                               'UTF-32'],
-                                      'type': 'string'}},
-     'required': ['file_format'],
+Failed validating 'required' in schema:
+    {'properties': {'checksum': {'properties': {'algorithm': {'enum': ['md5',
+                                                                       'sha2'],
+                                                              'type': 'string'}},
+                                 'required': ['algorithm', 'value'],
+                                 'type': 'object'},
+                    'file_characteristics': {'properties': {'file_encoding': {'enum': ['ISO-8859-15',
+                                                                                       'UTF-8',
+                                                                                       'UTF-16',
+                                                                                       'UTF-32'],
+                                                                              'type': 'string'}},
+                                             'required': ['file_format'],
+                                             'type': 'object'},
+                    'file_storage': {'required': ['identifier'],
+                                     'type': 'object'},
+                    'parent_directory': {'required': ['identifier'],
+                                         'type': 'object'}},
+     'required': ['checksum',
+                  'file_characteristics',
+                  'file_storage',
+                  'file_path',
+                  'parent_directory'],
      'type': 'object'}
 
-On instance['file_characteristics']:
-    {u'file_created': u'2014-01-17T08:19:31Z'}"""
+On instance:
+    {u'checksum': {u'algorithm': u'md5', u'value': u'1234asdf'},
+     u'file_characteristics': {u'file_created': u'2014-01-17T08:19:31Z'},
+     u'file_path': u'path/to/file3',
+     u'identifier': u'pid:urn:3',
+     u'parent_directory': {u'identifier': u'pid:urn:dir:wf1'}}"""
     )
 
 

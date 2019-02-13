@@ -7,6 +7,10 @@ SHAREDIR=${ROOT}${PREFIX}/share/dpres-research-rest-api
 APACHE_CONF_DIR=${ETC}/httpd/conf.d
 APACHE_CONF_FILE=${APACHE_CONF_DIR}/dpres-research-rest-api-httpd.conf.disabled
 
+RPM_REPOS=stable,master,develop
+FAIRDATA_ANSIBLE_BRANCH=master
+PRESERVATION_ANSIBLE_BRANCH=master
+
 all: info
 
 info:

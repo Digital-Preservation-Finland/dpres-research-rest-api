@@ -14,6 +14,10 @@
             "file_created": "2014-01-17T08:19:31Z",
             "file_format": "application/xhtml+xml",
             "format_version": "1.0"
+        },
+        "file_storage": {
+            "id": 1,
+            "identifier": "pid:urn:storageidentifier1"
         }
     },
     {
@@ -30,6 +34,10 @@
             "file_created": "2014-01-17T08:19:32Z",
             "file_format": "application/xhtml+xml",
             "format_version": "1.0"
+        },
+        "file_storage": {
+            "id": 1,
+            "identifier": "pid:urn:storageidentifier1"
         }
     }
 ]
