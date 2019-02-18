@@ -58,7 +58,7 @@ e2e-localhost-cleanup-fairdata: .e2e/ansible-fetch-fairdata
 	cd .e2e/ansible-fairdata ; ansible-playbook -i inventory/e2e-test e2e-pre-test-cleanup.yml
 
 e2e-localhost-provision-fairdata: .e2e/ansible-fetch-fairdata
-	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/e2e-test e2e_test_site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/e2e-test e2e-test-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 .e2e/ansible-preservation:
 	git clone https://gitlab.csc.fi/dpres/ansible-preservation-system.git .e2e/ansible-preservation
