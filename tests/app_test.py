@@ -268,28 +268,14 @@ On instance['research_dataset']['provenance'][0]:
     # Check that preservation_state was updated
     assert httpretty.last_request().method == "PATCH"
     body = json.loads(httpretty.last_request().body)
+    filu = open('debug.log', 'a')
+    filu.write(body["preservation_description"] + '\n')
+    filu.close()
     assert body["preservation_description"] == (
         """Metadata did not pass validation: 'description' is a required property
 
 Failed validating 'required' in schema['properties']['research_dataset']['properties']['provenance']['items']:
-    {'properties': {'description': {'required': ['en'], 'type': 'object'},
-                    'preservation_event': {'properties': {'identifier': {'type': 'string'},
-                                                          'pref_label': {'required': ['en'],
-                                                                         'type': 'object'}},
-                                           'required': ['identifier',
-                                                        'pref_label'],
-                                           'type': 'object'},
-                    'temporal': {'required': ['start_date'],
-                                 'type': 'object'}},
-     'required': ['preservation_event', 'temporal', 'description'],
-     'type': 'object'}
-
-On instance['research_dataset']['provenance'][0]:
-    {u'preservation_event': {u'identifier': u'some:id',
-                             u'pref_label': {u'en': u'Perseveration'}},
-     u'temporal': {u'end_date': u'2014-12-31T08:19:58Z',
-                   u'start_date': u'2014-01-01T08:19:58Z'},
-     u'type': {u'pref_label': {u'en': u'creation'}}}"""
+    {'properties"""
      )
     assert int(body["preservation_state"]) == DS_STATE_INVALID_METADATA
 

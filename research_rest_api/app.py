@@ -60,6 +60,8 @@ def create_app():
         # Update preservation status in Metax. Skip the update if validation
         # failed because dataset was not found in Metax.
         if status_code:
+            if len(description) > 200:
+                description = description[:199]
             config_object = Configuration(
                                 app.config.get('SIPTOOLS_RESEARCH_CONF'))
             metax_client = Metax(config_object.get('metax_url'),
@@ -111,6 +113,8 @@ def create_app():
                 DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
             error_message = str(exc)
             generation_message = str(exc)
+        if len(generation_message) > 200:
+            generation_message = generation_message[:199]
 
         config_object = Configuration(
                             app.config.get('SIPTOOLS_RESEARCH_CONF'))
