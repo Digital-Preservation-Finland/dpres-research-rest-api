@@ -268,9 +268,6 @@ On instance['research_dataset']['provenance'][0]:
     # Check that preservation_state was updated
     assert httpretty.last_request().method == "PATCH"
     body = json.loads(httpretty.last_request().body)
-    filu = open('debug.log', 'a')
-    filu.write(body["preservation_description"] + '\n')
-    filu.close()
     assert body["preservation_description"] == (
         """Metadata did not pass validation: 'description' is a required property
 
