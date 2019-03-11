@@ -8,3 +8,4 @@ rpmbuild
 build/
 dist/
 venv/
+.venv/

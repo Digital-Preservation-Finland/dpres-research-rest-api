@@ -34,6 +34,16 @@ def main():
     setup(
         name='dpres-research-rest-api',
         packages=find_packages(exclude=['tests', 'tests.*']),
+        install_requires=[
+            "flask",
+            "flask-cors",
+            "metax_access@git+https://gitlab.csc.fi/dpres/"
+            "metax-access.git@develop",
+            "siptools_research@git+https://gitlab.csc.fi/dpres/"
+            "dpres-siptools-research.git@develop",
+            "upload_rest_api@git+https://gitlab.csc.fi/dpres/"
+            "upload-rest-api.git@develop"
+        ],
         tests_require=['pytest'],
         cmdclass={'test': PyTest},
         version=get_version())
