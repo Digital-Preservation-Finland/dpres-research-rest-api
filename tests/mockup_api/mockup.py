@@ -20,7 +20,7 @@ CORS(app, resources={r"/*": {"origins": "*"}},
 app.config.from_object('tests.mockup_api.default_config')
 
 
-@app.route('/dataset/<dataset_id>/validate', methods=['POST'])
+@app.route('/packaging/api/dataset/<dataset_id>/validate', methods=['POST'])
 def validate(dataset_id):
     """Validates dataset.
 
@@ -49,7 +49,7 @@ def validate(dataset_id):
     return response
 
 
-@app.route('/dataset/<dataset_id>/preserve', methods=['POST'])
+@app.route('/packaging/api/dataset/<dataset_id>/preserve', methods=['POST'])
 def preserve(dataset_id):
     """Trigger packaging of dataset.
 
@@ -67,7 +67,7 @@ def preserve(dataset_id):
     return response
 
 
-@app.route('/dataset/<dataset_id>/genmetadata', methods=['POST'])
+@app.route('/packaging/api/dataset/<dataset_id>/genmetadata', methods=['POST'])
 def genmetadata(dataset_id):
     """Trigger packaging of dataset.
 
