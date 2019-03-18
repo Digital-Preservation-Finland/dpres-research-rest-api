@@ -67,7 +67,7 @@ def create_app():
             metax_client = Metax(config_object.get('metax_url'),
                                  config_object.get('metax_user'),
                                  config_object.get('metax_password'))
-            metax_client.set_preservation_state(dataset_id, status_code,
+            metax_client.set_preservation_state(dataset_id, state=status_code,
                                                 system_description=description)
 
         response = jsonify({'dataset_id': dataset_id,
@@ -121,8 +121,9 @@ def create_app():
         metax_client = Metax(config_object.get('metax_url'),
                              config_object.get('metax_user'),
                              config_object.get('metax_password'))
-        metax_client.set_preservation_state(dataset_id, preservation_state,
-                                            system_description=generation_message)
+        metax_client.set_preservation_state(
+            dataset_id, state=preservation_state,
+            system_description=generation_message)
         response = jsonify({'dataset_id': dataset_id,
                             'success': success,
                             'error': error_message})
