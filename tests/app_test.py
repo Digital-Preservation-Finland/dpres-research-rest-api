@@ -195,7 +195,8 @@ def test_dataset_preserve(mock_function, app):
     assert response.status_code == 202
 
 
-def test_dataset_genmetadata(app):
+@mock.patch('research_rest_api.app.generate_metadata')
+def test_dataset_genmetadata(mock_function, app):
     """Test the genmetadata method.
 
     :returns: None

@@ -2,17 +2,29 @@
 """Application instance factory"""
 
 from flask import Flask, jsonify, abort
-from siptools_research import (
-    generate_metadata, preserve_dataset, validate_metadata
-)
 from metax_access import (Metax, DS_STATE_INVALID_METADATA,
                           DS_STATE_VALID_METADATA,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
                           DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED,
                           DatasetNotFoundError)
+from siptools_research import (
+    generate_metadata, preserve_dataset, validate_metadata
+)
 from siptools_research.config import Configuration
 from siptools_research.workflowtask import InvalidMetadataError
 from flask_cors import CORS
+
+
+class MetadataGenerationError(Exception):
+    """Exception raised when metadata generation fails"""
+    def __init__(self, dataset_id, message):
+        super(MetadataGenerationError, self).__init__(message)
+        self.dataset_id = dataset_id
+
+    def __str__(self):
+        return "Error generating metadata for dataset %s: %s" % (
+            self.dataset_id, self.message
+        )
 
 
 def create_app():
@@ -63,10 +75,13 @@ def create_app():
             if len(description) > 200:
                 description = description[:199]
             config_object = Configuration(
-                                app.config.get('SIPTOOLS_RESEARCH_CONF'))
-            metax_client = Metax(config_object.get('metax_url'),
-                                 config_object.get('metax_user'),
-                                 config_object.get('metax_password'))
+                app.config.get('SIPTOOLS_RESEARCH_CONF')
+            )
+            metax_client = Metax(
+                config_object.get('metax_url'),
+                config_object.get('metax_user'),
+                config_object.get('metax_password')
+            )
             metax_client.set_preservation_state(dataset_id, state=status_code,
                                                 system_description=description)
 
@@ -100,33 +115,38 @@ def create_app():
 
         :returns: HTTP Response
         """
-        generation_message = 'Technical metadata generated'
-        preservation_state = DS_STATE_TECHNICAL_METADATA_GENERATED
-        error_message = ''
-        success = True
-        try:
-            generate_metadata(dataset_id,
-                              app.config.get('SIPTOOLS_RESEARCH_CONF'))
-        except Exception as exc:
-            success = False
-            preservation_state =\
-                DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
-            error_message = str(exc)
-            generation_message = str(exc)
-        if len(generation_message) > 200:
-            generation_message = generation_message[:199]
+        config_object = Configuration(app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        metax_client = Metax(
+            config_object.get('metax_url'),
+            config_object.get('metax_user'),
+            config_object.get('metax_password')
+        )
 
-        config_object = Configuration(
-                            app.config.get('SIPTOOLS_RESEARCH_CONF'))
-        metax_client = Metax(config_object.get('metax_url'),
-                             config_object.get('metax_user'),
-                             config_object.get('metax_password'))
+        try:
+            generate_metadata(
+                dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
+            )
+        except Exception as exc:
+            preservation_state = DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
+            message = str(exc)[:199] if len(str(exc)) > 200 else str(exc)
+
+            metax_client.set_preservation_state(
+                dataset_id, state=preservation_state,
+                system_description=message
+            )
+
+            raise MetadataGenerationError(dataset_id, str(exc))
+
         metax_client.set_preservation_state(
-            dataset_id, state=preservation_state,
-            system_description=generation_message)
-        response = jsonify({'dataset_id': dataset_id,
-                            'success': success,
-                            'error': error_message})
+            dataset_id, state=DS_STATE_TECHNICAL_METADATA_GENERATED,
+            system_description='Technical metadata generated'
+        )
+
+        response = jsonify({
+            'dataset_id': dataset_id,
+            'success': True,
+            'error': ''
+        })
         response.status_code = 200
         return response
 
@@ -155,6 +175,21 @@ def create_app():
         """
 
         response = jsonify({"code": 400, "error": str(error)})
+        response.status_code = 400
+
+        return response
+
+    @app.errorhandler(MetadataGenerationError)
+    def genmetadata_errorhandler(error):
+        """JSON response handler for MetadataGenerationError
+
+        :returns HTTP Response:
+        """
+        response = jsonify({
+            'dataset_id': error.dataset_id,
+            'success': False,
+            'error': error.message
+        })
         response.status_code = 400
 
         return response
