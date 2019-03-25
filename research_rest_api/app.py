@@ -1,5 +1,6 @@
 #pylint: disable=unused-variable
 """Application instance factory"""
+import logging
 
 from flask import Flask, jsonify, abort
 from metax_access import (Metax, DS_STATE_INVALID_METADATA,
@@ -27,7 +28,7 @@ class MetadataGenerationError(Exception):
         )
 
 
-def create_app():
+def create_app(testing=False):
     """Configure and return a Flask application instance.
 
     :returns: Instance of flask.Flask()
@@ -41,6 +42,15 @@ def create_app():
 
     CORS(app, resources={r"/*": {"origins": "*"}},
          supports_credentials=True)
+
+    # research-rest-api logging
+    if not testing:
+        file_handler = logging.handlers.RotatingFileHandler(
+            "/var/log/siptools_research/research_rest_api.log",
+            maxBytes=10*1024*1024, backupCount=5
+        )
+        file_handler.setLevel(logging.WARNING)
+        app.logger.addHandler(file_handler)
 
     @app.route('/dataset/<dataset_id>/validate', methods=['POST'])
     def validate(dataset_id):

@@ -105,9 +105,9 @@ coverage:
 clean: clean-rpm
 	find . -iname '*.pyc' -type f -delete
 	find . -iname '__pycache__' -exec rm -rf '{}' \; | true
-	rm coverage.xml
-	rm -r htmlcov
-	rm junit.xml
+	rm -f coverage.xml
+	rm -rf htmlcov
+	rm -f junit.xml
 
 clean-rpm:
 	rm -rf rpmbuild

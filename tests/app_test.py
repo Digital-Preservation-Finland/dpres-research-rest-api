@@ -140,7 +140,7 @@ def app(request, test_config):
     METAX and IDA HTTP responses
     """
     # Create app and change the default config file path
-    app = create_app()
+    app = create_app(testing=True)
     app.config.update(
         SIPTOOLS_RESEARCH_CONF=test_config
     )
@@ -167,7 +167,7 @@ def test_index():
     """
 
     # Create app and change the default config file path
-    app = create_app()
+    app = create_app(testing=True)
     app.config.update(
         SIPTOOLS_RESEARCH_CONF='tests/data/siptools_research.conf'
     )
