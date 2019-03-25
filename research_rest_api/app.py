@@ -2,7 +2,7 @@
 """Application instance factory"""
 import logging
 
-from flask import Flask, jsonify, abort
+from flask import Flask, jsonify, abort, current_app
 from metax_access import (Metax, DS_STATE_INVALID_METADATA,
                           DS_STATE_VALID_METADATA,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
@@ -50,6 +50,9 @@ def create_app(testing=False):
             maxBytes=10*1024*1024, backupCount=5
         )
         file_handler.setLevel(logging.WARNING)
+        file_handler.setFormatter(
+            logging.Formatter("\n[%(asctime)s - %(levelname)s]\n%(message)s")
+        )
         app.logger.addHandler(file_handler)
 
     @app.route('/dataset/<dataset_id>/validate', methods=['POST'])
@@ -201,6 +204,7 @@ def create_app(testing=False):
             'error': error.message
         })
         response.status_code = 400
+        current_app.logger.error(error, exc_info=True)
 
         return response
 
