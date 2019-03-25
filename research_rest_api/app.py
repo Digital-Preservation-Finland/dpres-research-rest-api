@@ -1,6 +1,7 @@
 #pylint: disable=unused-variable
 """Application instance factory"""
 import logging
+import logging.handlers
 
 from flask import Flask, jsonify, abort, current_app
 from metax_access import (Metax, DS_STATE_INVALID_METADATA,
@@ -174,6 +175,7 @@ def create_app(testing=False):
 
         :returns: HTTP Response
         """
+        current_app.logger.error(error, exc_info=True)
 
         response = jsonify({"code": 404, "error": str(error)})
         response.status_code = 404
@@ -186,9 +188,23 @@ def create_app(testing=False):
 
         :returns: HTTP Response
         """
+        current_app.logger.error(error, exc_info=True)
 
         response = jsonify({"code": 400, "error": str(error)})
         response.status_code = 400
+
+        return response
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        """JSON response handler for the 500 - Internal server error
+
+        :returns: HTTP Response
+        """
+        current_app.logger.error(error, exc_info=True)
+
+        response = jsonify({"code": 500, "error": "Internal server error"})
+        response.status_code = 500
 
         return response
 
@@ -198,13 +214,14 @@ def create_app(testing=False):
 
         :returns HTTP Response:
         """
+        current_app.logger.error(error, exc_info=True)
+
         response = jsonify({
             'dataset_id': error.dataset_id,
             'success': False,
             'error': error.message
         })
         response.status_code = 400
-        current_app.logger.error(error, exc_info=True)
 
         return response
 
