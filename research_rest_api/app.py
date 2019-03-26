@@ -12,21 +12,10 @@ from metax_access import (Metax, DS_STATE_INVALID_METADATA,
 from siptools_research import (
     generate_metadata, preserve_dataset, validate_metadata
 )
+from siptools_research.metadata_generator import MetadataGenerationError
 from siptools_research.config import Configuration
 from siptools_research.workflowtask import InvalidMetadataError
 from flask_cors import CORS
-
-
-class MetadataGenerationError(Exception):
-    """Exception raised when metadata generation fails"""
-    def __init__(self, dataset_id, message):
-        super(MetadataGenerationError, self).__init__(message)
-        self.dataset_id = dataset_id
-
-    def __str__(self):
-        return "Error generating metadata for dataset %s: %s" % (
-            self.dataset_id, self.message
-        )
 
 
 def create_app(testing=False):
@@ -140,7 +129,7 @@ def create_app(testing=False):
             generate_metadata(
                 dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
             )
-        except Exception as exc:
+        except MetadataGenerationError as exc:
             preservation_state = DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
             message = str(exc)[:199] if len(str(exc)) > 200 else str(exc)
 
@@ -149,7 +138,7 @@ def create_app(testing=False):
                 system_description=message
             )
 
-            raise MetadataGenerationError(dataset_id, str(exc))
+            raise
 
         metax_client.set_preservation_state(
             dataset_id, state=DS_STATE_TECHNICAL_METADATA_GENERATED,
