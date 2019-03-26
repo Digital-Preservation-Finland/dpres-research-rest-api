@@ -35,9 +35,9 @@ def create_app(testing=False):
 
     # research-rest-api logging
     if not testing:
-        file_handler = logging.handlers.RotatingFileHandler(
+        file_handler = logging.handlers.TimedRotatingFileHandler(
             "/var/log/siptools_research/research_rest_api.log",
-            maxBytes=10*1024*1024, backupCount=5
+            when="midnight", backupCount=6
         )
         file_handler.setLevel(logging.WARNING)
         file_handler.setFormatter(
