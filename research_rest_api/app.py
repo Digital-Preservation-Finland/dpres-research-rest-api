@@ -18,7 +18,11 @@ from siptools_research.workflowtask import InvalidMetadataError
 from flask_cors import CORS
 
 
-def create_app(testing=False):
+logging.basicConfig(level=logging.ERROR)
+LOGGER = logging.getLogger(__name__)
+
+
+def create_app():
     """Configure and return a Flask application instance.
 
     :returns: Instance of flask.Flask()
@@ -32,18 +36,6 @@ def create_app(testing=False):
 
     CORS(app, resources={r"/*": {"origins": "*"}},
          supports_credentials=True)
-
-    # research-rest-api logging
-    if not testing:
-        file_handler = logging.handlers.TimedRotatingFileHandler(
-            "/var/log/siptools_research/research_rest_api.log",
-            when="midnight", backupCount=6
-        )
-        file_handler.setLevel(logging.WARNING)
-        file_handler.setFormatter(
-            logging.Formatter("\n[%(asctime)s - %(levelname)s]\n%(message)s")
-        )
-        app.logger.addHandler(file_handler)
 
     @app.route('/dataset/<dataset_id>/validate', methods=['POST'])
     def validate(dataset_id):
