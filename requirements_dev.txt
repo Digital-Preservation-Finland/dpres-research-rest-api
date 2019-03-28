@@ -6,6 +6,7 @@ httpretty
 mock
 git+https://gitlab.csc.fi/dpres/dpres-siptools-research.git#egg=siptools_research
 git+https://gitlab.csc.fi/dpres/metax-access.git#egg=metax_access
+git+https://gitlab.csc.fi/dpres/upload-rest-api.git#egg=upload_rest_api
 
 
 # required by dpres-siptools-research

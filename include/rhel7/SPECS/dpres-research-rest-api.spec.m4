@@ -22,6 +22,7 @@ BuildArch:      noarch
 Requires:       python python-flask python-flask-cors httpd mod_wsgi dpres-siptools-research metax-access
 Requires:       python-httpretty
 Requires:       python-mock
+BuildRequires:  upload-rest-api
 
 %description
 REST API for metadata validation and SIP creation triggering
