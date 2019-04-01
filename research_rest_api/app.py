@@ -52,15 +52,19 @@ def create_app():
         except DatasetNotFoundError as exc:
             is_valid = False
             error = exc.message
+            detailed_error = error
             status_code = None
         except InvalidMetadataError as exc:
             is_valid = False
-            error = exc.message
+            detailed_error = exc.message
+            error = detailed_error.split('\n')[0]
             status_code = DS_STATE_INVALID_METADATA
-            description = "Metadata did not pass validation: %s" % error
+            description = "Metadata did not pass validation: %s" % \
+                detailed_error
         else:
             is_valid = True
             error = ''
+            detailed_error = error
             status_code = DS_STATE_VALID_METADATA
             description = "Metadata passed validation"
 
@@ -75,14 +79,16 @@ def create_app():
             metax_client = Metax(
                 config_object.get('metax_url'),
                 config_object.get('metax_user'),
-                config_object.get('metax_password')
+                config_object.get('metax_password'),
+                verify=config_object.getboolean('metax_ssl_verification')
             )
             metax_client.set_preservation_state(dataset_id, state=status_code,
                                                 system_description=description)
 
         response = jsonify({'dataset_id': dataset_id,
                             'is_valid': is_valid,
-                            'error': error})
+                            'error': error,
+                            'detailed_error': detailed_error})
 
         response.status_code = 200
         return response
@@ -110,11 +116,14 @@ def create_app():
 
         :returns: HTTP Response
         """
-        config_object = Configuration(app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        config_object = Configuration(
+            app.config.get('SIPTOOLS_RESEARCH_CONF')
+        )
         metax_client = Metax(
             config_object.get('metax_url'),
             config_object.get('metax_user'),
-            config_object.get('metax_password')
+            config_object.get('metax_password'),
+            verify=config_object.getboolean('metax_ssl_verification')
         )
 
         try:
@@ -200,7 +209,8 @@ def create_app():
         response = jsonify({
             'dataset_id': error.dataset_id,
             'success': False,
-            'error': error.message
+            'error': error.message.split('\n')[0],
+            'detailed_error': error.message
         })
         response.status_code = 400
 

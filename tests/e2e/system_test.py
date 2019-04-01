@@ -19,7 +19,7 @@ import time
 
 from requests import get, post
 import pytest
-
+from json import dumps
 from upload_rest_api import database as db
 
 
@@ -61,7 +61,8 @@ def test_tpas_preservation(filestorage):
         _init_upload_rest_api()
 
         # POST tiff file
-        with open("/var/www/html/files/valid_tiff/download", "rb") as _file:
+        with open("/var/www/html/files/valid_tiff/download",
+                  "rb") as _file:
             response = post(
                 "%s/files/valid_tiff.tiff" % upload_url,
                 auth=("test", "test"), data=_file
@@ -81,69 +82,86 @@ def test_tpas_preservation(filestorage):
     )
     assert response.status_code == 200
     assert response.json()['passtate'] == 0
-    response = post(
-        'http://localhost:5556/admin/api/1.0/datasets/%d/propose' % dataset_id,
-        data={'message': 'Proposing'}
-    )
-    response = get(
-        'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
-    )
-    assert response.status_code == 200
-    assert response.json()['passtate'] == 10
-    assert response.json()['passtateReasonDesc'] == 'Proposing'
-    response = post(
-        'http://localhost:5556/packaging/api'
-        '/dataset/%d/genmetadata' % dataset_id
-    )
-    assert response.status_code == 200
-    response = get(
-        'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
-    )
-    assert response.status_code == 200
-    assert response.json()['passtate'] == 20
-    response = post(
-        'http://localhost:5556/packaging/api/dataset/%d/validate' % dataset_id
-    )
-    assert response.status_code == 200
-    response = get(
-        'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
-    )
-    assert response.status_code == 200
-    assert response.json()['passtate'] == 70
-    response = post(
-        'http://localhost:5556/admin/api/1.0/datasets/%d/confirm' % dataset_id,
-        data={'confirmed': 'true'}
-    )
-    assert response.status_code == 200
-    response = get(
-        'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
-    )
-    assert response.status_code == 200
-    assert response.json()['passtate'] == 75
-    response = post(
-        'http://localhost:5556/admin/api/1.0/datasets/%d/preserve' % dataset_id
-    )
-    assert response.status_code == 200
-    response = get(
-        'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
-    )
-    assert response.status_code == 200
-    assert response.json()['passtate'] == 80
-    response = post(
-        'http://localhost:5556/packaging/api/dataset/%d/preserve' % dataset_id
-    )
-    assert response.status_code == 202
+    _assert_preservation(dataset_id)
 
-    # wait until dataset marked to be in digital preservation (state = 120)
-    # max wait time 5 minutes should be enough
-    counter = 0
-    passtate = 80
-    while counter < 60 and passtate != 120 and passtate != 130:
+
+def _assert_preservation(dataset_id):
+    """ Run the whole preservation workflow"""
+    try:
+        response = post(
+            'http://localhost:5556/admin/api/1.0/'
+            'datasets/%d/propose' % dataset_id,
+            data={'message': 'Proposing'}
+        )
         response = get(
             'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
         )
         assert response.status_code == 200
-        passtate = response.json()['passtate']
-        time.sleep(5)
-        counter += 1
-    assert passtate == 120
+        assert response.json()['passtate'] == 10
+        assert response.json()['passtateReasonDesc'] == 'Proposing'
+        response = post(
+            'http://localhost:5556/admin/api/1.0/research'
+            '/dataset/%d/genmetadata' % dataset_id
+        )
+        assert response.status_code == 200
+        response = get(
+            'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+        )
+        assert response.status_code == 200
+        assert response.json()['passtate'] == 20
+        response = post(
+            'http://localhost:5556/admin/api/1.0/research'
+            '/dataset/%d/validate' % dataset_id
+        )
+        assert response.status_code == 200
+        response = get(
+            'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+        )
+        assert response.status_code == 200
+        assert response.json()['passtate'] == 70
+        response = post(
+            'http://localhost:5556/admin/api/1.0/datasets'
+            '/%d/confirm' % dataset_id,
+            data={'confirmed': 'true'}
+        )
+        assert response.status_code == 200
+        response = get(
+            'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+        )
+        assert response.status_code == 200
+        assert response.json()['passtate'] == 75
+        response = post(
+            'http://localhost:5556/admin/api/1.0'
+            '/datasets/%d/preserve' % dataset_id
+        )
+        assert response.status_code == 200
+        response = get(
+            'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+        )
+        assert response.status_code == 200
+        assert response.json()['passtate'] == 80
+        response = post(
+            'http://localhost:5556/admin/api/1.0/research'
+            '/dataset/%d/preserve' % dataset_id
+        )
+        assert response.status_code == 202
+
+        # wait until dataset marked to be in digital preservation (state = 120)
+        # max wait time 5 minutes should be enough
+        counter = 0
+        passtate = 80
+        while counter < 60 and passtate != 120 and passtate != 130:
+            response = get(
+                'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+            )
+            assert response.status_code == 200
+            passtate = response.json()['passtate']
+            time.sleep(5)
+            counter += 1
+        assert passtate == 120
+    finally:
+        print "==========================================================="
+        print "Last response:"
+        print "Status:" + str(response.status_code)
+        print "Response: " + dumps(response.json())
+        print "==========================================================="

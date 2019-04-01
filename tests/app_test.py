@@ -5,9 +5,11 @@ from research_rest_api.app import create_app
 import httpretty
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
 import mock
+import re
 
 
-def httpretty_register_file(uri, filename, methods=None, status=200):
+def httpretty_register_file(uri, filename, match_querystring=True,
+                            methods=None, status=200):
     """Helper function that reads file and registers it to httpretty."""
     if not methods:
         methods = [httpretty.GET]
@@ -15,7 +17,8 @@ def httpretty_register_file(uri, filename, methods=None, status=200):
     with open(filename) as open_file:
         body = open_file.read()
         for method in methods:
-            httpretty.register_uri(method, uri, body, status=status)
+            httpretty.register_uri(method, uri, body, status=status,
+                                   match_querystring=match_querystring)
 
 
 def mock_metax():
@@ -23,64 +26,72 @@ def mock_metax():
     associated file "pid:urn:1" and "pid:urn:2".
     """
     httpretty_register_file(
-        uri='https://metax-test.csc.fi/rest/v1/datasets/1/files',
+        uri='https://metaksi/rest/v1/datasets/1/files',
         filename='tests/data/metax_metadata/valid_dataset_files.json'
     )
 
     httpretty_register_file(
-        uri=('https://metax-test.csc.fi/rest/v1/datasets/'
-             '1?dataset_format=datacite'),
-        filename='tests/data/metax_metadata/valid_datacite.xml',
-        methods=[httpretty.GET]
-    )
-
-    httpretty_register_file(
-        uri='https://metax-test.csc.fi/rest/v1/datasets/1',
-        filename='tests/data/metax_metadata/valid_dataset.json',
+        'https://metaksi/rest/v1/datasets/1',
+        'tests/data/metax_metadata/valid_dataset.json',
+        match_querystring=True,
         methods=[httpretty.GET, httpretty.PATCH]
     )
 
     httpretty_register_file(
-        uri='https://metax-test.csc.fi/rest/v1/files/pid:urn:1',
+        ('https://metaksi/rest/v1/datasets/valid_dataset'
+         '?dataset_format=datacite'),
+        'tests/data/metax_metadata/valid_datacite.xml',
+        match_querystring=True,
+        methods=[httpretty.GET]
+    )
+
+    httpretty_register_file(
+        uri='https://metaksi/rest/v1/files/pid:urn:1',
         filename='tests/data/metax_metadata/valid_file1.json',
         methods=[httpretty.GET, httpretty.PATCH]
     )
 
     httpretty_register_file(
-        uri='https://metax-test.csc.fi/rest/v1/files/pid:urn:2',
+        uri='https://metaksi/rest/v1/files/pid:urn:2',
         filename='tests/data/metax_metadata/valid_file2.json',
         methods=[httpretty.GET, httpretty.PATCH]
     )
 
     httpretty_register_file(
-        uri='https://metax-test.csc.fi/rest/v1/datasets/2',
+        uri='https://metaksi/rest/v1/datasets/2',
         filename='tests/data/metax_metadata/invalid_dataset2.json',
         methods=[httpretty.GET, httpretty.PATCH]
     )
 
     httpretty_register_file(
-        uri="https://metax-test.csc.fi/rest/v1/datasets/3",
+        uri="https://metaksi/rest/v1/datasets/3",
         filename="tests/data/metax_metadata/valid_dataset3.json",
         methods=[httpretty.GET, httpretty.PATCH]
     )
 
     httpretty_register_file(
-        uri="https://metax-test.csc.fi/rest/v1/files/pid:urn:3",
+        uri="https://metaksi/rest/v1/files/pid:urn:3",
         filename="tests/data/metax_metadata/invalid_file3.json",
         methods=[httpretty.GET, httpretty.PATCH]
     )
 
     httpretty_register_file(
-        uri="https://metax-test.csc.fi/rest/v1/datasets/not_available_id",
+        uri="https://metaksi/rest/v1/datasets/not_available_id",
         filename="tests/data/metax_metadata/not_found.json",
         methods=[httpretty.GET],
         status=404
     )
 
     httpretty_register_file(
-        uri="https://metax-test.csc.fi/rest/v1/contracts/contract",
+        uri="https://metaksi/rest/v1/contracts/contract",
         filename="tests/data/metax_metadata/contract.json",
         methods=[httpretty.GET]
+    )
+
+    httpretty.register_uri(
+        httpretty.POST,
+        re.compile('https://metaksi/rpc/(.*)'),
+        status=200
     )
 
 
@@ -115,7 +126,7 @@ def test_config(tmpdir):
         "mongodb_host = localhost",
         "mongodb_database = siptools-research",
         "mongodb_collection = workflow",
-        "metax_url = https://metax-test.csc.fi",
+        "metax_url = https://metaksi",
         "metax_user = tpas",
         "metax_password = ",
         "ida_url = https://86.50.169.61:4433",
@@ -124,7 +135,8 @@ def test_config(tmpdir):
         "dp_host = 86.50.168.218",
         "dp_user = tpas",
         "dp_ssh_key = ~/.ssh/id_rsa",
-        "sip_sign_key = ~/sip_sign_pas.pem"
+        "sip_sign_key = ~/sip_sign_pas.pem",
+        "metax_ssl_verification = False"
     ])
 
     with open(str(temp_config_path), "w+") as f:
@@ -220,6 +232,7 @@ def test_dataset_validate(app):
 
     # Check the body of response
     response_body = json.loads(response.data)
+    assert response_body["error"] == ""
     assert response_body["is_valid"] is True
     assert response_body["error"] == ""
 
@@ -243,7 +256,7 @@ def test_dataset_validate_invalid(app):
     # Check the body of response
     response_body = json.loads(response.data)
     assert response_body["is_valid"] is False
-    assert response_body["error"] == (
+    assert response_body["detailed_error"] == (
         """'description' is a required property
 
 Failed validating 'required' in schema['properties']['research_dataset']['properties']['provenance']['items']:
@@ -266,6 +279,7 @@ On instance['research_dataset']['provenance'][0]:
                    u'start_date': u'2014-01-01T08:19:58Z'},
      u'type': {u'pref_label': {u'en': u'creation'}}}""")
 
+    assert response_body["error"] == "'description' is a required property"
     # Check that preservation_state was updated
     assert httpretty.last_request().method == "PATCH"
     body = json.loads(httpretty.last_request().body)
@@ -289,7 +303,7 @@ def test_dataset_validate_invalid_file(app):
 
     response_body = json.loads(response.data)
     assert not response_body["is_valid"]
-    assert response_body["error"] == (
+    assert response_body["detailed_error"] == (
         """Validation error in metadata of path/to/file3: 'file_storage' is a required property
 
 Failed validating 'required' in schema:
@@ -323,6 +337,9 @@ On instance:
      u'identifier': u'pid:urn:3',
      u'parent_directory': {u'identifier': u'pid:urn:dir:wf1'}}"""
     )
+    assert response_body["error"] == ("Validation error in metadata of "
+                                      "path/to/file3: 'file_storage' is a "
+                                      "required property")
 
 
 def test_dataset_validate_unavailable(app):
