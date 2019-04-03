@@ -4,6 +4,7 @@
         "id": 1,
         "identifier": "contract"
     },
+    "preservation_identifier": "foo",
     "research_dataset": {
         "provenance": [
             {
