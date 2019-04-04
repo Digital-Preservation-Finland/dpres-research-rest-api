@@ -1,11 +1,14 @@
 """Tests for ``research_rest_api.app`` module"""
-import json
-import pytest
-from research_rest_api.app import create_app
-import httpretty
-from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
-import mock
 import re
+import json
+
+import pytest
+import httpretty
+import mock
+
+from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
+
+from research_rest_api.app import create_app
 
 
 def httpretty_register_file(uri, filename, match_querystring=True,
@@ -111,8 +114,8 @@ def mock_ida():
 
 @pytest.fixture(scope="function")
 def test_config(tmpdir):
-    """
-    Create a test configuration for siptools-research and return the file path
+    """Create a test configuration for siptools-research and return the
+    file path.
     """
     temp_config_path = tmpdir.join(
         "etc", "siptools-research").ensure(dir=True)
@@ -136,7 +139,8 @@ def test_config(tmpdir):
         "dp_user = tpas",
         "dp_ssh_key = ~/.ssh/id_rsa",
         "sip_sign_key = ~/sip_sign_pas.pem",
-        "metax_ssl_verification = False"
+        "metax_ssl_verification = False",
+        "mimetypes_conf = tests/data/dpres_mimetypes.json"
     ])
 
     with open(str(temp_config_path), "w+") as f:

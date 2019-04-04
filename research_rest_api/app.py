@@ -4,18 +4,20 @@ import logging
 import logging.handlers
 
 from flask import Flask, jsonify, abort, current_app
+from flask_cors import CORS
+
 from metax_access import (Metax, DS_STATE_INVALID_METADATA,
                           DS_STATE_VALID_METADATA,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
                           DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED,
                           DatasetNotFoundError)
+
 from siptools_research import (
     generate_metadata, preserve_dataset, validate_metadata
 )
 from siptools_research.metadata_generator import MetadataGenerationError
 from siptools_research.config import Configuration
 from siptools_research.workflowtask import InvalidMetadataError
-from flask_cors import CORS
 
 
 logging.basicConfig(level=logging.ERROR)
