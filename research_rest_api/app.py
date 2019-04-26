@@ -5,6 +5,7 @@ import logging.handlers
 
 from flask import Flask, jsonify, abort, current_app
 from flask_cors import CORS
+from requests.exceptions import HTTPError
 
 from metax_access import (Metax, DS_STATE_INVALID_METADATA,
                           DS_STATE_VALID_METADATA,
@@ -201,6 +202,16 @@ def create_app():
 
         response = jsonify(error.to_dict())
         response.status_code = error.status_code
+        return response
+
+    @app.errorhandler(HTTPError)
+    def http_error(error):
+        """HTTPError handler"""
+        current_app.logger.error(error, exc_info=True)
+
+        response = jsonify({"code": error.response.status_code,
+                            "error": str(error)})
+        response.status_code = error.response.status_code
         return response
 
     def _set_preservation_state(dataset_id, state=None,
