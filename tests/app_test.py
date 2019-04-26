@@ -34,6 +34,11 @@ def mock_metax():
     )
 
     httpretty_register_file(
+        uri='https://metaksi/rest/v1/datasets/3/files',
+        filename='tests/data/metax_metadata/valid_dataset3_files.json'
+    )
+
+    httpretty_register_file(
         'https://metaksi/rest/v1/datasets/1',
         'tests/data/metax_metadata/valid_dataset.json',
         match_querystring=True,
@@ -49,18 +54,6 @@ def mock_metax():
     )
 
     httpretty_register_file(
-        uri='https://metaksi/rest/v1/files/pid:urn:1',
-        filename='tests/data/metax_metadata/valid_file1.json',
-        methods=[httpretty.GET, httpretty.PATCH]
-    )
-
-    httpretty_register_file(
-        uri='https://metaksi/rest/v1/files/pid:urn:2',
-        filename='tests/data/metax_metadata/valid_file2.json',
-        methods=[httpretty.GET, httpretty.PATCH]
-    )
-
-    httpretty_register_file(
         uri='https://metaksi/rest/v1/datasets/2',
         filename='tests/data/metax_metadata/invalid_dataset2.json',
         methods=[httpretty.GET, httpretty.PATCH]
@@ -69,12 +62,6 @@ def mock_metax():
     httpretty_register_file(
         uri="https://metaksi/rest/v1/datasets/3",
         filename="tests/data/metax_metadata/valid_dataset3.json",
-        methods=[httpretty.GET, httpretty.PATCH]
-    )
-
-    httpretty_register_file(
-        uri="https://metaksi/rest/v1/files/pid:urn:3",
-        filename="tests/data/metax_metadata/invalid_file3.json",
         methods=[httpretty.GET, httpretty.PATCH]
     )
 
