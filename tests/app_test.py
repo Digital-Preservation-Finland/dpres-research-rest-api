@@ -46,8 +46,7 @@ def mock_metax():
     )
 
     httpretty_register_file(
-        ('https://metaksi/rest/v1/datasets/valid_dataset'
-         '?dataset_format=datacite'),
+        'https://metaksi/rest/v1/datasets/1?dataset_format=datacite',
         'tests/data/metax_metadata/valid_datacite.xml',
         match_querystring=True,
         methods=[httpretty.GET]
@@ -224,7 +223,6 @@ def test_dataset_validate(app):
     response_body = json.loads(response.data)
     assert response_body["error"] == ""
     assert response_body["is_valid"] is True
-    assert response_body["error"] == ""
 
     # Check that preservation_state was updated
     assert httpretty.last_request().method == "PATCH"
