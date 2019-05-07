@@ -5,8 +5,10 @@ import json
 import pytest
 import httpretty
 import mock
+import lxml
 
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
+from metax_access import Metax
 
 from research_rest_api.app import create_app
 
@@ -46,13 +48,6 @@ def mock_metax():
     )
 
     httpretty_register_file(
-        'https://metaksi/rest/v1/datasets/1?dataset_format=datacite',
-        'tests/data/metax_metadata/valid_datacite.xml',
-        match_querystring=True,
-        methods=[httpretty.GET]
-    )
-
-    httpretty_register_file(
         uri='https://metaksi/rest/v1/datasets/2',
         filename='tests/data/metax_metadata/invalid_dataset2.json',
         methods=[httpretty.GET, httpretty.PATCH]
@@ -82,6 +77,21 @@ def mock_metax():
         re.compile('https://metaksi/rpc/(.*)'),
         status=200
     )
+
+
+# NOTE: This fixture is used because old httpretty version  (0.8.14) from
+# centos7 RPM repositories does not work with http query strings.
+@pytest.fixture
+def mock_get_datacite(monkeypatch):
+    """Mock Metax.get_datacite function with a function that just reads XML
+    from a file.
+    """
+    def read_datacite_file(*args):
+        datacite = lxml.etree.parse(
+            'tests/data/metax_metadata/valid_datacite.xml'
+        )
+        return datacite
+    monkeypatch.setattr(Metax, 'get_datacite', read_datacite_file)
 
 
 def mock_ida():
@@ -209,7 +219,7 @@ def test_dataset_genmetadata(_, app):
     assert response.status_code == 200
 
 
-def test_dataset_validate(app):
+def test_dataset_validate(app, mock_get_datacite):
     """Test the validate method.
 
     :returns: None
