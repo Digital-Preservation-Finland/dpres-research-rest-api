@@ -69,10 +69,13 @@ e2e-localhost-provision-fairdata: .e2e/ansible-fetch-fairdata
 		git checkout $(PRESERVATION_ANSIBLE_BRANCH) && \
 		git reset --hard origin/$(PRESERVATION_ANSIBLE_BRANCH) && \
 		git clean -fdx && \
-		git status
+		git status && \
+		if [ -f requirements.yml ]; then \
+			ansible-galaxy install -r requirements.yml; \
+		fi
 
 e2e-localhost-cleanup-preservation: .e2e/ansible-fetch-preservation
-	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/localhost e2e-pre-test-cleanup.yml
+	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/localhost external_roles/test-cleanup/cleanup.yml
 
 e2e-localhost-provision-preservation: .e2e/ansible-fetch-preservation
 	cd .e2e/ansible-preservation ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/localhost testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
