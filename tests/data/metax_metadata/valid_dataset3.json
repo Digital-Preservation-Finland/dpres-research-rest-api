@@ -19,12 +19,20 @@
 				"description": {
 					"en": "Description of provenance"
 				},
-                "preservation_event": {
-                    "identifier": "some:id",
-                    "pref_label": {
-                        "en": "Per serving"
-                    }
-                }
+                                "preservation_event": {
+                                        "identifier": "some:id",
+                                        "pref_label": {
+                                                "en": "Per serving"
+                                        }
+                                },
+                                "event_outcome": {
+                                        "pref_label": {
+                                                "en": "(:unav)"
+                                        }
+                                },
+                                "outcome_description": {
+                                        "en": "Value unavailable, possibly unknown"
+                                }
 			}
 		],
 		"files": [

@@ -16,12 +16,20 @@
 					"end_date": "2014-12-31T08:19:58Z",
 					"start_date": "2014-01-01T08:19:58Z"
 				},
-                "preservation_event": {
-                    "identifier": "some:id",
-                    "pref_label": {
-                        "en": "Perseveration"
-                    }
-                }
+                                "preservation_event": {
+                                        "identifier": "some:id",
+                                        "pref_label": {
+                                                "en": "Perseveration"
+                                        }
+                                },
+                                "event_outcome": {
+                                        "pref_label": {
+                                                "en": "(:unav)"
+                                        }
+                                },
+                                "outcome_description": {
+                                        "en": "Value unavailable, possibly unknown"
+                                }
 			}
 		],
 		"files": [

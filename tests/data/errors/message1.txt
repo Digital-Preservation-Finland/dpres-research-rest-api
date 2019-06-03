@@ -1,0 +1,32 @@
+'description' is a required property
+
+Failed validating 'required' in schema['properties']['research_dataset']['properties']['provenance']['items']:
+    {'properties': {'description': {'required': ['en'], 'type': 'object'},
+                    'event_outcome': {'properties': {'pref_label': {'required': ['en'],
+                                                                    'type': 'object'}},
+                                      'required': ['pref_label'],
+                                      'type': 'object'},
+                    'outcome_description': {'required': ['en'],
+                                            'type': 'object'},
+                    'preservation_event': {'properties': {'identifier': {'type': 'string'},
+                                                          'pref_label': {'required': ['en'],
+                                                                         'type': 'object'}},
+                                           'required': ['identifier',
+                                                        'pref_label'],
+                                           'type': 'object'},
+                    'temporal': {'required': ['start_date'],
+                                 'type': 'object'}},
+     'required': ['preservation_event',
+                  'description',
+                  'event_outcome',
+                  'outcome_description'],
+     'type': 'object'}
+
+On instance['research_dataset']['provenance'][0]:
+    {u'event_outcome': {u'pref_label': {u'en': u'(:unav)'}},
+     u'outcome_description': {u'en': u'Value unavailable, possibly unknown'},
+     u'preservation_event': {u'identifier': u'some:id',
+                             u'pref_label': {u'en': u'Perseveration'}},
+     u'temporal': {u'end_date': u'2014-12-31T08:19:58Z',
+                   u'start_date': u'2014-01-01T08:19:58Z'},
+     u'type': {u'pref_label': {u'en': u'creation'}}}

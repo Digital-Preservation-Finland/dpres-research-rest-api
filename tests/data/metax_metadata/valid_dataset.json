@@ -25,6 +25,14 @@
                     "pref_label": {
                         "en": "Pre-severing"
                     }
+                },
+                "event_outcome": {
+                        "pref_label": {
+                                "en": "(:unav)"
+                        }
+                },
+                "outcome_description": {
+                        "en": "Value unavailable, possibly unknown"
                 }
             }
         ],

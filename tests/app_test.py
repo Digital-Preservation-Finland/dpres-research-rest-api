@@ -254,37 +254,9 @@ def test_dataset_validate_invalid(app):
     # Check the body of response
     response_body = json.loads(response.data)
     assert response_body["is_valid"] is False
-    assert response_body["detailed_error"] == (
-        "'description' is a required property\n"
-        "\n"
-        "Failed validating 'required' in schema['properties']"
-        "['research_dataset']['properties']['provenance']['items']:\n"
-        "    {'properties': {'description': {'required': ['en'], 'type': "
-        "'object'},\n"
-        "                    'preservation_event': {'properties': "
-        "{'identifier': {'type': 'string'},\n"
-        "                                                          "
-        "'pref_label': {'required': ['en'],\n"
-        "                                                                    "
-        "     'type': 'object'}},\n"
-        "                                           'required': "
-        "['identifier',\n"
-        "                                                        "
-        "'pref_label'],\n"
-        "                                           'type': 'object'},\n"
-        "                    'temporal': {'required': ['start_date'],\n"
-        "                                 'type': 'object'}},\n"
-        "     'required': ['preservation_event', 'temporal', 'description'],\n"
-        "     'type': 'object'}\n"
-        "\n"
-        "On instance['research_dataset']['provenance'][0]:\n"
-        "    {u'preservation_event': {u'identifier': u'some:id',\n"
-        "                             u'pref_label': "
-        "{u'en': u'Perseveration'}},\n"
-        "     u'temporal': {u'end_date': u'2014-12-31T08:19:58Z',\n"
-        "                   u'start_date': u'2014-01-01T08:19:58Z'},\n"
-        "     u'type': {u'pref_label': {u'en': u'creation'}}}"
-    )
+
+    with open("tests/data/errors/message1.txt") as message:
+        assert response_body["detailed_error"] == message.read()[:-1]
 
     assert response_body["error"] == "'description' is a required property"
     # Check that preservation_state was updated
@@ -311,53 +283,9 @@ def test_dataset_validate_invalid_file(app):
 
     response_body = json.loads(response.data)
     assert not response_body["is_valid"]
-    assert response_body["detailed_error"] == (
-        "Validation error in metadata of path/to/file3: 'file_storage' is a "
-        "required property\n"
-        "\n"
-        "Failed validating 'required' in schema:\n"
-        "    {'properties': {'checksum': {'properties': {'algorithm': "
-        "{'enum': ['md5',\n"
-        "                                                                     "
-        "  'sha2'],\n"
-        "                                                              'type':"
-        " 'string'}},\n"
-        "                                 'required': ['algorithm', 'value'],"
-        "\n"
-        "                                 'type': 'object'},\n"
-        "                    'file_characteristics': {'properties': "
-        "{'file_encoding': {'enum': ['ISO-8859-15',\n"
-        "                                                                     "
-        "                  'UTF-8',\n"
-        "                                                                     "
-        "                  'UTF-16',\n"
-        "                                                                     "
-        "                  'UTF-32'],\n"
-        "                                                                     "
-        "         'type': 'string'}},\n"
-        "                                             'required':"
-        " ['file_format'],\n"
-        "                                             'type': 'object'},\n"
-        "                    'file_storage': {'required': ['identifier'],\n"
-        "                                     'type': 'object'},\n"
-        "                    'parent_directory': {'required': ['identifier'],"
-        "\n"
-        "                                         'type': 'object'}},\n"
-        "     'required': ['checksum',\n"
-        "                  'file_characteristics',\n"
-        "                  'file_storage',\n"
-        "                  'file_path',\n"
-        "                  'parent_directory'],\n"
-        "     'type': 'object'}\n"
-        "\n"
-        "On instance:\n"
-        "    {u'checksum': {u'algorithm': u'md5', u'value': u'1234asdf'},\n"
-        "     u'file_characteristics': {u'file_created': "
-        "u'2014-01-17T08:19:31Z'},\n"
-        "     u'file_path': u'path/to/file3',\n"
-        "     u'identifier': u'pid:urn:3',\n"
-        "     u'parent_directory': {u'identifier': u'pid:urn:dir:wf1'}}"
-    )
+    with open("tests/data/errors/message2.txt") as message:
+        assert response_body["detailed_error"] == message.read()[:-1]
+
     assert response_body["error"] == ("Validation error in metadata of "
                                       "path/to/file3: 'file_storage' is a "
                                       "required property")
