@@ -5,14 +5,13 @@ import flask
 from flask import current_app, abort
 from requests import patch
 from requests.exceptions import ConnectionError
-from requests.auth import HTTPBasicAuth
 
 from flask_cors import CORS
-from metax_access import (Metax, DS_STATE_VALID_METADATA,
+from metax_access import (DS_STATE_VALID_METADATA,
                           DS_STATE_METADATA_VALIDATION_FAILED,
-                          DS_STATE_IN_PACKAGING_SERVICE,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
-                          DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED)
+                          DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED,
+                          DS_STATE_IN_DIGITAL_PRESERVATION)
 app = flask.Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}},
      supports_credentials=True)
@@ -56,7 +55,7 @@ def preserve(dataset_id):
     :returns: HTTP Response
     """
     data = {}
-    data['preservation_state'] = DS_STATE_IN_PACKAGING_SERVICE
+    data['preservation_state'] = DS_STATE_IN_DIGITAL_PRESERVATION
     data['preservation_description'] = 'In packaging service'
     set_preservation_state(dataset_id, data)
 
@@ -100,8 +99,7 @@ def set_preservation_state(dataset_id, data):
                            current_app.config['METAX_BASE_PATH'],
                            "datasets/", dataset_id]),
                   json=data,
-                  verify=current_app.config['METAX_SSL_VERIFICATION'],
-                  auth=HTTPBasicAuth('tpas', 'y6WZzVwfY4XPsRhV'))
+                  verify=False)
         if r.status_code == 404:
             abort(404)
         elif r.status_code >= 300:
