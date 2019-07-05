@@ -99,6 +99,8 @@ def _assert_preservation(dataset_id):
         assert response.status_code == 200
         assert response.json()['passtate'] == 10
         assert response.json()['passtateReasonDesc'] == 'Proposing'
+        # switch to pas dataset
+        dataset_id = response.json()['pasDatasetIdentifier']
         response = post(
             'http://localhost:5556/admin/api/1.0/research'
             '/dataset/%d/genmetadata' % dataset_id
