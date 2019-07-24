@@ -19,7 +19,7 @@ import time
 
 from requests import get, post
 import pytest
-from json import dumps
+import json
 from upload_rest_api import database as db
 
 
@@ -163,5 +163,5 @@ def _assert_preservation(dataset_id):
         print "==========================================================="
         print "Last response:"
         print "Status:" + str(response.status_code)
-        print "Response: " + dumps(response.json())
+        print "Response: " + json.dumps(response.json(), indent=4)
         print "==========================================================="
