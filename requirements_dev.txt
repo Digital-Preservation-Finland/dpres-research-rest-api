@@ -2,32 +2,12 @@ flask==0.10.1
 werkzeug==0.9.1
 requests==2.6.0
 flask_cors
+git+https://gitlab.csc.fi/dpres/dpres-siptools-research.git#egg=siptools_research
+git+https://gitlab.csc.fi/dpres/metax-access.git#egg=metax_access
+
+# testing requirements
 coverage
 pytest-cov
 httpretty
 mock
-git+https://gitlab.csc.fi/dpres/dpres-siptools-research.git#egg=siptools_research
-git+https://gitlab.csc.fi/dpres/metax-access.git#egg=metax_access
 git+https://gitlab.csc.fi/dpres/upload-rest-api.git#egg=upload_rest_api
-
-
-# required by dpres-siptools-research
-# TODO: These should be installed automatically installed as requirements of dpres-siptools-research
-git+https://gitlab.csc.fi/dpres/dpres-signature.git
-git+https://gitlab.csc.fi/dpres/dpres-siptools.git@develop#egg=siptools
-git+https://gitlab.csc.fi/dpres/addml.git@develop
-
-
-# siptools requirements
-# TODO: These should be installed automatically installed as requirements of dpres-siptools
-git+https://gitlab.csc.fi/dpres/xml-helpers.git@develop#egg=xml_helpers
-git+https://gitlab.csc.fi/dpres/mets.git@develop#egg=mets
-git+https://gitlab.csc.fi/dpres/premis.git@develop#egg=premis
-git+https://gitlab.csc.fi/dpres/nisomix.git@develop#egg=nisomix
-git+https://gitlab.csc.fi/dpres/dpres-signature.git@develop#egg=dpres_signature
-git+https://gitlab.csc.fi/dpres/dpres-ipt.git@develop#egg=ipt
-
-
-# mets requirements
-# TODO: These should be installed automatically installed as requirements of mets
-dateutils

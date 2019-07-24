@@ -41,8 +41,6 @@ def main():
             "metax-access.git@develop",
             "siptools_research@git+https://gitlab.csc.fi/dpres/"
             "dpres-siptools-research.git@develop",
-            "upload_rest_api@git+https://gitlab.csc.fi/dpres/"
-            "upload-rest-api.git@develop"
         ],
         tests_require=['pytest'],
         cmdclass={'test': PyTest},
