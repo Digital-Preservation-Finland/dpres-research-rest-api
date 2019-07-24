@@ -36,7 +36,17 @@ def mock_metax():
     )
 
     httpretty_register_file(
+        uri='https://metaksi/rest/v1/datasets/valid_dataset/files',
+        filename='tests/data/metax_metadata/valid_dataset_files.json'
+    )
+
+    httpretty_register_file(
         uri='https://metaksi/rest/v1/datasets/3/files',
+        filename='tests/data/metax_metadata/valid_dataset3_files.json'
+    )
+
+    httpretty_register_file(
+        uri='https://metaksi/rest/v1/datasets/valid_dataset3/files',
         filename='tests/data/metax_metadata/valid_dataset3_files.json'
     )
 
