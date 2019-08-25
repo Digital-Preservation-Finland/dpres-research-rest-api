@@ -1,4 +1,4 @@
-#pylint: disable=unused-variable
+# pylint: disable=unused-variable
 """Application instance factory"""
 import logging
 import logging.handlers
