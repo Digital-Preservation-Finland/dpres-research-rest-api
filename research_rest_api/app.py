@@ -186,7 +186,6 @@ def create_app():
         current_app.logger.error(error, exc_info=True)
 
         response = jsonify({
-            'dataset_id': error.dataset_id,
             'success': False,
             'error': error.message.split('\n')[0],
             'detailed_error': error.message

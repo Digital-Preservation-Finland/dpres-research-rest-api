@@ -7,6 +7,7 @@ import httpretty
 import mock
 import lxml
 
+from siptools_research.xml_metadata import MetadataGenerationError
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
 from metax_access import Metax
 
@@ -227,6 +228,24 @@ def test_dataset_genmetadata(_, app):
         response = client.post('/dataset/1/genmetadata')
 
     assert response.status_code == 200
+
+
+@mock.patch('research_rest_api.app.generate_metadata')
+def test_dataset_genmetadata_error(generate_metadata_mock, app):
+    """Test that genmetadata method can handle metadata generation errors.
+
+    :returns: ``None``
+    """
+    generate_metadata_mock.side_effect = MetadataGenerationError('foo\nbar')
+    # Test the response
+    with app.test_client() as client:
+        response = client.post('/dataset/1/genmetadata')
+
+    response_json = json.loads(response.data)
+    assert response_json["success"] is False
+    assert response_json["error"] == 'foo'
+    assert response_json["detailed_error"] == 'foo\nbar'
+    assert response.status_code == 400
 
 
 def test_dataset_validate(app, mock_get_datacite):
