@@ -90,21 +90,6 @@ def mock_metax():
     )
 
 
-# NOTE: This fixture is used because old httpretty version  (0.8.14) from
-# centos7 RPM repositories does not work with http query strings.
-@pytest.fixture
-def mock_get_datacite(monkeypatch):
-    """Mock Metax.get_datacite function with a function that just reads XML
-    from a file.
-    """
-    def read_datacite_file(*args):
-        datacite = lxml.etree.parse(
-            'tests/data/metax_metadata/valid_datacite.xml'
-        )
-        return datacite
-    monkeypatch.setattr(Metax, 'get_datacite', read_datacite_file)
-
-
 def mock_ida():
     """Mock Metax using HTTPretty. Serve on valid metadata for dataset "1", and
     associated file "pid:urn:1" and "pid:urn:2".
@@ -248,11 +233,45 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
     assert response.status_code == 400
 
 
-def test_dataset_validate(app, mock_get_datacite):
+def test_dataset_validate(app, requests_mock):
     """Test the validate method.
 
     :returns: None
     """
+    with open('tests/data/metax_metadata/valid_dataset.json') as file_:
+        mocked_response = json.load(file_)
+    requests_mock.get("https://metaksi/rest/v1/datasets/1",
+                      json=mocked_response)
+
+    with open("tests/data/metax_metadata/contract.json") as file_:
+        mocked_response = json.load(file_)
+    requests_mock.get("https://metaksi/rest/v1/contracts/contract",
+                      json=mocked_response)
+
+    with open('tests/data/metax_metadata/valid_dataset_files.json') as file_:
+        mocked_response = json.load(file_)
+    requests_mock.get("https://metaksi/rest/v1/datasets/valid_dataset/files",
+                      json=mocked_response)
+    requests_mock.get("https://metaksi/rest/v1/datasets/1/files",
+                      json=mocked_response)
+
+    requests_mock.get("https://metaksi/rest/v1/directories/pid:urn:dir:wf1",
+                      json={"directory_path": "foo"})
+
+    requests_mock.patch("https://metaksi/rest/v1/datasets/1", json={})
+
+    requests_mock.post(
+        "https://metaksi/rpc/datasets/set_preservation_identifier"
+    )
+
+    with open("tests/data/metax_metadata/valid_datacite.xml") as file_:
+        mocked_response = file_.read()
+    requests_mock.get(
+        "https://metaksi/rest/v1/datasets/1?dataset_format=datacite",
+        text=mocked_response,
+        complete_qs=True
+    )
+
     # Test the response
     with app.test_client() as client:
         response = client.post('/dataset/1/validate')
@@ -264,8 +283,8 @@ def test_dataset_validate(app, mock_get_datacite):
     assert response_body["is_valid"] is True
 
     # Check that preservation_state was updated
-    assert httpretty.last_request().method == "PATCH"
-    body = json.loads(httpretty.last_request().body)
+    assert requests_mock.last_request.method == "PATCH"
+    body = json.loads(requests_mock.last_request.body)
     assert body["preservation_description"] == "Metadata passed validation"
     assert int(body["preservation_state"]) == DS_STATE_VALID_METADATA
 

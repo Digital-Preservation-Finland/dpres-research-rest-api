@@ -11,3 +11,4 @@ pytest-cov
 httpretty
 mock
 git+https://gitlab.csc.fi/dpres/upload-rest-api.git#egg=upload_rest_api
+requests_mock
