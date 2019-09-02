@@ -31,7 +31,7 @@ def validate(dataset_id):
     preservation_state = DS_STATE_VALID_METADATA
     preservation_description = 'Metadata passed validation'
     error = ''
-    if int(dataset_id) == int(app.config.get('VALIDATION_FAILS_DATASET_ID')):
+    if dataset_id == app.config.get('VALIDATION_FAILS_DATASET_ID'):
         error = 'Something went wrong'
         preservation_state = DS_STATE_METADATA_VALIDATION_FAILED
         preservation_description = 'Metadata did not pass validation: ' + error
@@ -77,7 +77,7 @@ def genmetadata(dataset_id):
     error = ''
     preservation_state = DS_STATE_TECHNICAL_METADATA_GENERATED
     preservation_description = 'Metadata generated'
-    if int(dataset_id) == int(app.config.get('PROPOSE_FAILS_DATASET_ID')):
+    if dataset_id == app.config.get('PROPOSE_FAILS_DATASET_ID'):
         error = 'Metadata generation failed'
         preservation_state = DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
         preservation_description = 'Propose failed: ' + error

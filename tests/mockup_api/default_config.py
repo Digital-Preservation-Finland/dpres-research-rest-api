@@ -16,8 +16,10 @@ METAX_API_HOST = "http://localhost:8888"
 # default: "/"
 METAX_BASE_PATH = "/rest/v1/"
 
-PROPOSE_FAILS_DATASET_ID = 2
-VALIDATION_FAILS_DATASET_ID = 1
+PROPOSE_FAILS_DATASET_ID = ("urn:nbn:fi:att:cr955e904-e3dd-4d7e-99f1-"
+                            "3fed446f96d2")
+VALIDATION_FAILS_DATASET_ID = ("urn:nbn:fi:att:cr955e904-e3dd-4d7e-99f1-"
+                               "3fed446f96d1")
 
 # default: False
 METAX_SSL_VERIFICATION = False

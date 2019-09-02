@@ -46,14 +46,14 @@ def _init_upload_rest_api():
     db.UsersDoc("test").create("test_project", password="test")
 
 
-@pytest.mark.parametrize("filestorage", ["ida", "local"])
-def test_tpas_preservation(filestorage):
+@pytest.mark.parametrize("filestorage, dataset_id",
+                         [("ida", 100), ("local", 101)])
+def test_tpas_preservation(filestorage, dataset_id):
     """Test the whole preservation workflow using both IDA and upload-rest-api.
     """
     response = post('http://localhost:5556/metax/rest/v1/reset')
     assert response.status_code == 200
 
-    dataset_id = 100 if filestorage == "ida" else 101
     upload_url = "http://localhost:5556/filestorage/api/v1"
 
     # Upload files through upload-rest-api
@@ -82,69 +82,74 @@ def test_tpas_preservation(filestorage):
     )
     assert response.status_code == 200
     assert response.json()['passtate'] == 0
-    _assert_preservation(dataset_id)
+    _assert_preservation(response.json()['identifier'])
 
 
-def _assert_preservation(dataset_id):
+def _assert_preservation(dataset_identifier):
     """ Run the whole preservation workflow"""
     try:
         response = post(
             'http://localhost:5556/admin/api/1.0/'
-            'datasets/%d/propose' % dataset_id,
+            'datasets/%s/propose' % dataset_identifier,
             data={'message': 'Proposing'}
         )
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+            'http://localhost:5556/admin/api/1.0/datasets/%s' %
+            dataset_identifier
         )
         assert response.status_code == 200
         assert response.json()['passtate'] == 10
         assert response.json()['passtateReasonDesc'] == 'Proposing'
         response = post(
             'http://localhost:5556/admin/api/1.0/research'
-            '/dataset/%d/genmetadata' % dataset_id
+            '/dataset/%s/genmetadata' % dataset_identifier
         )
         assert response.status_code == 200
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+            'http://localhost:5556/admin/api/1.0/datasets/%s' %
+            dataset_identifier
         )
         assert response.status_code == 200
         assert response.json()['passtate'] == 20
         response = post(
             'http://localhost:5556/admin/api/1.0/research'
-            '/dataset/%d/validate' % dataset_id
+            '/dataset/%s/validate' % dataset_identifier
         )
         assert response.status_code == 200
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+            'http://localhost:5556/admin/api/1.0/datasets/%s' %
+            dataset_identifier
         )
         assert response.status_code == 200
         assert response.json()['passtate'] == 70
         response = post(
             'http://localhost:5556/admin/api/1.0/datasets'
-            '/%d/confirm' % dataset_id,
+            '/%s/confirm' % dataset_identifier,
             data={'confirmed': 'true'}
         )
         assert response.status_code == 200
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+            'http://localhost:5556/admin/api/1.0/datasets/%s' %
+            dataset_identifier
         )
         assert response.status_code == 200
         assert response.json()['passtate'] == 75
         response = post(
             'http://localhost:5556/admin/api/1.0'
-            '/datasets/%d/preserve' % dataset_id
+            '/datasets/%s/preserve' % dataset_identifier
         )
         assert response.status_code == 200
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+            'http://localhost:5556/admin/api/1.0/datasets/%s' %
+            dataset_identifier
         )
         assert response.status_code == 200
         assert response.json()['passtate'] == 80
         # switch to pas dataset
-        dataset_id = response.json()['pasDatasetIdentifier']
+        dataset_identifier = response.json()['pasDatasetIdentifier']
         response = post(
             'http://localhost:5556/admin/api/1.0/research'
-            '/dataset/%d/preserve' % dataset_id
+            '/dataset/%s/preserve' % dataset_identifier
         )
         assert response.status_code == 202
 
@@ -154,7 +159,8 @@ def _assert_preservation(dataset_id):
         passtate = 80
         while counter < 120 and passtate != 120 and passtate != 130:
             response = get(
-                'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
+                'http://localhost:5556/admin/api/1.0/datasets/%s' %
+                dataset_identifier
             )
             assert response.status_code == 200
             passtate = response.json()['passtate']
