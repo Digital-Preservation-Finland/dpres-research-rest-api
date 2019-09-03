@@ -157,7 +157,7 @@ def _assert_preservation(dataset_identifier):
         # max wait time 10 minutes should be enough
         counter = 0
         passtate = 80
-        while counter < 120 and passtate != 120 and passtate != 130:
+        while counter < 60 and passtate != 120 and passtate != 130:
             response = get(
                 'http://localhost:5556/admin/api/1.0/datasets/%s' %
                 dataset_identifier
