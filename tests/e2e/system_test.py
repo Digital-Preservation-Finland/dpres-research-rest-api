@@ -154,7 +154,7 @@ def _assert_preservation(dataset_identifier):
         assert response.status_code == 202
 
         # wait until dataset marked to be in digital preservation (state = 120)
-        # max wait time 10 minutes should be enough
+        # max wait time 5 minutes should be enough
         counter = 0
         passtate = 80
         while counter < 60 and passtate != 120 and passtate != 130:
