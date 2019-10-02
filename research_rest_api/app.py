@@ -17,8 +17,8 @@ from siptools_research import (
     generate_metadata, preserve_dataset, validate_metadata
 )
 from siptools_research.metadata_generator import MetadataGenerationError
-from siptools_research.config import Configuration
 from siptools_research.workflowtask import InvalidMetadataError
+from siptools_research.config import Configuration
 
 
 logging.basicConfig(level=logging.ERROR)
@@ -54,12 +54,12 @@ def create_app():
             )
         except DatasetNotFoundError as exc:
             is_valid = False
-            error = exc.message
+            error = str(exc)
             detailed_error = error
             status_code = None
         except InvalidMetadataError as exc:
             is_valid = False
-            detailed_error = exc.message
+            detailed_error = str(exc)
             error = detailed_error.split('\n')[0]
             status_code = DS_STATE_INVALID_METADATA
             description = "Metadata did not pass validation: %s" % \
@@ -187,8 +187,8 @@ def create_app():
 
         response = jsonify({
             'success': False,
-            'error': error.message.split('\n')[0],
-            'detailed_error': error.message
+            'error': str(error).split('\n')[0],
+            'detailed_error': str(error)
         })
         response.status_code = 400
 

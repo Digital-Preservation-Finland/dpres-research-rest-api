@@ -15,6 +15,8 @@ System environment setup
 
 Metax(metax-mockup) and IDA services are mocked.
 """
+from __future__ import print_function
+
 import time
 
 from requests import get, post
@@ -168,8 +170,8 @@ def _assert_preservation(dataset_identifier):
             counter += 1
         assert passtate == 120
     finally:
-        print "==========================================================="
-        print "Last response:"
-        print "Status:" + str(response.status_code)
-        print "Response: " + json.dumps(response.json(), indent=4)
-        print "==========================================================="
+        print("===========================================================")
+        print("Last response:")
+        print("Status:" + str(response.status_code))
+        print("Response: " + json.dumps(response.json(), indent=4))
+        print("===========================================================")
