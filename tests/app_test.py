@@ -303,9 +303,6 @@ def test_dataset_validate_invalid(app):
     response_body = json.loads(response.data)
     assert response_body["is_valid"] is False
 
-    with open("tests/data/errors/message1.txt") as message:
-        assert response_body["detailed_error"] == message.read()[:-1]
-
     assert response_body["error"] == "'description' is a required property"
     # Check that preservation_state was updated
     assert httpretty.last_request().method == "PATCH"
@@ -331,8 +328,6 @@ def test_dataset_validate_invalid_file(app):
 
     response_body = json.loads(response.data)
     assert not response_body["is_valid"]
-    with open("tests/data/errors/message2.txt") as message:
-        assert response_body["detailed_error"] == message.read()[:-1]
 
     assert response_body["error"] == ("Validation error in metadata of "
                                       "path/to/file3: 'file_storage' is a "
