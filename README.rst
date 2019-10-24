@@ -1,5 +1,5 @@
-dpres-research-rest-api - REST API for metadata validation and triggering SIP creation
-======================================================================================
+Packaging service REST API
+==========================
 
 
 This web application provides a REST API that allows user to trigger dataset validation/preservation using packaging service. The web application must be installed on same server as the packaging service.
@@ -8,17 +8,11 @@ This web application provides a REST API that allows user to trigger dataset val
 Installation
 ------------
 
-RPM package can be installed from dpres-rpms.csc.fi::
+Clone this repository and install with pip::
 
-   yum install dpres-research-rest-api
+   pip install --use-pep517 ../dpres-research-rest-api/
 
-Installation from git::
-
-   pip install -r requirements_dev.txt
-   make install
-
-By default REST API listens to port 80. This can be changed by configuring
-apache configuration file: /etc/httpd/conf.d/dpres-research-rest-api-httpd.conf
+Configure apache to use WSGI application script file (see `sample configuration file <./include/etc/httpd/conf.d/dpres-research-rest-api-httpd.conf.disabled>`_). Restart apache.
 
 Usage
 -----

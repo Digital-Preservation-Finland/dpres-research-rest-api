@@ -9,7 +9,7 @@
         <Directory /usr/lib/python2.7/site-packages/research_rest_api>
                 WSGIProcessGroup research_rest_api
                 WSGIApplicationGroup %{GLOBAL}
-		Require all granted
+                Require all granted
         </Directory>
 
 </VirtualHost>
