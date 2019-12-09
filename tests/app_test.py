@@ -5,11 +5,9 @@ import json
 import pytest
 import httpretty
 import mock
-import lxml
 
 from siptools_research.xml_metadata import MetadataGenerationError
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
-from metax_access import Metax
 
 from research_rest_api.app import create_app
 
@@ -260,14 +258,10 @@ def test_dataset_validate(app, requests_mock):
 
     requests_mock.patch("https://metaksi/rest/v1/datasets/1", json={})
 
-    requests_mock.post(
-        "https://metaksi/rpc/datasets/set_preservation_identifier"
-    )
-
     with open("tests/data/metax_metadata/valid_datacite.xml") as file_:
         mocked_response = file_.read()
     requests_mock.get(
-        "https://metaksi/rest/v1/datasets/1?dataset_format=datacite",
+        "https://metaksi/rest/v1/datasets/1?dataset_format=datacite&dummy_doi=true",
         text=mocked_response,
         complete_qs=True
     )

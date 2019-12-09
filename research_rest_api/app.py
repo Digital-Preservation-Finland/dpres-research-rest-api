@@ -50,7 +50,9 @@ def create_app():
 
         try:
             validate_metadata(
-                dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
+                dataset_id,
+                app.config.get('SIPTOOLS_RESEARCH_CONF'),
+                dummy_doi="true"
             )
         except DatasetNotFoundError as exc:
             is_valid = False
