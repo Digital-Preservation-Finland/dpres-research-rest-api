@@ -23,6 +23,14 @@ from requests import get, post
 import pytest
 import json
 from upload_rest_api import database as db
+from metax_access import (DS_STATE_INITIALIZED,
+                          DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
+                          DS_STATE_TECHNICAL_METADATA_GENERATED,
+                          DS_STATE_VALID_METADATA,
+                          DS_STATE_METADATA_CONFIRMED,
+                          DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
+                          DS_STATE_IN_DIGITAL_PRESERVATION,
+                          DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE)
 
 
 def _init_upload_rest_api():
@@ -83,7 +91,7 @@ def test_tpas_preservation(filestorage, dataset_id):
         'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
     )
     assert response.status_code == 200
-    assert response.json()['passtate'] == 0
+    assert response.json()['passtate'] == DS_STATE_INITIALIZED
     _assert_preservation(response.json()['identifier'])
 
 
@@ -100,7 +108,8 @@ def _assert_preservation(dataset_identifier):
             dataset_identifier
         )
         assert response.status_code == 200
-        assert response.json()['passtate'] == 10
+        passtate = response.json()['passtate']
+        assert passtate == DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION
         assert response.json()['passtateReasonDesc'] == 'Proposing'
         response = post(
             'http://localhost:5556/admin/api/1.0/research'
@@ -112,7 +121,8 @@ def _assert_preservation(dataset_identifier):
             dataset_identifier
         )
         assert response.status_code == 200
-        assert response.json()['passtate'] == 20
+        passtate = response.json()['passtate']
+        assert passtate == DS_STATE_TECHNICAL_METADATA_GENERATED
         response = post(
             'http://localhost:5556/admin/api/1.0/research'
             '/dataset/%s/validate' % dataset_identifier
@@ -123,7 +133,7 @@ def _assert_preservation(dataset_identifier):
             dataset_identifier
         )
         assert response.status_code == 200
-        assert response.json()['passtate'] == 70
+        assert response.json()['passtate'] == DS_STATE_VALID_METADATA
         response = post(
             'http://localhost:5556/admin/api/1.0/datasets'
             '/%s/confirm' % dataset_identifier,
@@ -135,7 +145,7 @@ def _assert_preservation(dataset_identifier):
             dataset_identifier
         )
         assert response.status_code == 200
-        assert response.json()['passtate'] == 75
+        assert response.json()['passtate'] == DS_STATE_METADATA_CONFIRMED
         response = post(
             'http://localhost:5556/admin/api/1.0'
             '/datasets/%s/preserve' % dataset_identifier
@@ -146,9 +156,11 @@ def _assert_preservation(dataset_identifier):
             dataset_identifier
         )
         assert response.status_code == 200
-        assert response.json()['passtate'] == 80
-        # switch to pas dataset
-        dataset_identifier = response.json()['pasDatasetIdentifier']
+        passtate = response.json()['passtate']
+        assert passtate == DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION
+        if response.json()['isPASDataset'] is False:
+            # switch to pas dataset
+            dataset_identifier = response.json()['pasDatasetIdentifier']
         response = post(
             'http://localhost:5556/admin/api/1.0/research'
             '/dataset/%s/preserve' % dataset_identifier
@@ -158,8 +170,10 @@ def _assert_preservation(dataset_identifier):
         # wait until dataset marked to be in digital preservation (state = 120)
         # max wait time 5 minutes should be enough
         counter = 0
-        passtate = 80
-        while counter < 60 and passtate != 120 and passtate != 130:
+        passtate = DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION
+        while (counter < 60 and
+               passtate != DS_STATE_IN_DIGITAL_PRESERVATION and
+               passtate != DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE):
             response = get(
                 'http://localhost:5556/admin/api/1.0/datasets/%s' %
                 dataset_identifier
@@ -168,7 +182,7 @@ def _assert_preservation(dataset_identifier):
             passtate = response.json()['passtate']
             time.sleep(5)
             counter += 1
-        assert passtate == 120
+        assert passtate == DS_STATE_IN_DIGITAL_PRESERVATION
     finally:
         print("===========================================================")
         print("Last response:")
