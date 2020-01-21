@@ -5,11 +5,15 @@ import json
 import pytest
 import httpretty
 import mock
+from requests.exceptions import HTTPError
+from siptools_research.workflowtask import InvalidMetadataError
 
 from siptools_research.xml_metadata import MetadataGenerationError
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
 
 from research_rest_api.app import create_app
+import siptools_research
+import research_rest_api
 
 
 def httpretty_register_file(uri, filename, match_querystring=True,
@@ -151,6 +155,7 @@ def app(request, test_config):
     )
 
     def _fin():
+        httpretty.reset()
         httpretty.disable()
 
     httpretty.enable()
@@ -261,7 +266,8 @@ def test_dataset_validate(app, requests_mock):
     with open("tests/data/metax_metadata/valid_datacite.xml") as file_:
         mocked_response = file_.read()
     requests_mock.get(
-        "https://metaksi/rest/v1/datasets/1?dataset_format=datacite&dummy_doi=true",
+        ("https://metaksi/rest/v1/datasets/1?dataset_format=datacite&"
+         "dummy_doi=true"),
         text=mocked_response,
         complete_qs=True
     )
@@ -278,6 +284,9 @@ def test_dataset_validate(app, requests_mock):
 
     # Check that preservation_state was updated
     assert requests_mock.last_request.method == "PATCH"
+    assert requests_mock.last_request.url == (
+        "https://metaksi/rest/v1/datasets/1"
+    )
     body = json.loads(requests_mock.last_request.body)
     assert body["preservation_description"] == "Metadata passed validation"
     assert int(body["preservation_state"]) == DS_STATE_VALID_METADATA
@@ -300,6 +309,7 @@ def test_dataset_validate_invalid(app):
     assert response_body["error"] == "'description' is a required property"
     # Check that preservation_state was updated
     assert httpretty.last_request().method == "PATCH"
+    assert httpretty.last_request().path == "/rest/v1/datasets/2"
     body = json.loads(httpretty.last_request().body)
     assert body["preservation_description"] == (
         "Metadata did not pass validation: 'description' is a required "

@@ -7,18 +7,13 @@ from flask import Flask, jsonify, abort, current_app
 from flask_cors import CORS
 from requests.exceptions import HTTPError
 
-from metax_access import (Metax, DS_STATE_INVALID_METADATA,
-                          DS_STATE_VALID_METADATA,
-                          DS_STATE_TECHNICAL_METADATA_GENERATED,
-                          DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED,
-                          DatasetNotFoundError, MetaxError)
+from metax_access import DatasetNotFoundError, MetaxError
 
 from siptools_research import (
     generate_metadata, preserve_dataset, validate_metadata
 )
 from siptools_research.metadata_generator import MetadataGenerationError
 from siptools_research.workflowtask import InvalidMetadataError
-from siptools_research.config import Configuration
 
 
 logging.basicConfig(level=logging.ERROR)
@@ -58,28 +53,15 @@ def create_app():
             is_valid = False
             error = str(exc)
             detailed_error = error
-            status_code = None
         except InvalidMetadataError as exc:
             is_valid = False
             detailed_error = str(exc)
             error = detailed_error.split('\n')[0]
-            status_code = DS_STATE_INVALID_METADATA
-            description = "Metadata did not pass validation: %s" % \
-                detailed_error
         else:
             is_valid = True
             error = ''
             detailed_error = error
-            status_code = DS_STATE_VALID_METADATA
-            description = "Metadata passed validation"
 
-        # Update preservation status in Metax. Skip the update if validation
-        # failed because dataset was not found in Metax.
-        if status_code:
-            if len(description) > 200:
-                description = description[:199]
-            _set_preservation_state(dataset_id, state=status_code,
-                                    system_description=description)
         response = jsonify({'dataset_id': dataset_id,
                             'is_valid': is_valid,
                             'error': error,
@@ -111,22 +93,7 @@ def create_app():
 
         :returns: HTTP Response
         """
-        try:
-            generate_metadata(
-                dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
-            )
-        except MetadataGenerationError as exc:
-            preservation_state = DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED
-            message = str(exc)[:199] if len(str(exc)) > 200 else str(exc)
-
-            _set_preservation_state(dataset_id, state=preservation_state,
-                                    system_description=message)
-            raise
-
-        _set_preservation_state(
-            dataset_id, state=DS_STATE_TECHNICAL_METADATA_GENERATED,
-            system_description='Technical metadata generated'
-        )
+        generate_metadata(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
         response = jsonify({
             'dataset_id': dataset_id,
             'success': True,
@@ -209,31 +176,9 @@ def create_app():
     def http_error(error):
         """HTTPError handler"""
         current_app.logger.error(error, exc_info=True)
-
         response = jsonify({"code": error.response.status_code,
                             "error": str(error)})
         response.status_code = error.response.status_code
         return response
-
-    def _set_preservation_state(dataset_id, state=None,
-                                system_description=None):
-        """ Sets dataset's preservation_state or/and
-        preservation_reason_description attributes in Metax
-
-        :dataset_id: dataset id
-        :state: preservation_state attribute value to be set for the dataset
-        :user_description: preservation_reason_description attribute value to
-            be set for the dataset
-        """
-        config_object = Configuration(app.config.get('SIPTOOLS_RESEARCH_CONF'))
-        metax_client = Metax(
-            config_object.get('metax_url'),
-            config_object.get('metax_user'),
-            config_object.get('metax_password'),
-            verify=config_object.getboolean('metax_ssl_verification')
-        )
-        metax_client.set_preservation_state(
-            dataset_id, state=state, system_description=system_description
-        )
 
     return app
