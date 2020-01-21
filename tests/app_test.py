@@ -233,7 +233,7 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
 
 
 def test_dataset_validate(app, requests_mock):
-    """Test the validate method.
+    """Test the validate_md method.
 
     :returns: None
     """
@@ -270,7 +270,7 @@ def test_dataset_validate(app, requests_mock):
 
     # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/1/validate')
+        response = client.post('/dataset/1/validate/metadata')
     assert response.status_code == 200
 
     # Check the body of response
@@ -289,13 +289,13 @@ def test_dataset_validate(app, requests_mock):
 
 
 def test_dataset_validate_invalid(app):
-    """Test the validate method for invalid dataset.
+    """Test the validate_md method for invalid dataset.
 
     :returns: None
     """
     # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/2/validate')
+        response = client.post('/dataset/2/validate/metadata')
     assert response.status_code == 200
 
     # Check the body of response
@@ -320,10 +320,11 @@ def test_dataset_validate_invalid(app):
 
 # pylint: disable=invalid-name
 def test_dataset_validate_invalid_file(app):
-    """Test the validate method for a valid dataset containing an invalid file
+    """Test the validate_md method for a valid dataset containing invalid
+    file metadata.
     """
     with app.test_client() as client:
-        response = client.post("/dataset/3/validate")
+        response = client.post("/dataset/3/validate/metadata")
     assert response.status_code == 200
 
     response_body = json.loads(response.data)
@@ -342,7 +343,7 @@ def test_dataset_validate_unavailable(app):
     """
     # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/not_available_id/validate')
+        response = client.post('/dataset/not_available_id/validate/metadata')
     assert response.status_code == 200
 
     # Check the body of response

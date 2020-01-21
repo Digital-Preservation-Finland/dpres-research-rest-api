@@ -2,11 +2,11 @@
 
 This is a e2e test for verifying the fairdata siptools workflow functionality.
 The test simulates the Management UI (admin-web-ui) by using the REST APIs
-(admin-rest-api and research-rest-api) to propose, generate metadata, validate,
-confirm and finally accept the dataset for digital preservation. The test waits
-until the preservation_state of the dataset will be changed to "In digital
-Preservation"(120). This means that the created SIP has been accepted for
-digital preservation by the preservation system.
+(admin-rest-api and research-rest-api) to propose, generate metadata, validate
+metadata, confirm and finally accept the dataset for digital preservation. The
+test waits until the preservation_state of the dataset will be changed to "In
+digital Preservation"(120). This means that the created SIP has been accepted
+for digital preservation by the preservation system.
 
 The test dataset contains one HTML file and one TIFF file
 
@@ -18,10 +18,10 @@ Metax(metax-mockup) and IDA services are mocked.
 from __future__ import print_function
 
 import time
+import json
 
 from requests import get, post
 import pytest
-import json
 from upload_rest_api import database as db
 from metax_access import (DS_STATE_INITIALIZED,
                           DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
@@ -125,7 +125,7 @@ def _assert_preservation(dataset_identifier):
         assert passtate == DS_STATE_TECHNICAL_METADATA_GENERATED
         response = post(
             'http://localhost:5556/admin/api/1.0/research'
-            '/dataset/%s/validate' % dataset_identifier
+            '/dataset/%s/validate/metadata' % dataset_identifier
         )
         assert response.status_code == 200
         response = get(

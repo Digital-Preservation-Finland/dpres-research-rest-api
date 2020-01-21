@@ -35,9 +35,9 @@ def create_app():
     CORS(app, resources={r"/*": {"origins": "*"}},
          supports_credentials=True)
 
-    @app.route('/dataset/<dataset_id>/validate', methods=['POST'])
-    def validate(dataset_id):
-        """Validates dataset.
+    @app.route('/dataset/<dataset_id>/validate/metadata', methods=['POST'])
+    def validate_md(dataset_id):
+        """Validates dataset metadata.
 
         :returns: HTTP Response
         """
