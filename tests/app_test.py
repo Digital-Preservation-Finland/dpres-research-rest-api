@@ -5,15 +5,11 @@ import json
 import pytest
 import httpretty
 import mock
-from requests.exceptions import HTTPError
-from siptools_research.workflowtask import InvalidMetadataError
 
 from siptools_research.xml_metadata import MetadataGenerationError
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
 
 from research_rest_api.app import create_app
-import siptools_research
-import research_rest_api
 
 
 def httpretty_register_file(uri, filename, match_querystring=True,
