@@ -9,9 +9,10 @@ from requests.exceptions import HTTPError
 
 from metax_access import DatasetNotFoundError, MetaxError
 
-from siptools_research import (
-    generate_metadata, preserve_dataset, validate_metadata
-)
+from siptools_research import (generate_metadata, preserve_dataset,
+                               validate_metadata, validate_files)
+from siptools_research.file_validator import FileValidationError
+
 from siptools_research.metadata_generator import MetadataGenerationError
 from siptools_research.workflowtask import InvalidMetadataError
 
@@ -36,7 +37,7 @@ def create_app():
          supports_credentials=True)
 
     @app.route('/dataset/<dataset_id>/validate/metadata', methods=['POST'])
-    def validate_md(dataset_id):
+    def validate_dataset_metadata(dataset_id):
         """Validates dataset metadata.
 
         :returns: HTTP Response
@@ -62,6 +63,36 @@ def create_app():
             is_valid = True
             error = ''
             detailed_error = error
+
+        response = jsonify({'dataset_id': dataset_id,
+                            'is_valid': is_valid,
+                            'error': error,
+                            'detailed_error': detailed_error})
+
+        response.status_code = 200
+        return response
+
+    @app.route('/dataset/<dataset_id>/validate/files', methods=['POST'])
+    def validate_dataset_files(dataset_id):
+        """Validates dataset files.
+
+        :returns: HTTP Response
+        """
+        # Validate dataset files
+
+        try:
+            validate_files(
+                dataset_id,
+                app.config.get('SIPTOOLS_RESEARCH_CONF')
+            )
+        except FileValidationError as exc:
+            is_valid = False
+            error = str(exc)
+            detailed_error = ''
+        else:
+            is_valid = True
+            error = ''
+            detailed_error = ''
 
         response = jsonify({'dataset_id': dataset_id,
                             'is_valid': is_valid,

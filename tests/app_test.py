@@ -1,15 +1,124 @@
 """Tests for ``research_rest_api.app`` module"""
 import re
 import json
+import os
+import copy
 
 import pytest
 import httpretty
 import mock
+import mongomock
+import pymongo
 
 from siptools_research.xml_metadata import MetadataGenerationError
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
 
 from research_rest_api.app import create_app
+from siptools_research.config import Configuration
+from _pytest.monkeypatch import monkeypatch
+
+BASE_DATASET = {
+    "identifier": "valid_dataset",
+    "contract": {
+        "id": 1,
+        "identifier": "contract"
+    },
+    "preservation_identifier": "foo",
+    "research_dataset": {
+        "provenance": [
+            {
+                "type": {
+                    "pref_label": {
+                        "en": "creation"
+                    }
+                },
+                "temporal": {
+                    "end_date": "2014-12-31T08:19:58Z",
+                    "start_date": "2014-01-01T08:19:58Z"
+                },
+                "description": {
+                    "en": "Description of provenance"
+                },
+                "preservation_event": {
+                    "identifier": "some:id",
+                    "pref_label": {
+                        "en": "Pre-severing"
+                    }
+                },
+                "event_outcome": {
+                        "pref_label": {
+                                "en": "(:unav)"
+                        }
+                },
+                "outcome_description": {
+                        "en": "Value unavailable, possibly unknown"
+                }
+            }
+        ],
+        "files": [
+            {
+                "identifier": "pid:urn:1",
+                "use_category": {
+                    "pref_label": {
+                        "en": "label1"
+                    }
+                }
+            },
+            {
+                "identifier": "pid:urn:2",
+                "use_category": {
+                    "pref_label": {
+                        "en": "label2"
+                    }
+                }
+            }
+        ]
+    }
+}
+
+BASE_FILE = {
+    "file_storage": {},
+    "parent_directory": {
+        "identifier": "pid:urn:dir:wf1"
+    },
+    "checksum": {
+        "algorithm": "md5",
+        "value": "58284d6cdd8deaffe082d063580a9df3"
+    },
+    "file_characteristics": {
+        "file_format": "text/plain",
+    }
+}
+
+
+def _get_file(identifier, file_storage, file_format=None, version=None):
+    file_ = copy.deepcopy(BASE_FILE)
+    file_['identifier'] = identifier
+    file_['file_path'] = "/path/" + identifier
+    file_['file_storage']['identifier'] = file_storage
+    if file_format:
+        file_['file_characteristics']['file_format'] = file_format
+    if version:
+        file_['file_characteristics']['format_version'] = version
+    return file_
+
+
+def _add_files_to_dataset(files, dataset):
+    """Add files to dataset.
+    :param: files: file identifier to be added
+    :param: dataset
+    :returns: ``None``
+    """
+    for _file in files:
+        files = dataset["research_dataset"]["files"]
+        files.append({
+            "identifier": _file,
+            "use_category": {
+                "pref_label": {
+                    "en": "label2"
+                }
+            }
+        })
 
 
 def httpretty_register_file(uri, filename, match_querystring=True,
@@ -88,20 +197,6 @@ def mock_metax():
     )
 
 
-def mock_ida():
-    """Mock Metax using HTTPretty. Serve on valid metadata for dataset "1", and
-    associated file "pid:urn:1" and "pid:urn:2".
-    """
-    httpretty_register_file(
-        'https://86.50.169.61:4433/files/pid:urn:1/download',
-        'tests/data/ida_files/valid_utf8'
-    )
-    httpretty_register_file(
-        'https://86.50.169.61:4433/files/pid:urn:2/download',
-        'tests/data/ida_files/valid_utf8'
-    )
-
-
 @pytest.fixture(scope="function")
 def test_config(tmpdir):
     """Create a test configuration for siptools-research and return the
@@ -130,7 +225,8 @@ def test_config(tmpdir):
         "dp_ssh_key = ~/.ssh/id_rsa",
         "sip_sign_key = ~/sip_sign_pas.pem",
         "metax_ssl_verification = False",
-        "mimetypes_conf = tests/data/dpres_mimetypes.json"
+        "mimetypes_conf = tests/data/dpres_mimetypes.json",
+        "pas_storage_id = urn:nbn:fi:att:file-storage-pas"
     ])
 
     with open(str(temp_config_path), "w+") as config_file:
@@ -149,6 +245,11 @@ def app(request, test_config):
     app_.config.update(
         SIPTOOLS_RESEARCH_CONF=test_config
     )
+    conf = Configuration(test_config)
+    ida_dir = os.path.join(conf.get("workspace_root"), "ida_files")
+    os.mkdir(ida_dir)
+    tmp_dir = os.path.join(conf.get("workspace_root"), "tmp")
+    os.mkdir(tmp_dir)
 
     def _fin():
         httpretty.reset()
@@ -161,7 +262,7 @@ def app(request, test_config):
     mock_metax()
 
     # Mock Ida
-    mock_ida()
+    # mock_ida()
 
     return app_
 
@@ -232,7 +333,7 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
     assert response.status_code == 400
 
 
-def test_dataset_validate(app, requests_mock):
+def test_validate_metadata(app, requests_mock):
     """Test the validate_md method.
 
     :returns: None
@@ -288,7 +389,7 @@ def test_dataset_validate(app, requests_mock):
     assert int(body["preservation_state"]) == DS_STATE_VALID_METADATA
 
 
-def test_dataset_validate_invalid(app):
+def test_validate_metadata_invalid_dataset(app):
     """Test the validate_md method for invalid dataset.
 
     :returns: None
@@ -319,7 +420,7 @@ def test_dataset_validate_invalid(app):
 
 
 # pylint: disable=invalid-name
-def test_dataset_validate_invalid_file(app):
+def test_validate_metadata_invalid_file(app):
     """Test the validate_md method for a valid dataset containing invalid
     file metadata.
     """
@@ -336,7 +437,7 @@ def test_dataset_validate_invalid_file(app):
 
 
 # pylint: disable=invalid-name
-def test_dataset_validate_unavailable(app):
+def test_validate_metadata_dataset_unavailable(app):
     """Test validation of dataset unavailable from Metax.
 
     :returns: None
@@ -355,3 +456,133 @@ def test_dataset_validate_unavailable(app):
     # Last HTTP request should be GET, since preservation_state is not
     # updated by PATCH request
     assert httpretty.last_request().method == "GET"
+
+
+@pytest.mark.parametrize(
+    "filestorage",
+    ["ida", "pas"]
+)
+def test_validate_files(app, requests_mock, monkeypatch, filestorage):
+    """Test the validate/files endpoint.
+
+    :returns: None
+    """
+    _init_mongo(app, monkeypatch)
+
+    dataset = copy.deepcopy(BASE_DATASET)
+    requests_mock.get("https://metaksi/rest/v1/datasets/1",
+                      json=dataset)
+    _add_files_to_dataset(["pid:urn:1", "pid:urn:2"],
+                          dataset)
+    files = [_get_file("pid:urn:1", filestorage),
+             _get_file("pid:urn:2", filestorage)]
+    requests_mock.get("https://metaksi/rest/v1/datasets/1/files", json=files)
+    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:1/download",
+                      text='This file is valid UTF-8')
+    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:2/download",
+                      text='This file is valid UTF-8')
+
+    requests_mock.patch("https://metaksi/rest/v1/datasets/1", json={})
+
+    # Test the response
+    with app.test_client() as client:
+        response = client.post('/dataset/1/validate/files')
+    assert response.status_code == 200
+
+    # Check the body of response
+    response_body = json.loads(response.data)
+    assert response_body["error"] == ""
+    assert response_body["is_valid"] is True
+
+    # Check that preservation_state was updated
+    assert requests_mock.last_request.method == "PATCH"
+    assert requests_mock.last_request.url == (
+        "https://metaksi/rest/v1/datasets/1"
+    )
+    body = json.loads(requests_mock.last_request.body)
+    assert body["preservation_description"] == "Files passed validation"
+    assert int(body["preservation_state"]) == DS_STATE_VALID_METADATA
+
+
+@pytest.mark.parametrize(
+    "filestorage",
+    ["ida", "pas"]
+)
+def test_validate_files_fails(app, requests_mock, monkeypatch, filestorage):
+    """Test the validate/files endpoint. File validation fails.
+
+    :returns: None
+    """
+    _init_mongo(app, monkeypatch)
+
+    dataset = copy.deepcopy(BASE_DATASET)
+    requests_mock.get("https://metaksi/rest/v1/datasets/1",
+                      json=dataset)
+    _add_files_to_dataset(["pid:urn:1", "pid:urn:2"],
+                          dataset)
+    file1 = _get_file("pid:urn:1", filestorage,
+                      file_format="image/tiff", version="6.0")
+    file2 = _get_file("pid:urn:2", filestorage,
+                      file_format="image/tiff", version="6.0")
+    files = [file1, file2]
+    requests_mock.get("https://metaksi/rest/v1/datasets/1/files", json=files)
+    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:1/download",
+                      text='This file is valid UTF-8')
+    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:2/download",
+                      text='This file is valid UTF-8')
+
+    requests_mock.patch("https://metaksi/rest/v1/datasets/1", json={})
+
+    # Test the response
+    with app.test_client() as client:
+        response = client.post('/dataset/1/validate/files')
+    assert response.status_code == 200
+
+    # Check the body of response
+    response_body = json.loads(response.data)
+    assert response_body["error"].startswith(
+        "Following files are not well-formed:"
+    )
+    assert response_body["is_valid"] is False
+
+    # Check that preservation_state was updated
+    assert requests_mock.last_request.method == "PATCH"
+    assert requests_mock.last_request.url == (
+        "https://metaksi/rest/v1/datasets/1"
+    )
+    body = json.loads(requests_mock.last_request.body)
+    assert body["preservation_description"].startswith(
+        "Following files are not well-formed:"
+    )
+    assert int(body["preservation_state"]) == DS_STATE_INVALID_METADATA
+
+
+def _init_mongo(app, monkeypatch):
+    conf = Configuration(app.config.get('SIPTOOLS_RESEARCH_CONF'))
+    mongoclient = mongomock.MongoClient()
+    # pylint: disable=unused-argument
+
+    def mock_mongoclient(*_args, **_kwargs):
+        """Returns already initialized mongomock.MongoClient"""
+        return mongoclient
+    monkeypatch.setattr(pymongo, 'MongoClient', mock_mongoclient)
+
+    mongoclient = pymongo.MongoClient(host='localhost')
+    files_col = mongoclient.upload.files
+
+    files = [
+        "pid:urn:1",
+        "pid:urn:2",
+    ]
+    for _file in files:
+        filepath = os.path.abspath(conf.get('workspace_root') +
+                                   "/tmp/%s" % _file)
+        fil = open(filepath, 'w+')
+        fil.write('This file is valid UTF-8')
+        fil.close()
+        files_col.insert_one({
+            "_id": _file,
+            "file_path": filepath
+        })
+
+    
