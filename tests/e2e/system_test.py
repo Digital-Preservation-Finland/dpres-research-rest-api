@@ -135,6 +135,17 @@ def _assert_preservation(dataset_identifier):
         assert response.status_code == 200
         assert response.json()['passtate'] == DS_STATE_VALID_METADATA
         response = post(
+            'http://localhost:5556/admin/api/1.0/research'
+            '/dataset/%s/validate/files' % dataset_identifier
+        )
+        assert response.status_code == 200
+        response = get(
+            'http://localhost:5556/admin/api/1.0/datasets/%s' %
+            dataset_identifier
+        )
+        assert response.status_code == 200
+        assert response.json()['passtate'] == DS_STATE_VALID_METADATA
+        response = post(
             'http://localhost:5556/admin/api/1.0/datasets'
             '/%s/confirm' % dataset_identifier,
             data={'confirmed': 'true'}

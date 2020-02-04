@@ -1,5 +1,6 @@
 # pylint: disable=unused-variable
 """Application instance factory"""
+import time
 
 import flask
 from flask import current_app, abort
@@ -12,6 +13,7 @@ from metax_access import (DS_STATE_VALID_METADATA,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
                           DS_STATE_TECHNICAL_METADATA_GENERATION_FAILED,
                           DS_STATE_IN_DIGITAL_PRESERVATION)
+
 app = flask.Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}},
      supports_credentials=True)
@@ -19,12 +21,14 @@ CORS(app, resources={r"/*": {"origins": "*"}},
 app.config.from_object('tests.mockup_api.default_config')
 
 
-@app.route('/packaging/api/dataset/<dataset_id>/validate', methods=['POST'])
-def validate(dataset_id):
+@app.route('/packaging/api/dataset/<dataset_id>/validate/metadata',
+           methods=['POST'])
+def validate_md(dataset_id):
     """Validates dataset.
 
     :returns: HTTP Response
     """
+    time.sleep(2)
     data = {}
     # Set defaults
     is_valid = True
@@ -48,12 +52,44 @@ def validate(dataset_id):
     return response
 
 
+@app.route('/packaging/api/dataset/<dataset_id>/validate/files',
+           methods=['POST'])
+def validate_dataset_files(dataset_id):
+    """Validates dataset.
+
+    :returns: HTTP Response
+    """
+    time.sleep(2)
+    data = {}
+    # Set defaults
+    is_valid = True
+    preservation_state = DS_STATE_VALID_METADATA
+    preservation_description = 'Files passed validation'
+    error = ''
+    if dataset_id == app.config.get('VALIDATION_FAILS_DATASET_ID'):
+        error = 'Following files are not well-formed:\npath1\npath2\npath3'
+        preservation_state = DS_STATE_METADATA_VALIDATION_FAILED
+        preservation_description = error
+        is_valid = False
+    data['preservation_state'] = preservation_state
+    data['preservation_description'] = preservation_description
+    set_preservation_state(dataset_id, data)
+
+    response = flask.jsonify({'dataset_id': dataset_id,
+                              'is_valid': is_valid,
+                              'error': error})
+
+    response.status_code = 200
+    return response
+
+
 @app.route('/packaging/api/dataset/<dataset_id>/preserve', methods=['POST'])
 def preserve(dataset_id):
     """Trigger packaging of dataset.
 
     :returns: HTTP Response
     """
+    time.sleep(2)
     data = {}
     data['preservation_state'] = DS_STATE_IN_DIGITAL_PRESERVATION
     data['preservation_description'] = 'In packaging service'
@@ -72,6 +108,7 @@ def genmetadata(dataset_id):
 
     :returns: HTTP Response
     """
+    time.sleep(2)
     data = {}
     success = True
     error = ''

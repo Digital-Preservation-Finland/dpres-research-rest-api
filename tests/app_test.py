@@ -15,7 +15,6 @@ from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
 
 from research_rest_api.app import create_app
 from siptools_research.config import Configuration
-from _pytest.monkeypatch import monkeypatch
 
 BASE_DATASET = {
     "identifier": "valid_dataset",
