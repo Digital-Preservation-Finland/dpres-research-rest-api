@@ -10,11 +10,11 @@ import mock
 import mongomock
 import pymongo
 
+from siptools_research.config import Configuration
 from siptools_research.xml_metadata import MetadataGenerationError
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
 
 from research_rest_api.app import create_app
-from siptools_research.config import Configuration
 
 BASE_DATASET = {
     "identifier": "valid_dataset",
@@ -45,12 +45,12 @@ BASE_DATASET = {
                     }
                 },
                 "event_outcome": {
-                        "pref_label": {
-                                "en": "(:unav)"
-                        }
+                    "pref_label": {
+                        "en": "(:unav)"
+                    }
                 },
                 "outcome_description": {
-                        "en": "Value unavailable, possibly unknown"
+                    "en": "Value unavailable, possibly unknown"
                 }
             }
         ],
@@ -583,5 +583,3 @@ def _init_mongo(app, monkeypatch):
             "_id": _file,
             "file_path": filepath
         })
-
-    
