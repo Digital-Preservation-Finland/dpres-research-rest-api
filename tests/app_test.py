@@ -245,8 +245,8 @@ def app(request, test_config):
         SIPTOOLS_RESEARCH_CONF=test_config
     )
     conf = Configuration(test_config)
-    ida_dir = os.path.join(conf.get("workspace_root"), "ida_files")
-    os.mkdir(ida_dir)
+    cache_dir = os.path.join(conf.get("workspace_root"), "file_cache")
+    os.mkdir(cache_dir)
     tmp_dir = os.path.join(conf.get("workspace_root"), "tmp")
     os.mkdir(tmp_dir)
 
