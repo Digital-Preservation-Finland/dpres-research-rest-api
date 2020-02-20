@@ -33,6 +33,11 @@ from metax_access import (DS_STATE_INITIALIZED,
                           DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE)
 
 
+METAX_API_URL = "http://metax.localhost:5556/rest/v1"
+UPLOAD_API_URL = "http://packaging.localhost:8443/filestorage/api/v1"
+ADMIN_API_URL = "http://manage.localhost:8443/admin/api/1.0"
+
+
 def _init_upload_rest_api():
     """Add identifiers html_file_local and tiff_file_local to upload.files
     collection and create user test:test
@@ -61,10 +66,8 @@ def _init_upload_rest_api():
 def test_tpas_preservation(filestorage, dataset_id):
     """Test the whole preservation workflow using both IDA and upload-rest-api.
     """
-    response = post('http://localhost:5556/metax/rest/v1/reset')
+    response = post('{}/reset'.format(METAX_API_URL))
     assert response.status_code == 200
-
-    upload_url = "http://localhost:5556/filestorage/api/v1"
 
     # Upload files through upload-rest-api
     if filestorage == "local":
@@ -74,7 +77,7 @@ def test_tpas_preservation(filestorage, dataset_id):
         with open("/var/www/html/files/valid_tiff/download",
                   "rb") as _file:
             response = post(
-                "%s/files/valid_tiff.tiff" % upload_url,
+                "%s/files/valid_tiff.tiff" % UPLOAD_API_URL,
                 auth=("test", "test"), data=_file
             )
             assert response.status_code == 200
@@ -82,14 +85,12 @@ def test_tpas_preservation(filestorage, dataset_id):
         # POST html file
         with open("/var/www/html/files/html_file/download", "rb") as _file:
             response = post(
-                "%s/files/html_file" % upload_url,
+                "%s/files/html_file" % UPLOAD_API_URL,
                 auth=("test", "test"), data=_file
             )
             assert response.status_code == 200
 
-    response = get(
-        'http://localhost:5556/admin/api/1.0/datasets/%d' % dataset_id
-    )
+    response = get('{}/datasets/{}'.format(ADMIN_API_URL, dataset_id))
     assert response.status_code == 200
     assert response.json()['passtate'] == DS_STATE_INITIALIZED
     _assert_preservation(response.json()['identifier'])
@@ -99,72 +100,64 @@ def _assert_preservation(dataset_identifier):
     """ Run the whole preservation workflow"""
     try:
         response = post(
-            'http://localhost:5556/admin/api/1.0/'
-            'datasets/%s/propose' % dataset_identifier,
+            '{}/datasets/{}/propose'.format(ADMIN_API_URL, dataset_identifier),
             data={'message': 'Proposing'}
         )
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%s' %
-            dataset_identifier
+            '{}/datasets/{}'.format(ADMIN_API_URL, dataset_identifier)
         )
         assert response.status_code == 200
         passtate = response.json()['passtate']
         assert passtate == DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION
         assert response.json()['passtateReasonDesc'] == 'Proposing'
         response = post(
-            'http://localhost:5556/admin/api/1.0/research'
-            '/dataset/%s/genmetadata' % dataset_identifier
+            '{}/research/dataset/{}/genmetadata'.format(ADMIN_API_URL,
+                                                        dataset_identifier)
         )
         assert response.status_code == 200
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%s' %
-            dataset_identifier
+            '{}/datasets/{}'.format(ADMIN_API_URL, dataset_identifier)
         )
         assert response.status_code == 200
         passtate = response.json()['passtate']
         assert passtate == DS_STATE_TECHNICAL_METADATA_GENERATED
         response = post(
-            'http://localhost:5556/admin/api/1.0/research'
-            '/dataset/%s/validate/metadata' % dataset_identifier
+            '{}/research/dataset/{}/validate/metadata'.format(
+                ADMIN_API_URL, dataset_identifier
+            )
         )
         assert response.status_code == 200
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%s' %
-            dataset_identifier
+            '{}/datasets/{}'.format(ADMIN_API_URL, dataset_identifier)
         )
         assert response.status_code == 200
         assert response.json()['passtate'] == DS_STATE_VALID_METADATA
         response = post(
-            'http://localhost:5556/admin/api/1.0/research'
-            '/dataset/%s/validate/files' % dataset_identifier
+            '{}/research/dataset/{}/validate/files'.format(ADMIN_API_URL,
+                                                           dataset_identifier)
         )
         assert response.status_code == 200
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%s' %
-            dataset_identifier
+            '{}/datasets/{}'.format(ADMIN_API_URL, dataset_identifier)
         )
         assert response.status_code == 200
         assert response.json()['passtate'] == DS_STATE_VALID_METADATA
         response = post(
-            'http://localhost:5556/admin/api/1.0/datasets'
-            '/%s/confirm' % dataset_identifier,
+            '{}/datasets/{}/confirm'.format(ADMIN_API_URL, dataset_identifier),
             data={'confirmed': 'true'}
         )
         assert response.status_code == 200
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%s' %
-            dataset_identifier
+            '{}/datasets/{}'.format(ADMIN_API_URL, dataset_identifier)
         )
         assert response.status_code == 200
         assert response.json()['passtate'] == DS_STATE_METADATA_CONFIRMED
         response = post(
-            'http://localhost:5556/admin/api/1.0'
-            '/datasets/%s/preserve' % dataset_identifier
-        )
+            '{}/datasets/{}/preserve'.format(ADMIN_API_URL,
+                                             dataset_identifier))
         assert response.status_code == 200
         response = get(
-            'http://localhost:5556/admin/api/1.0/datasets/%s' %
-            dataset_identifier
+            '{}/datasets/{}'.format(ADMIN_API_URL, dataset_identifier)
         )
         assert response.status_code == 200
         passtate = response.json()['passtate']
@@ -173,8 +166,8 @@ def _assert_preservation(dataset_identifier):
             # switch to pas dataset
             dataset_identifier = response.json()['pasDatasetIdentifier']
         response = post(
-            'http://localhost:5556/admin/api/1.0/research'
-            '/dataset/%s/preserve' % dataset_identifier
+            '{}/research/dataset/{}/preserve'.format(ADMIN_API_URL,
+                                                     dataset_identifier)
         )
         assert response.status_code == 202
 
@@ -186,8 +179,7 @@ def _assert_preservation(dataset_identifier):
                passtate != DS_STATE_IN_DIGITAL_PRESERVATION and
                passtate != DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE):
             response = get(
-                'http://localhost:5556/admin/api/1.0/datasets/%s' %
-                dataset_identifier
+                '{}/datasets/{}'.format(ADMIN_API_URL, dataset_identifier)
             )
             assert response.status_code == 200
             passtate = response.json()['passtate']
