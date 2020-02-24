@@ -181,8 +181,9 @@ def _assert_preservation(dataset_identifier):
         while (counter < 60 and
                passtate != DS_STATE_IN_DIGITAL_PRESERVATION and
                passtate != DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE):
-            response = REQUESTS_SESSION.get(
-                '{}/datasets/{}'.format(ADMIN_API_URL, dataset_identifier)
+            response = requests.get(
+                '{}/datasets/{}'.format(ADMIN_API_URL, dataset_identifier),
+                verify=False
             )
             assert response.status_code == 200
             passtate = response.json()['passtate']
