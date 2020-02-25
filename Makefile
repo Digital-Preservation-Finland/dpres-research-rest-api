@@ -55,10 +55,10 @@ test:
 		git status
 
 e2e-localhost-provision-fairdata: .e2e/ansible-fetch-fairdata
-	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/e2e-test e2e-test-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 e2e-distributed-provision-fairdata: .e2e/ansible-fetch-fairdata
-	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/e2e-distributed-test e2e-test-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/e2e-distributed-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 .e2e/ansible-preservation:
 	git clone https://gitlab.csc.fi/dpres/ansible-preservation-system.git .e2e/ansible-preservation
