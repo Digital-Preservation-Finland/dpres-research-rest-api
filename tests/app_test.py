@@ -209,7 +209,7 @@ def test_config(tmpdir):
 
     config = "\n".join([
         "[siptools_research]",
-        "workspace_root = {}".format(temp_spool_path),
+        "packaging_root = {}".format(temp_spool_path),
         "mongodb_host = localhost",
         "mongodb_database = siptools-research",
         "mongodb_collection = workflow",
@@ -245,9 +245,9 @@ def app(request, test_config):
         SIPTOOLS_RESEARCH_CONF=test_config
     )
     conf = Configuration(test_config)
-    cache_dir = os.path.join(conf.get("workspace_root"), "file_cache")
+    cache_dir = os.path.join(conf.get("packaging_root"), "file_cache")
     os.mkdir(cache_dir)
-    tmp_dir = os.path.join(conf.get("workspace_root"), "tmp")
+    tmp_dir = os.path.join(conf.get("packaging_root"), "tmp")
     os.mkdir(tmp_dir)
 
     def _fin():
@@ -574,7 +574,7 @@ def _init_mongo(app, monkeypatch):
         "pid:urn:2",
     ]
     for _file in files:
-        filepath = os.path.abspath(conf.get('workspace_root') +
+        filepath = os.path.abspath(conf.get('packaging_root') +
                                    "/tmp/%s" % _file)
         fil = open(filepath, 'w+')
         fil.write('This file is valid UTF-8')
