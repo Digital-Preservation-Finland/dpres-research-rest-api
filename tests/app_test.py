@@ -10,6 +10,7 @@ import mock
 import mongomock
 import pymongo
 
+import upload_rest_api
 from siptools_research.config import Configuration
 from siptools_research.xml_metadata import MetadataGenerationError
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
@@ -88,6 +89,15 @@ BASE_FILE = {
         "file_format": "text/plain",
     }
 }
+
+
+@pytest.fixture(autouse=True)
+def mock_upload_conf(monkeypatch):
+    """Patch upload_rest_api configuration parsing"""
+    monkeypatch.setattr(
+        upload_rest_api.database, "parse_conf",
+        lambda conf: {"MONGO_HOST": "localhost", "MONGO_PORT": 27017}
+    )
 
 
 def _get_file(identifier, file_storage, file_format=None, version=None):
