@@ -22,6 +22,8 @@ import json
 
 import requests
 import pytest
+import urllib3
+
 from upload_rest_api import database as db
 from metax_access import (DS_STATE_INITIALIZED,
                           DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
@@ -32,6 +34,7 @@ from metax_access import (DS_STATE_INITIALIZED,
                           DS_STATE_IN_DIGITAL_PRESERVATION,
                           DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE)
 
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 METAX_API_URL = "http://metax.localhost/rest/v1"
 UPLOAD_API_URL = "https://packaging.localhost:8443/filestorage/api/v1"
