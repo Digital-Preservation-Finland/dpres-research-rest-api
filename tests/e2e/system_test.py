@@ -49,7 +49,7 @@ def _init_upload_rest_api():
     """
     # Adding identifiers
     files = db.FilesCol()
-    project_path = "/var/spool/upload/test_project"
+    project_path = "/var/spool/upload/projects/test_project"
     identifiers = [
         {
             "_id": "valid_tiff_local",
