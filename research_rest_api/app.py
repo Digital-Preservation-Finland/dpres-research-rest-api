@@ -208,8 +208,9 @@ def create_app():
     def http_error(error):
         """HTTPError handler"""
         current_app.logger.error(error, exc_info=True)
+
         response = jsonify({"code": error.response.status_code,
-                            "error": str(error)})
+                            "error": error.response.reason})
         response.status_code = error.response.status_code
         return response
 
