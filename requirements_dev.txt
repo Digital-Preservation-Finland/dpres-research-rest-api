@@ -13,4 +13,5 @@ mock
 git+https://gitlab.csc.fi/dpres/upload-rest-api.git@develop#egg=upload_rest_api
 requests_mock
 mongomock
+luigi==2.8.13
 
