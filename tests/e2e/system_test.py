@@ -24,7 +24,7 @@ import requests
 import pytest
 import urllib3
 
-from upload_rest_api import database as db
+import upload_rest_api.database
 from metax_access import (DS_STATE_INITIALIZED,
                           DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
@@ -47,8 +47,9 @@ def _init_upload_rest_api():
     """Add identifiers html_file_local and tiff_file_local to upload.files
     collection and create user test:test
     """
+    upload_database = upload_rest_api.database.Database()
     # Adding identifiers
-    files = db.FilesCol()
+    files = upload_database.files
     project_path = "/var/spool/upload/projects/test_project"
     identifiers = [
         {
@@ -63,7 +64,7 @@ def _init_upload_rest_api():
     files.insert(identifiers)
 
     # Creating test user
-    db.UsersDoc("test").create("test_project", password="test")
+    upload_database.user("test").create("test_project", password="test")
 
 
 @pytest.mark.parametrize("filestorage, dataset_id",
