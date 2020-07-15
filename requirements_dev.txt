@@ -10,7 +10,7 @@ coverage
 pytest-cov
 httpretty
 mock
+urllib3
 git+https://gitlab.csc.fi/dpres/upload-rest-api.git@develop#egg=upload_rest_api
 requests_mock
 mongomock
-
