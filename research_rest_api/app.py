@@ -7,7 +7,7 @@ from flask import Flask, jsonify, abort, current_app
 from flask_cors import CORS
 from requests.exceptions import HTTPError
 
-from metax_access import DatasetNotFoundError, MetaxError
+from metax_access import DatasetNotAvailableError, MetaxError
 
 from siptools_research import (generate_metadata, preserve_dataset,
                                validate_metadata, validate_files)
@@ -51,7 +51,7 @@ def create_app():
                 dummy_doi="true",
                 set_preservation_state=True
             )
-        except DatasetNotFoundError as exc:
+        except DatasetNotAvailableError as exc:
             is_valid = False
             error = str(exc)
             detailed_error = error
