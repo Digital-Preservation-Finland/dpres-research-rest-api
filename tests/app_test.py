@@ -466,8 +466,7 @@ def test_validate_metadata_dataset_unavailable(app):
     # Check the body of response
     response_body = json.loads(response.data)
     assert response_body["dataset_id"] == "not_available_id"
-    assert response_body["error"] ==\
-        "Could not find metadata for dataset: not_available_id"
+    assert response_body["error"] == "Dataset not found"
 
     # Last HTTP request should be GET, since preservation_state is not
     # updated by PATCH request
