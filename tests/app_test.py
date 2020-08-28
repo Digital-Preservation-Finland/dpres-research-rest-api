@@ -209,8 +209,11 @@ def mock_metax():
     )
 
 
-@pytest.fixture(scope="function", name="test_config")
-def fixture_test_config(tmpdir):
+# TODO: Use the name argument for pytest.fixture decorator to solve the
+# funcarg-shadowing-fixture problem, when support for pytest version 2.x is not
+# required anymore (the name argument was introduced in pytest version 3.0).
+@pytest.fixture(scope="function")
+def test_config(tmpdir):
     """Create a test configuration for siptools-research.
 
     :returns: Path to configuration file
@@ -250,8 +253,11 @@ def fixture_test_config(tmpdir):
     return str(temp_config_path)
 
 
-@pytest.fixture(scope="function", name="app")
-def fixture_app(request, test_config):
+# TODO: Use the name argument for pytest.fixture decorator to solve the
+# funcarg-shadowing-fixture problem, when support for pytest version 2.x is not
+# required anymore (the name argument was introduced in pytest version 3.0).
+@pytest.fixture(scope="function")
+def app(request, test_config):
     """Create web app and Mock Metax HTTP responses.
 
     :returns: An instance of the REST API web app.
