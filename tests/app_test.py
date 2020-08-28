@@ -1,4 +1,4 @@
-"""Tests for ``research_rest_api.app`` module"""
+"""Tests for ``research_rest_api.app`` module."""
 import re
 import json
 import os
@@ -93,7 +93,7 @@ BASE_FILE = {
 
 @pytest.fixture(autouse=True)
 def mock_upload_conf(monkeypatch):
-    """Patch upload_rest_api configuration parsing"""
+    """Patch upload_rest_api configuration parsing."""
     monkeypatch.setattr(
         upload_rest_api.database, "parse_conf",
         lambda conf: {"MONGO_HOST": "localhost", "MONGO_PORT": 27017}
@@ -114,6 +114,7 @@ def _get_file(identifier, file_storage, file_format=None, version=None):
 
 def _add_files_to_dataset(files, dataset):
     """Add files to dataset.
+
     :param: files: file identifier to be added
     :param: dataset
     :returns: ``None``
@@ -132,7 +133,7 @@ def _add_files_to_dataset(files, dataset):
 
 def httpretty_register_file(uri, filename, match_querystring=True,
                             methods=None, status=200):
-    """Helper function that reads file and registers it to httpretty."""
+    """Read file and registers it to httpretty."""
     if not methods:
         methods = [httpretty.GET]
 
@@ -144,8 +145,10 @@ def httpretty_register_file(uri, filename, match_querystring=True,
 
 
 def mock_metax():
-    """Mock Metax using HTTPretty. Serve on valid metadata for dataset "1", and
-    associated file "pid:urn:1" and "pid:urn:2".
+    """Mock Metax using HTTPretty.
+
+    Serve on valid metadata for dataset "1", and associated file "pid:urn:1"
+    and "pid:urn:2".
     """
     httpretty_register_file(
         uri='https://metaksi/rest/v1/datasets/1/files',
@@ -208,14 +211,17 @@ def mock_metax():
 
 @pytest.fixture(scope="function")
 def test_config(tmpdir):
-    """Create a test configuration for siptools-research and return the
+    """Create a test configuration for siptools-research.
+
+    :returns: Path to configuration file
     file path.
     """
-    temp_config_path = tmpdir.join(
-        "etc", "siptools-research").ensure(dir=True)
+    temp_config_path = tmpdir.join("etc",
+                                   "siptools-research").ensure(dir=True)
     temp_config_path = temp_config_path.join("siptools-research.conf")
-    temp_spool_path = tmpdir.join(
-        "var", "spool", "siptools-research").ensure(dir=True)
+    temp_spool_path = tmpdir.join("var",
+                                  "spool",
+                                  "siptools-research").ensure(dir=True)
 
     config = "\n".join([
         "[siptools_research]",
@@ -246,8 +252,9 @@ def test_config(tmpdir):
 
 @pytest.fixture(scope="function")
 def app(request, test_config):
-    """Fixture that returns an instance of the REST API web app and mocks
-    METAX and IDA HTTP responses
+    """Create web app and Mock Metax HTTP responses.
+
+    :returns: An instance of the REST API web app.
     """
     # Create app and change the default config file path
     app_ = create_app()
@@ -281,7 +288,6 @@ def test_index():
 
     :returns: None
     """
-
     # Create app and change the default config file path
     app_ = create_app()
     app_.config.update(
@@ -343,7 +349,7 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
 
 
 def test_validate_metadata(app, requests_mock):
-    """Test the validate_md method.
+    """Test the validate metadata endpoint.
 
     :returns: None
     """
@@ -399,7 +405,7 @@ def test_validate_metadata(app, requests_mock):
 
 
 def test_validate_metadata_invalid_dataset(app):
-    """Test the validate_md method for invalid dataset.
+    """Test the validate metadata endpoint with invalid dataset metadata.
 
     :returns: None
     """
@@ -430,8 +436,9 @@ def test_validate_metadata_invalid_dataset(app):
 
 # pylint: disable=invalid-name
 def test_validate_metadata_invalid_file(app):
-    """Test the validate_md method for a valid dataset containing invalid
-    file metadata.
+    """Test the validate metadata end point with invalid file metadata.
+
+    returns: ``None``
     """
     with app.test_client() as client:
         response = client.post("/dataset/3/validate/metadata")
@@ -572,7 +579,7 @@ def _init_mongo(app, monkeypatch):
     # pylint: disable=unused-argument
 
     def mock_mongoclient(*_args, **_kwargs):
-        """Returns already initialized mongomock.MongoClient"""
+        """Return already initialized mongomock.MongoClient."""
         return mongoclient
     monkeypatch.setattr(pymongo, 'MongoClient', mock_mongoclient)
 

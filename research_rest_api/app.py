@@ -1,5 +1,5 @@
 # pylint: disable=unused-variable
-"""Application instance factory"""
+"""Application instance factory."""
 import logging
 import logging.handlers
 
@@ -38,7 +38,7 @@ def create_app():
 
     @app.route('/dataset/<dataset_id>/validate/metadata', methods=['POST'])
     def validate_dataset_metadata(dataset_id):
-        """Validates dataset metadata.
+        """Validate dataset metadata.
 
         :returns: HTTP Response
         """
@@ -74,7 +74,7 @@ def create_app():
 
     @app.route('/dataset/<dataset_id>/validate/files', methods=['POST'])
     def validate_dataset_files(dataset_id):
-        """Validates dataset files.
+        """Validate dataset files.
 
         :returns: HTTP Response
         """
@@ -108,7 +108,6 @@ def create_app():
 
         :returns: HTTP Response
         """
-
         # Trigger dataset preservation using function provided by
         # siptools_research package.
         preserve_dataset(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
@@ -136,12 +135,12 @@ def create_app():
 
     @app.route('/')
     def index():
-        """Accessing the root URL will return a Bad Request error."""
+        """Return a Bad Request error."""
         abort(400)
 
     @app.errorhandler(404)
     def page_not_found(error):
-        """JSON response handler for the 404 - Not found errors
+        """Handle the 404 - Not found errors.
 
         :returns: HTTP Response
         """
@@ -154,7 +153,7 @@ def create_app():
 
     @app.errorhandler(400)
     def bad_request(error):
-        """JSON response handler for the 400 - Bad request errors
+        """JSON response handler for the 400 - Bad request errors.
 
         :returns: HTTP Response
         """
@@ -167,7 +166,7 @@ def create_app():
 
     @app.errorhandler(500)
     def internal_server_error(error):
-        """JSON response handler for the 500 - Internal server error
+        """Handle the 500 - Internal server error.
 
         :returns: HTTP Response
         """
@@ -180,7 +179,7 @@ def create_app():
 
     @app.errorhandler(MetadataGenerationError)
     def genmetadata_errorhandler(error):
-        """JSON response handler for MetadataGenerationError
+        """Handle MetadataGenerationError.
 
         :returns HTTP Response:
         """
@@ -197,7 +196,7 @@ def create_app():
 
     @app.errorhandler(MetaxError)
     def metax_error(error):
-        """Generic MetaxError handler"""
+        """Handle MetaxError."""
         current_app.logger.error(error, exc_info=True)
 
         response = jsonify(error.to_dict())
@@ -206,7 +205,7 @@ def create_app():
 
     @app.errorhandler(HTTPError)
     def http_error(error):
-        """HTTPError handler"""
+        """Handle HTTPError."""
         current_app.logger.error(error, exc_info=True)
 
         response = jsonify({"code": error.response.status_code,
