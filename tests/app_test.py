@@ -209,8 +209,8 @@ def mock_metax():
     )
 
 
-@pytest.fixture(scope="function")
-def test_config(tmpdir):
+@pytest.fixture(scope="function", name="test_config")
+def fixture_test_config(tmpdir):
     """Create a test configuration for siptools-research.
 
     :returns: Path to configuration file
@@ -250,8 +250,8 @@ def test_config(tmpdir):
     return str(temp_config_path)
 
 
-@pytest.fixture(scope="function")
-def app(request, test_config):
+@pytest.fixture(scope="function", name="app")
+def fixture_app(request, test_config):
     """Create web app and Mock Metax HTTP responses.
 
     :returns: An instance of the REST API web app.
