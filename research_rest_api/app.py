@@ -14,7 +14,7 @@ from siptools_research import (generate_metadata, preserve_dataset,
 from siptools_research.file_validator import FileValidationError
 
 from siptools_research.metadata_generator import MetadataGenerationError
-from siptools_research.workflowtask import InvalidMetadataError
+from siptools_research.exceptions import InvalidDatasetError
 
 
 logging.basicConfig(level=logging.ERROR)
@@ -55,7 +55,7 @@ def create_app():
             is_valid = False
             error = str(exc)
             detailed_error = error
-        except InvalidMetadataError as exc:
+        except InvalidDatasetError as exc:
             is_valid = False
             detailed_error = str(exc)
             error = detailed_error.split('\n')[0]
