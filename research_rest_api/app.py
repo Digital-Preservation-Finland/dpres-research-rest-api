@@ -12,8 +12,6 @@ from metax_access import DatasetNotAvailableError, MetaxError
 from siptools_research import (generate_metadata, preserve_dataset,
                                validate_metadata, validate_files)
 from siptools_research.file_validator import FileValidationError
-
-from siptools_research.metadata_generator import MetadataGenerationError
 from siptools_research.exceptions import InvalidDatasetError
 
 
@@ -124,13 +122,24 @@ def create_app():
 
         :returns: HTTP Response
         """
-        generate_metadata(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        try:
+            generate_metadata(dataset_id,
+                              app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        except InvalidDatasetError as exc:
+            success = False
+            error = str(exc)
+            status_code = 400
+        else:
+            success = True
+            error = ""
+            status_code = 200
+
         response = jsonify({
             'dataset_id': dataset_id,
-            'success': True,
-            'error': ''
+            'success': success,
+            'error': error
         })
-        response.status_code = 200
+        response.status_code = status_code
         return response
 
     @app.route('/')
@@ -174,23 +183,6 @@ def create_app():
 
         response = jsonify({"code": 500, "error": "Internal server error"})
         response.status_code = 500
-
-        return response
-
-    @app.errorhandler(MetadataGenerationError)
-    def genmetadata_errorhandler(error):
-        """Handle MetadataGenerationError.
-
-        :returns HTTP Response:
-        """
-        current_app.logger.error(error, exc_info=True)
-
-        response = jsonify({
-            'success': False,
-            'error': str(error).split('\n')[0],
-            'detailed_error': str(error)
-        })
-        response.status_code = 400
 
         return response
 

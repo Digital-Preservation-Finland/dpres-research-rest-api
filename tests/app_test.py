@@ -12,7 +12,7 @@ import pymongo
 
 import upload_rest_api
 from siptools_research.config import Configuration
-from siptools_research.xml_metadata import MetadataGenerationError
+from siptools_research.exceptions import InvalidDatasetError
 from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
 
 from research_rest_api.app import create_app
@@ -342,7 +342,7 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
 
     :returns: ``None``
     """
-    generate_metadata_mock.side_effect = MetadataGenerationError('foo\nbar')
+    generate_metadata_mock.side_effect = InvalidDatasetError('foo')
     # Test the response
     with app.test_client() as client:
         response = client.post('/dataset/1/genmetadata')
@@ -350,7 +350,6 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
     response_json = json.loads(response.data)
     assert response_json["success"] is False
     assert response_json["error"] == 'foo'
-    assert response_json["detailed_error"] == 'foo\nbar'
     assert response.status_code == 400
 
 
