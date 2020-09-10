@@ -11,8 +11,9 @@ from metax_access import DatasetNotAvailableError, MetaxError
 
 from siptools_research import (generate_metadata, preserve_dataset,
                                validate_metadata, validate_files)
-from siptools_research.file_validator import FileValidationError
 from siptools_research.exceptions import InvalidDatasetError
+from siptools_research.exceptions import InvalidFileError
+from siptools_research.exceptions import MissingFileError
 
 
 logging.basicConfig(level=logging.ERROR)
@@ -83,17 +84,29 @@ def create_app():
                 dataset_id,
                 app.config.get('SIPTOOLS_RESEARCH_CONF')
             )
-        except FileValidationError as exc:
+        except InvalidFileError as exc:
             is_valid = False
             error = str(exc)
-            detailed_error = ''
+            detailed_error = '{}:\n{}'.format(str(exc), '\n'.join(exc.files))
+            missing_files = []
+            invalid_files = exc.files
+        except MissingFileError as exc:
+            is_valid = False
+            error = str(exc)
+            detailed_error = '{}:\n{}'.format(str(exc), '\n'.join(exc.files))
+            missing_files = exc.files
+            invalid_files = []
         else:
             is_valid = True
             error = ''
             detailed_error = ''
+            missing_files = []
+            invalid_files = []
 
         response = jsonify({'dataset_id': dataset_id,
                             'is_valid': is_valid,
+                            'missing_files': missing_files,
+                            'invalid_files': invalid_files,
                             'error': error,
                             'detailed_error': detailed_error})
 

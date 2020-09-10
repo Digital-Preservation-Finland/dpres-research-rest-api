@@ -513,6 +513,7 @@ def test_validate_files(app, requests_mock, monkeypatch, filestorage):
     response_body = json.loads(response.data)
     assert response_body["error"] == ""
     assert response_body["is_valid"] is True
+    assert response_body["invalid_files"] == []
 
     # Check that preservation_state was updated
     assert requests_mock.last_request.method == "PATCH"
@@ -525,33 +526,44 @@ def test_validate_files(app, requests_mock, monkeypatch, filestorage):
 
 
 @pytest.mark.parametrize(
-    "filestorage",
-    ["ida", "pas"]
+    ("filestorage", "ida_status_code", "validation_error"),
+    [
+        ("ida", 200, "2 files are not well-formed"),
+        ("ida", 404, "2 files are missing"),
+        ("pas", 200, "2 files are not well-formed")
+    ]
 )
-def test_validate_files_fails(app, requests_mock, monkeypatch, filestorage):
+def test_validate_files_fails(app, requests_mock, monkeypatch, filestorage,
+                              ida_status_code, validation_error):
     """Test the validate/files endpoint. File validation fails.
 
     :returns: None
     """
     _init_mongo(app, monkeypatch)
 
-    dataset = copy.deepcopy(BASE_DATASET)
-    requests_mock.get("https://metaksi/rest/v1/datasets/1",
-                      json=dataset)
-    _add_files_to_dataset(["pid:urn:1", "pid:urn:2"],
-                          dataset)
+    # Mock local filestorage
     file1 = _get_file("pid:urn:1", filestorage,
                       file_format="image/tiff", version="6.0")
     file2 = _get_file("pid:urn:2", filestorage,
                       file_format="image/tiff", version="6.0")
     files = [file1, file2]
-    requests_mock.get("https://metaksi/rest/v1/datasets/1/files", json=files)
-    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:1/download",
-                      text='This file is valid UTF-8')
-    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:2/download",
-                      text='This file is valid UTF-8')
 
+    # Mock Metax
+    dataset = copy.deepcopy(BASE_DATASET)
+    requests_mock.get("https://metaksi/rest/v1/datasets/1",
+                      json=dataset)
+    requests_mock.get("https://metaksi/rest/v1/datasets/1/files", json=files)
     requests_mock.patch("https://metaksi/rest/v1/datasets/1", json={})
+    _add_files_to_dataset(["pid:urn:1", "pid:urn:2"],
+                          dataset)
+
+    # Mock Ida
+    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:1/download",
+                      text='This file is valid UTF-8',
+                      status_code=ida_status_code)
+    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:2/download",
+                      text='This file is valid UTF-8',
+                      status_code=ida_status_code)
 
     # Test the response
     with app.test_client() as client:
@@ -561,9 +573,10 @@ def test_validate_files_fails(app, requests_mock, monkeypatch, filestorage):
     # Check the body of response
     response_body = json.loads(response.data)
     assert response_body["error"].startswith(
-        "Following files are not well-formed:"
+        validation_error
     )
     assert response_body["is_valid"] is False
+    assert response_body["invalid_files"] == ['pid:urn:1', 'pid:urn:2']
 
     # Check that preservation_state was updated
     assert requests_mock.last_request.method == "PATCH"
@@ -571,9 +584,8 @@ def test_validate_files_fails(app, requests_mock, monkeypatch, filestorage):
         "https://metaksi/rest/v1/datasets/1"
     )
     body = json.loads(requests_mock.last_request.body)
-    assert body["preservation_description"].startswith(
-        "Following files are not well-formed:"
-    )
+    assert body["preservation_description"] \
+        == "{}:\npid:urn:1\npid:urn:2".format(validation_error)
     assert int(body["preservation_state"]) == DS_STATE_INVALID_METADATA
 
 
