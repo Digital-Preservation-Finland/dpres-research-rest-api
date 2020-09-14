@@ -7,7 +7,7 @@ from flask import Flask, jsonify, abort, current_app
 from flask_cors import CORS
 from requests.exceptions import HTTPError
 
-from metax_access import DatasetNotAvailableError, MetaxError
+from metax_access import ResourceNotAvailableError
 
 from siptools_research import (generate_metadata, preserve_dataset,
                                validate_metadata, validate_files)
@@ -47,21 +47,16 @@ def create_app():
             validate_metadata(
                 dataset_id,
                 app.config.get('SIPTOOLS_RESEARCH_CONF'),
-                dummy_doi="true",
-                set_preservation_state=True
+                dummy_doi="true"
             )
-        except DatasetNotAvailableError as exc:
-            is_valid = False
-            error = str(exc)
-            detailed_error = error
         except InvalidDatasetError as exc:
             is_valid = False
+            error = "Metadata did not pass validation"
             detailed_error = str(exc)
-            error = detailed_error.split('\n')[0]
         else:
             is_valid = True
             error = ''
-            detailed_error = error
+            detailed_error = ''
 
         response = jsonify({'dataset_id': dataset_id,
                             'is_valid': is_valid,
@@ -140,17 +135,20 @@ def create_app():
                               app.config.get('SIPTOOLS_RESEARCH_CONF'))
         except InvalidDatasetError as exc:
             success = False
-            error = str(exc)
+            error = "Dataset is invalid"
+            detailed_error = str(exc)
             status_code = 400
         else:
             success = True
             error = ""
+            detailed_error = ""
             status_code = 200
 
         response = jsonify({
             'dataset_id': dataset_id,
             'success': success,
-            'error': error
+            'error': error,
+            'detailed_error': detailed_error
         })
         response.status_code = status_code
         return response
@@ -199,13 +197,13 @@ def create_app():
 
         return response
 
-    @app.errorhandler(MetaxError)
+    @app.errorhandler(ResourceNotAvailableError)
     def metax_error(error):
-        """Handle MetaxError."""
+        """Handle ResourceNotAvailableError."""
         current_app.logger.error(error, exc_info=True)
 
-        response = jsonify(error.to_dict())
-        response.status_code = error.status_code
+        response = jsonify({"code": 404, "error": str(error)})
+        response.status_code = 404
         return response
 
     @app.errorhandler(HTTPError)

@@ -9,11 +9,9 @@ import httpretty
 import mock
 import mongomock
 import pymongo
-
 import upload_rest_api
 from siptools_research.config import Configuration
 from siptools_research.exceptions import InvalidDatasetError
-from metax_access import DS_STATE_INVALID_METADATA, DS_STATE_VALID_METADATA
 
 from research_rest_api.app import create_app
 
@@ -197,6 +195,13 @@ def mock_metax():
     )
 
     httpretty_register_file(
+        uri="https://metaksi/rest/v1/datasets/not_available_id/files",
+        filename="tests/data/metax_metadata/not_found.json",
+        methods=[httpretty.GET],
+        status=404
+    )
+
+    httpretty_register_file(
         uri="https://metaksi/rest/v1/contracts/contract",
         filename="tests/data/metax_metadata/contract.json",
         methods=[httpretty.GET]
@@ -349,7 +354,8 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
 
     response_json = json.loads(response.data)
     assert response_json["success"] is False
-    assert response_json["error"] == 'foo'
+    assert response_json["error"] == 'Dataset is invalid'
+    assert response_json["detailed_error"] == 'foo'
     assert response.status_code == 400
 
 
@@ -399,15 +405,6 @@ def test_validate_metadata(app, requests_mock):
     assert response_body["error"] == ""
     assert response_body["is_valid"] is True
 
-    # Check that preservation_state was updated
-    assert requests_mock.last_request.method == "PATCH"
-    assert requests_mock.last_request.url == (
-        "https://metaksi/rest/v1/datasets/1"
-    )
-    body = json.loads(requests_mock.last_request.body)
-    assert body["preservation_description"] == "Metadata passed validation"
-    assert int(body["preservation_state"]) == DS_STATE_VALID_METADATA
-
 
 def test_validate_metadata_invalid_dataset(app):
     """Test the validate metadata endpoint with invalid dataset metadata.
@@ -422,21 +419,14 @@ def test_validate_metadata_invalid_dataset(app):
     # Check the body of response
     response_body = json.loads(response.data)
     assert response_body["is_valid"] is False
-
-    assert response_body["error"] == "'description' is a required property"
-    # Check that preservation_state was updated
-    assert httpretty.last_request().method == "PATCH"
-    assert httpretty.last_request().path == "/rest/v1/datasets/2"
-    body = json.loads(httpretty.last_request().body)
-    assert body["preservation_description"] == (
-        "Metadata did not pass validation: 'description' is a required "
-        "property\n"
+    assert response_body["error"] == "Metadata did not pass validation"
+    assert response_body["detailed_error"].startswith(
+        "'description' is a required property\n"
         "\n"
         "Failed validating 'required' in schema['properties']"
         "['research_dataset']['properties']['provenance']['items']:\n"
         "    {'properties"
     )
-    assert int(body["preservation_state"]) == DS_STATE_INVALID_METADATA
 
 
 # pylint: disable=invalid-name
@@ -452,30 +442,34 @@ def test_validate_metadata_invalid_file(app):
     response_body = json.loads(response.data)
     assert not response_body["is_valid"]
 
-    assert response_body["error"] == ("Validation error in metadata of "
-                                      "path/to/file3: 'file_storage' is a "
-                                      "required property")
+    assert response_body["error"] == "Metadata did not pass validation"
+    assert response_body["detailed_error"].startswith(
+        "Validation error in metadata of path/to/file3: 'file_storage' is"
+        " a required property"
+    )
 
 
+@pytest.mark.parametrize(
+    'action',
+    ('validate/metadata', 'validate/files', 'preserve', 'genmetadata')
+)
 # pylint: disable=invalid-name
-def test_validate_metadata_dataset_unavailable(app):
-    """Test validation of dataset unavailable from Metax.
+def test_dataset_unavailable(app, action):
+    """Test actions for dataset that is unavailable from Metax.
 
-    :returns: None
+    API should respond with clear error message.
+
+    :returns: ``None``
     """
     # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/not_available_id/validate/metadata')
-    assert response.status_code == 200
+        response = client.post('/dataset/not_available_id/{}'.format(action))
+    assert response.status_code == 404
 
     # Check the body of response
     response_body = json.loads(response.data)
-    assert response_body["dataset_id"] == "not_available_id"
+    assert response_body["code"] == 404
     assert response_body["error"] == "Dataset not found"
-
-    # Last HTTP request should be GET, since preservation_state is not
-    # updated by PATCH request
-    assert httpretty.last_request().method == "GET"
 
 
 @pytest.mark.parametrize(
@@ -514,15 +508,6 @@ def test_validate_files(app, requests_mock, monkeypatch, filestorage):
     assert response_body["error"] == ""
     assert response_body["is_valid"] is True
     assert response_body["invalid_files"] == []
-
-    # Check that preservation_state was updated
-    assert requests_mock.last_request.method == "PATCH"
-    assert requests_mock.last_request.url == (
-        "https://metaksi/rest/v1/datasets/1"
-    )
-    body = json.loads(requests_mock.last_request.body)
-    assert body["preservation_description"] == "Files passed validation"
-    assert int(body["preservation_state"]) == DS_STATE_VALID_METADATA
 
 
 @pytest.mark.parametrize(
@@ -577,16 +562,8 @@ def test_validate_files_fails(app, requests_mock, monkeypatch, filestorage,
     )
     assert response_body["is_valid"] is False
     assert response_body["invalid_files"] == ['pid:urn:1', 'pid:urn:2']
-
-    # Check that preservation_state was updated
-    assert requests_mock.last_request.method == "PATCH"
-    assert requests_mock.last_request.url == (
-        "https://metaksi/rest/v1/datasets/1"
-    )
-    body = json.loads(requests_mock.last_request.body)
-    assert body["preservation_description"] \
+    assert response_body["detailed_error"] \
         == "{}:\npid:urn:1\npid:urn:2".format(validation_error)
-    assert int(body["preservation_state"]) == DS_STATE_INVALID_METADATA
 
 
 def _init_mongo(app, monkeypatch):
