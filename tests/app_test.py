@@ -7,8 +7,6 @@ import copy
 import pytest
 import httpretty
 import mock
-import mongomock
-import pymongo
 import upload_rest_api
 from siptools_research.config import Configuration
 from siptools_research.exceptions import InvalidDatasetError
@@ -272,24 +270,22 @@ def app(request, test_config):
     app_.config.update(
         SIPTOOLS_RESEARCH_CONF=test_config
     )
+    app_.config['TESTING'] = True
+
+    # Create temporary directories
     conf = Configuration(test_config)
     cache_dir = os.path.join(conf.get("packaging_root"), "file_cache")
     os.mkdir(cache_dir)
     tmp_dir = os.path.join(conf.get("packaging_root"), "tmp")
     os.mkdir(tmp_dir)
 
+    # Mock Metax
     def _fin():
         httpretty.reset()
         httpretty.disable()
-
     httpretty.enable()
     request.addfinalizer(_fin)
-
-    # Mock Metax
     mock_metax()
-
-    # Mock Ida
-    # mock_ida()
 
     return app_
 
@@ -473,74 +469,69 @@ def test_dataset_unavailable(app, action):
 
 
 @pytest.mark.parametrize(
-    "filestorage",
-    ["ida", "pas"]
-)
-def test_validate_files(app, requests_mock, monkeypatch, filestorage):
-    """Test the validate/files endpoint.
-
-    :returns: None
-    """
-    _init_mongo(app, monkeypatch)
-
-    dataset = copy.deepcopy(BASE_DATASET)
-    requests_mock.get("https://metaksi/rest/v1/datasets/1",
-                      json=dataset)
-    _add_files_to_dataset(["pid:urn:1", "pid:urn:2"],
-                          dataset)
-    files = [_get_file("pid:urn:1", filestorage),
-             _get_file("pid:urn:2", filestorage)]
-    requests_mock.get("https://metaksi/rest/v1/datasets/1/files", json=files)
-    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:1/download",
-                      text='This file is valid UTF-8')
-    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:2/download",
-                      text='This file is valid UTF-8')
-
-    requests_mock.patch("https://metaksi/rest/v1/datasets/1", json={})
-
-    # Test the response
-    with app.test_client() as client:
-        response = client.post('/dataset/1/validate/files')
-    assert response.status_code == 200
-
-    # Check the body of response
-    response_body = json.loads(response.data)
-    assert response_body["error"] == ""
-    assert response_body["is_valid"] is True
-    assert response_body["invalid_files"] == []
-
-
-@pytest.mark.parametrize(
-    ("filestorage", "ida_status_code", "validation_error"),
+    ("ida_status_code", "file_format", "expected_response"),
     [
-        ("ida", 200, "2 files are not well-formed"),
-        ("ida", 404, "2 files are missing"),
-        ("pas", 200, "2 files are not well-formed")
+        # Valid metadata
+        (
+            200,
+            "text/plain",
+            {
+                "dataset_id": "1",
+                "is_valid": True,
+                "error": "",
+                "detailed_error": "",
+                "missing_files": [],
+                "invalid_files": [],
+            }
+        ),
+        # Wrong file format in file metadata
+        (
+            200,
+            "image/tiff",
+            {
+                "dataset_id": "1",
+                "is_valid": False,
+                "error": "2 files are not well-formed",
+                "detailed_error": ("2 files are not well-formed:"
+                                   "\npid:urn:1\npid:urn:2"),
+                "missing_files": [],
+                "invalid_files": ["pid:urn:1", "pid:urn:2"],
+            }
+        ),
+        # Files are not available in Ida
+        (
+            404,
+            "text/plain",
+            {
+                "dataset_id": "1",
+                "is_valid": False,
+                "error": "2 files are missing",
+                "detailed_error": ("2 files are missing:"
+                                   "\npid:urn:1\npid:urn:2"),
+                "missing_files": ["pid:urn:1", "pid:urn:2"],
+                "invalid_files": []
+            }
+        ),
     ]
 )
-def test_validate_files_fails(app, requests_mock, monkeypatch, filestorage,
-                              ida_status_code, validation_error):
-    """Test the validate/files endpoint. File validation fails.
+def test_validate_files(app, requests_mock, ida_status_code, file_format,
+                        expected_response):
+    """Test the validate/files endpoint.
 
+    Test dataset contains two valid text files.
+
+    :param app: Flask application
+    :param requests_mock: Requests mocker
+    :param ida_status_code: Status code of mocked Ida HTTP Response
+    :param file_format: File format in file metadata
+    :param expected_response: Expected API response data
     :returns: None
     """
-    _init_mongo(app, monkeypatch)
-
-    # Mock local filestorage
-    file1 = _get_file("pid:urn:1", filestorage,
-                      file_format="image/tiff", version="6.0")
-    file2 = _get_file("pid:urn:2", filestorage,
-                      file_format="image/tiff", version="6.0")
-    files = [file1, file2]
-
     # Mock Metax
-    dataset = copy.deepcopy(BASE_DATASET)
-    requests_mock.get("https://metaksi/rest/v1/datasets/1",
-                      json=dataset)
+    requests_mock.get("https://metaksi/rest/v1/datasets/1", json=BASE_DATASET)
+    files = [_get_file('pid:urn:1', 'ida', file_format),
+             _get_file('pid:urn:2', 'ida', file_format)]
     requests_mock.get("https://metaksi/rest/v1/datasets/1/files", json=files)
-    requests_mock.patch("https://metaksi/rest/v1/datasets/1", json={})
-    _add_files_to_dataset(["pid:urn:1", "pid:urn:2"],
-                          dataset)
 
     # Mock Ida
     requests_mock.get("https://86.50.169.61:4433/files/pid:urn:1/download",
@@ -556,40 +547,4 @@ def test_validate_files_fails(app, requests_mock, monkeypatch, filestorage,
     assert response.status_code == 200
 
     # Check the body of response
-    response_body = json.loads(response.data)
-    assert response_body["error"].startswith(
-        validation_error
-    )
-    assert response_body["is_valid"] is False
-    assert response_body["invalid_files"] == ['pid:urn:1', 'pid:urn:2']
-    assert response_body["detailed_error"] \
-        == "{}:\npid:urn:1\npid:urn:2".format(validation_error)
-
-
-def _init_mongo(app, monkeypatch):
-    conf = Configuration(app.config.get('SIPTOOLS_RESEARCH_CONF'))
-    mongoclient = mongomock.MongoClient()
-    # pylint: disable=unused-argument
-
-    def mock_mongoclient(*_args, **_kwargs):
-        """Return already initialized mongomock.MongoClient."""
-        return mongoclient
-    monkeypatch.setattr(pymongo, 'MongoClient', mock_mongoclient)
-
-    mongoclient = pymongo.MongoClient(host='localhost')
-    files_col = mongoclient.upload.files
-
-    files = [
-        "pid:urn:1",
-        "pid:urn:2",
-    ]
-    for _file in files:
-        filepath = os.path.abspath(conf.get('packaging_root') +
-                                   "/tmp/%s" % _file)
-        fil = open(filepath, 'w+')
-        fil.write('This file is valid UTF-8')
-        fil.close()
-        files_col.insert_one({
-            "_id": _file,
-            "file_path": filepath
-        })
+    assert json.loads(response.data) == expected_response
