@@ -4,6 +4,8 @@ import json
 import os
 import copy
 
+import mongomock
+import pymongo
 import pytest
 import httpretty
 import mock
@@ -94,6 +96,26 @@ def mock_upload_conf(monkeypatch):
         upload_rest_api.database, "parse_conf",
         lambda conf: {"MONGO_HOST": "localhost", "MONGO_PORT": 27017}
     )
+
+
+@pytest.fixture(scope="function", autouse=True)
+def testmongoclient(monkeypatch):
+    """Monkeypatch pymongo.MongoClient class.
+
+    An instance of mongomock.MongoClient is created in beginning of test.
+    Whenever pymongo.MongoClient() is called during the test, the already
+    initialized mongomock.MongoClient is used instead.
+
+    :param monkeypatch: pytest `monkeypatch` fixture
+    :returns: ``None``
+    """
+    mongoclient = mongomock.MongoClient()
+    # pylint: disable=unused-argument
+
+    def mock_mongoclient(*args, **kwargs):
+        """Return already initialized mongomock.MongoClient."""
+        return mongoclient
+    monkeypatch.setattr(pymongo, 'MongoClient', mock_mongoclient)
 
 
 def _get_file(identifier, file_storage, file_format=None, version=None):
