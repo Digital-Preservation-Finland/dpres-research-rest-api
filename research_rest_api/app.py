@@ -209,11 +209,13 @@ def create_app():
     @app.errorhandler(HTTPError)
     def http_error(error):
         """Handle HTTPError."""
-        current_app.logger.error(error, exc_info=True)
+        # Log also content of response for debugging purposes
+        message \
+            = 'HTTP request to {} failed. Response from server was: {}'.format(
+                error.response.url, error.response.text
+            )
+        current_app.logger.error(message)
 
-        response = jsonify({"code": error.response.status_code,
-                            "error": error.response.reason})
-        response.status_code = error.response.status_code
-        return response
+        raise error
 
     return app

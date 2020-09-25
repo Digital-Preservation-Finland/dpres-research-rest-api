@@ -570,3 +570,39 @@ def test_validate_files(app, requests_mock, ida_status_code, file_format,
 
     # Check the body of response
     assert json.loads(response.data) == expected_response
+
+
+def test_httperror(app, requests_mock, caplog):
+    """Test HTTPError handling.
+
+    API should respond with "500 internal server error" if HTTPError occurs.
+    The content of response to failed HTTP request should be logged.
+
+    :param app: Flask application
+    :param requests_mock: Request mocker
+    :param caplog: log capturing instance
+    """
+    # Mock metax to respond with HTTP 500 error to cause HTTPError exception
+    requests_mock.get('https://metaksi/rest/v1/datasets/1',
+                      status_code=500,
+                      reason='Metax error',
+                      text='Metax failed to process request')
+
+    # Let app handle exceptions
+    app.config['TESTING'] = False
+
+    # Test the response
+    with app.test_client() as client:
+        response = client.post('/dataset/1/validate/metadata')
+    assert response.status_code == 500
+    assert json.loads(response.data) \
+        == {"code": 500, "error": "Internal server error"}
+
+    # Check logs
+    logged_messages = [record.message for record in caplog.records]
+    # HTTPError should be logged by default
+    assert '500 Server Error: Metax error' in logged_messages
+    # Also the content of HTTP response should be logged
+    assert ('HTTP request to https://metaksi/rest/v1/datasets/1 failed. '
+            'Response from server was: Metax failed to process request')\
+        in logged_messages
