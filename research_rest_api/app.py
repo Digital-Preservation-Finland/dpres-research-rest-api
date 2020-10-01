@@ -206,16 +206,4 @@ def create_app():
         response.status_code = 404
         return response
 
-    @app.errorhandler(HTTPError)
-    def http_error(error):
-        """Handle HTTPError."""
-        # Log also content of response for debugging purposes
-        message \
-            = 'HTTP request to {} failed. Response from server was: {}'.format(
-                error.response.url, error.response.text
-            )
-        current_app.logger.error(message)
-
-        raise error
-
     return app
