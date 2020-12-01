@@ -2,8 +2,8 @@ flask==0.10.1
 werkzeug==0.9.1
 requests==2.6.0
 flask_cors
-git+https://gitlab.csc.fi/dpres/dpres-siptools-research.git@develop#egg=siptools_research
-git+https://gitlab.csc.fi/dpres/metax-access.git@develop#egg=metax_access
+git+https://gitlab.ci.csc.fi/dpres/dpres-siptools-research.git@develop#egg=siptools_research
+git+https://gitlab.ci.csc.fi/dpres/metax-access.git@develop#egg=metax_access
 
 # testing requirements
 coverage
@@ -11,6 +11,6 @@ pytest-cov
 httpretty
 mock
 urllib3
-git+https://gitlab.csc.fi/dpres/upload-rest-api.git@develop#egg=upload_rest_api
+git+https://gitlab.ci.csc.fi/dpres/upload-rest-api.git@develop#egg=upload_rest_api
 requests_mock
 mongomock

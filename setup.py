@@ -37,9 +37,9 @@ def main():
         install_requires=[
             "flask",
             "flask-cors",
-            "metax_access@git+https://gitlab.csc.fi/dpres/"
+            "metax_access@git+https://gitlab.ci.csc.fi/dpres/"
             "metax-access.git@develop",
-            "siptools_research@git+https://gitlab.csc.fi/dpres/"
+            "siptools_research@git+https://gitlab.ci.csc.fi/dpres/"
             "dpres-siptools-research.git@develop",
         ],
         tests_require=['pytest'],

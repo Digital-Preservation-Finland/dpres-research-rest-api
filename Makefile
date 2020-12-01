@@ -40,7 +40,7 @@ test:
 	py.test -svvvv --full-trace --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/app_test.py
 
 .e2e/ansible-fairdata:
-	git clone https://gitlab.csc.fi/dpres/ansible-fairdata-pas.git .e2e/ansible-fairdata
+	git clone https://gitlab.ci.csc.fi/dpres/ansible-fairdata-pas.git .e2e/ansible-fairdata
 
 .e2e/ansible-fetch-fairdata: .e2e/ansible-fairdata
 	cd .e2e/ansible-fairdata && \
@@ -57,7 +57,7 @@ e2e-distributed-provision-fairdata: .e2e/ansible-fetch-fairdata
 	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}], "dp_host": "fairdata-pas-instance"}'
 
 .e2e/ansible-preservation:
-	git clone https://gitlab.csc.fi/dpres/ansible-preservation-system.git .e2e/ansible-preservation
+	git clone https://gitlab.ci.csc.fi/dpres/ansible-preservation-system.git .e2e/ansible-preservation
 
 .e2e/ansible-fetch-preservation: .e2e/ansible-preservation
 	cd .e2e/ansible-preservation && \
