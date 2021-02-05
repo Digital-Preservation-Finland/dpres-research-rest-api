@@ -23,6 +23,7 @@ Requires:       python python-flask python-flask-cors httpd mod_wsgi dpres-sipto
 BuildRequires:  python-httpretty
 BuildRequires:  python-mock
 BuildRequires:  upload-rest-api
+BuildRequires:  python-mongomock
 
 %description
 REST API for metadata validation and SIP creation triggering
