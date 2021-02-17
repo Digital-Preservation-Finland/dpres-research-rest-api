@@ -69,10 +69,10 @@ test:
 		git status
 
 e2e-localhost-provision-fairdata: .e2e/ansible-fetch-fairdata
-	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml --force ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 e2e-distributed-provision-fairdata: .e2e/ansible-fetch-fairdata
-	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}], "dp_host": "fairdata-pas-instance"}'
+	cd .e2e/ansible-fairdata ; ansible-galaxy install -r requirements.yml --force ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}], "dp_host": "fairdata-pas-instance"}'
 
 .e2e/ansible-preservation:
 	git clone https://gitlab.ci.csc.fi/dpres/ansible-preservation-system.git .e2e/ansible-preservation
@@ -85,7 +85,7 @@ e2e-distributed-provision-fairdata: .e2e/ansible-fetch-fairdata
 		git clean -fdx && \
 		git status && \
 		if [ -f requirements.yml ]; then \
-			ansible-galaxy install -r requirements.yml; \
+			ansible-galaxy install -r requirements.yml --force; \
 		fi
 
 e2e-localhost-cleanup: .e2e/ansible-fetch-preservation
@@ -95,10 +95,10 @@ e2e-distributed-cleanup: .e2e/ansible-fetch-preservation
 	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/pouta-fairdata-pas external_roles/test-cleanup/cleanup.yml
 
 e2e-localhost-provision-preservation: .e2e/ansible-fetch-preservation
-	cd .e2e/ansible-preservation ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/localhost testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+	cd .e2e/ansible-preservation ; ansible-galaxy install -r requirements.yml --force ; ansible-playbook -i inventory/localhost testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 e2e-distributed-provision-preservation: .e2e/ansible-fetch-preservation
-	cd .e2e/ansible-preservation ; ansible-galaxy install -r requirements.yml ; ansible-playbook -i inventory/pouta-fairdata-pas testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+	cd .e2e/ansible-preservation ; ansible-galaxy install -r requirements.yml --force ; ansible-playbook -i inventory/pouta-fairdata-pas testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 e2e-test:
 	py.test -svvv --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/e2e
