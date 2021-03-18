@@ -12,7 +12,7 @@ Clone this repository and install with pip::
 
    pip install --use-pep517 ../dpres-research-rest-api/
 
-Configure apache to use WSGI application script file (see `sample configuration file <./include/etc/httpd/conf.d/dpres-research-rest-api-httpd.conf.disabled>`_). Restart apache.
+Configure apache to use WSGI application script file and restart apache.
 
 Usage
 -----

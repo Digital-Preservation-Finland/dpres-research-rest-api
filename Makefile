@@ -4,9 +4,6 @@ PYROOT=${ROOT}/
 ETC=${ROOT}/etc
 SHAREDIR=${ROOT}${PREFIX}/share/dpres-research-rest-api
 
-APACHE_CONF_DIR=${ETC}/httpd/conf.d
-APACHE_CONF_FILE=${APACHE_CONF_DIR}/dpres-research-rest-api-httpd.conf.disabled
-
 all: info
 
 info:
@@ -23,12 +20,6 @@ install:
 	rm -f INSTALLED_FILES
 	rm -f INSTALLED_FILES.in
 
-	mkdir -p "${APACHE_CONF_DIR}"
-
-	# Copy configuration file
-	cp include/etc/httpd/conf.d/* "${APACHE_CONF_DIR}/"
-	chmod 644 ${APACHE_CONF_FILE}
-
 	# Install web app using Python setuptools
 	python setup.py build ; python ./setup.py install -O1 --prefix="${PREFIX}" --root="${PYROOT}" --record=INSTALLED_FILES.in
 	cat INSTALLED_FILES.in | sed 's/^/\//g' >> INSTALLED_FILES
@@ -40,12 +31,6 @@ install3:
 	# Cleanup temporary files
 	rm -f INSTALLED_FILES
 	rm -f INSTALLED_FILES.in
-
-	mkdir -p "${APACHE_CONF_DIR}"
-
-	# Copy configuration file
-	cp include/etc/httpd/conf.d/* "${APACHE_CONF_DIR}/"
-	chmod 644 ${APACHE_CONF_FILE}
 
 	# Install web app using Python setuptools
 	python3 setup.py build ; python3 ./setup.py install -O1 --prefix="${PREFIX}" --root="${PYROOT}" --record=INSTALLED_FILES.in
