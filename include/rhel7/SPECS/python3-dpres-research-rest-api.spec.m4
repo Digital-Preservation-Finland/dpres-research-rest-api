@@ -9,7 +9,7 @@
 %define file_build_number M4_FILE_BUILD_NUMBER
 %define file_commit_ref M4_FILE_COMMIT_REF
 
-Name:           dpres-research-rest-api
+Name:           python3-dpres-research-rest-api
 Version:        %{file_version}
 Release:        %{file_release_number}%{file_release_tag}.%{file_build_number}.git%{file_commit_ref}%{?dist}
 Summary:        REST API for metadata validation and SIP creation triggering
