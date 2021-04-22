@@ -1,8 +1,10 @@
-PREFIX=/usr
-ROOT=
-PYROOT=${ROOT}/
-ETC=${ROOT}/etc
-SHAREDIR=${ROOT}${PREFIX}/share/dpres-research-rest-api
+PREFIX = /usr
+ROOT =
+PYROOT = ${ROOT}/
+ETC = ${ROOT}/etc
+SHAREDIR = ${ROOT}${PREFIX}/share/dpres-research-rest-api
+
+PYTHON ?= python3
 
 all: info
 
@@ -40,7 +42,9 @@ install3:
 	echo "--"
 
 test:
-	py.test -svvvv --full-trace --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/app_test.py
+	${PYTHON} -m pytest tests/app_test.py \
+	    -svvvv --full-trace \
+	    --junitprefix=dpres-research-rest-api --junitxml=junit.xml
 
 .e2e/ansible-fairdata:
 	git clone https://gitlab.ci.csc.fi/dpres/ansible-fairdata-pas.git .e2e/ansible-fairdata
@@ -107,7 +111,7 @@ killdocserver:
 	make -C doc killdocserver
 
 coverage:
-	py.test tests --cov=research_rest_api --cov-report=html
+	${PYTHON} -m pytest tests --cov=research_rest_api --cov-report=html
 	coverage report -m
 	coverage html
 	coverage xml
