@@ -9,6 +9,7 @@ import pymongo
 import pytest
 import httpretty
 import mock
+
 import upload_rest_api
 from siptools_research.config import Configuration
 from siptools_research.exceptions import InvalidDatasetError
@@ -601,7 +602,13 @@ def test_httperror(app, requests_mock, caplog):
     # Check logs
     logged_messages = [record.message for record in caplog.records]
     # HTTPError should be logged by default
-    assert '500 Server Error: Metax error' in logged_messages
+    py3_error_msg = (
+        '500 Internal Server Error: The server encountered an '
+        'internal error and was unable to complete your request. Either '
+        'the server is overloaded or there is an error in the application.'
+    )
+    py2_error_msg = '500 Internal Server Error: Metax error'
+    assert py2_error_msg or py3_error_msg in logged_messages
     # Also the content of HTTP response should be logged
     assert ('HTTP request to https://metaksi/rest/v1/datasets/1 failed. '
             'Response from server was: Metax failed to process request')\
