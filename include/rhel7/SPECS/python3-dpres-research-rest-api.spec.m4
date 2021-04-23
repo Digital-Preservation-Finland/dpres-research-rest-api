@@ -24,6 +24,9 @@ Requires:       python3-dpres-siptools-research python3-metax-access
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-httpretty
 BuildRequires:  python36-mock
+BuildRequires:  python3-mongomock
+BuildRequires:  python36-pytest-catchlog
+BuildRequires:  python3-requests-mock
 BuildRequires:  python3-upload-rest-api
 
 %description

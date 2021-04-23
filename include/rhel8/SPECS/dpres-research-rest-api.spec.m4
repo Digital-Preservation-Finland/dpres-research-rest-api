@@ -23,6 +23,9 @@ Requires:       python3 python3-flask python3-flask-cors httpd python3-mod_wsgi 
 BuildRequires:  python3-setuptools
 BuildRequires:  python3-httpretty
 BuildRequires:  python3-mock
+BuildRequires:  python3-mongomock
+BuildRequires:  python3-pytest-catchlog
+BuildRequires:  python3-requests-mock
 BuildRequires:  upload-rest-api
 
 %description
