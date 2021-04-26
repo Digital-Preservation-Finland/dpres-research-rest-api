@@ -607,8 +607,11 @@ def test_httperror(app, requests_mock, caplog):
         'internal error and was unable to complete your request. Either '
         'the server is overloaded or there is an error in the application.'
     )
-    py2_error_msg = '500 Internal Server Error: Metax error'
-    assert py2_error_msg or py3_error_msg in logged_messages
+    py2_error_msg = '500 Server Error: Metax error'
+    assert (
+        py2_error_msg in logged_messages or
+        py3_error_msg in logged_messages
+    )
     # Also the content of HTTP response should be logged
     assert ('HTTP request to https://metaksi/rest/v1/datasets/1 failed. '
             'Response from server was: Metax failed to process request')\
