@@ -15,5 +15,5 @@ httpretty
 mock
 urllib3
 git+https://gitlab.ci.csc.fi/dpres/upload-rest-api.git@develop#egg=upload_rest_api
-requests_mock
+requests_mock<=1.7.0
 mongomock
