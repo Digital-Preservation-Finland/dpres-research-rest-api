@@ -7,6 +7,6 @@ junit.xml
 rpmbuild
 build/
 dist/
-venv/
-.venv/
+venv*/
+.venv*/
 .cache/

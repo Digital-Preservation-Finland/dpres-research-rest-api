@@ -41,7 +41,7 @@ find %{_sourcedir}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install3 PREFIX="%{_prefix}" ROOT="%{buildroot}"
+make install PREFIX="%{_prefix}" ROOT="%{buildroot}"
 
 %post
 
