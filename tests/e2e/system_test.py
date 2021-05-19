@@ -15,8 +15,6 @@ System environment setup
 
 Metax(metax-mockup) and IDA services are mocked.
 """
-from __future__ import print_function
-
 import time
 import json
 
@@ -37,7 +35,7 @@ from metax_access import (DS_STATE_INITIALIZED,
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 METAX_API_URL = "https://metax.localhost:8443/rest/v2"
-UPLOAD_API_URL = "https://packaging.localhost:8443/filestorage/api/v2"
+UPLOAD_API_URL = "https://packaging.localhost:8443/filestorage/api/v1"
 ADMIN_API_URL = "https://manage.localhost:8443/secure/api/1.0"
 REQUESTS_SESSION = requests.Session()
 REQUESTS_SESSION.verify = False
