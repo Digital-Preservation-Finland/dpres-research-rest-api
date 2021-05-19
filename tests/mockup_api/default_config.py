@@ -14,7 +14,7 @@ METAX_API_HOST = "http://localhost:8888"
 # METAX_API_HOST = "https://metax-test.csc.fi"
 
 # default: "/"
-METAX_BASE_PATH = "/rest/v1/"
+METAX_BASE_PATH = "/rest/v2/"
 
 PROPOSE_FAILS_DATASET_ID = ("urn:nbn:fi:att:cr955e904-e3dd-4d7e-99f1-"
                             "3fed446f96d2")

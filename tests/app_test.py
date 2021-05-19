@@ -170,60 +170,62 @@ def mock_metax():
     and "pid:urn:2".
     """
     httpretty_register_file(
-        uri='https://metaksi/rest/v1/datasets/1/files',
+        uri='https://metaksi/rest/v2/datasets/1/files',
         filename='tests/data/metax_metadata/valid_dataset_files.json'
     )
 
     httpretty_register_file(
-        uri='https://metaksi/rest/v1/datasets/valid_dataset/files',
+        uri='https://metaksi/rest/v2/datasets/valid_dataset/files',
         filename='tests/data/metax_metadata/valid_dataset_files.json'
     )
 
     httpretty_register_file(
-        uri='https://metaksi/rest/v1/datasets/3/files',
+        uri='https://metaksi/rest/v2/datasets/3/files',
         filename='tests/data/metax_metadata/valid_dataset3_files.json'
     )
 
     httpretty_register_file(
-        uri='https://metaksi/rest/v1/datasets/valid_dataset3/files',
+        uri='https://metaksi/rest/v2/datasets/valid_dataset3/files',
         filename='tests/data/metax_metadata/valid_dataset3_files.json'
     )
 
     httpretty_register_file(
-        'https://metaksi/rest/v1/datasets/1',
+        'https://metaksi/rest/v2/datasets/1?include_user_metadata=true',
         'tests/data/metax_metadata/valid_dataset.json',
         match_querystring=True,
         methods=[httpretty.GET, httpretty.PATCH]
     )
 
     httpretty_register_file(
-        uri='https://metaksi/rest/v1/datasets/2',
+        uri='https://metaksi/rest/v2/datasets/2?include_user_metadata=true',
         filename='tests/data/metax_metadata/invalid_dataset2.json',
         methods=[httpretty.GET, httpretty.PATCH]
     )
 
     httpretty_register_file(
-        uri="https://metaksi/rest/v1/datasets/3",
+        uri="https://metaksi/rest/v2/datasets/3?include_user_metadata=true",
         filename="tests/data/metax_metadata/valid_dataset3.json",
         methods=[httpretty.GET, httpretty.PATCH]
     )
 
     httpretty_register_file(
-        uri="https://metaksi/rest/v1/datasets/not_available_id",
+        uri="https://metaksi/rest/v2/datasets/not_available_id?{}".format(
+            "include_user_metadata=true"
+        ),
         filename="tests/data/metax_metadata/not_found.json",
         methods=[httpretty.GET],
         status=404
     )
 
     httpretty_register_file(
-        uri="https://metaksi/rest/v1/datasets/not_available_id/files",
+        uri="https://metaksi/rest/v2/datasets/not_available_id/files",
         filename="tests/data/metax_metadata/not_found.json",
         methods=[httpretty.GET],
         status=404
     )
 
     httpretty_register_file(
-        uri="https://metaksi/rest/v1/contracts/contract",
+        uri="https://metaksi/rest/v2/contracts/contract",
         filename="tests/data/metax_metadata/contract.json",
         methods=[httpretty.GET]
     )
@@ -385,30 +387,30 @@ def test_validate_metadata(app, requests_mock):
     """
     with open('tests/data/metax_metadata/valid_dataset.json') as file_:
         mocked_response = json.load(file_)
-    requests_mock.get("https://metaksi/rest/v1/datasets/1",
+    requests_mock.get("https://metaksi/rest/v2/datasets/1",
                       json=mocked_response)
 
     with open("tests/data/metax_metadata/contract.json") as file_:
         mocked_response = json.load(file_)
-    requests_mock.get("https://metaksi/rest/v1/contracts/contract",
+    requests_mock.get("https://metaksi/rest/v2/contracts/contract",
                       json=mocked_response)
 
     with open('tests/data/metax_metadata/valid_dataset_files.json') as file_:
         mocked_response = json.load(file_)
-    requests_mock.get("https://metaksi/rest/v1/datasets/valid_dataset/files",
+    requests_mock.get("https://metaksi/rest/v2/datasets/valid_dataset/files",
                       json=mocked_response)
-    requests_mock.get("https://metaksi/rest/v1/datasets/1/files",
+    requests_mock.get("https://metaksi/rest/v2/datasets/1/files",
                       json=mocked_response)
 
-    requests_mock.get("https://metaksi/rest/v1/directories/pid:urn:dir:wf1",
+    requests_mock.get("https://metaksi/rest/v2/directories/pid:urn:dir:wf1",
                       json={"directory_path": "foo"})
 
-    requests_mock.patch("https://metaksi/rest/v1/datasets/1", json={})
+    requests_mock.patch("https://metaksi/rest/v2/datasets/1", json={})
 
     with open("tests/data/metax_metadata/valid_datacite.xml") as file_:
         mocked_response = file_.read()
     requests_mock.get(
-        ("https://metaksi/rest/v1/datasets/1?dataset_format=datacite&"
+        ("https://metaksi/rest/v2/datasets/1?dataset_format=datacite&"
          "dummy_doi=true"),
         text=mocked_response,
         complete_qs=True
@@ -551,10 +553,10 @@ def test_validate_files(app, requests_mock, ida_status_code, file_format,
     :returns: None
     """
     # Mock Metax
-    requests_mock.get("https://metaksi/rest/v1/datasets/1", json=BASE_DATASET)
+    requests_mock.get("https://metaksi/rest/v2/datasets/1", json=BASE_DATASET)
     files = [_get_file('pid:urn:1', 'ida', file_format),
              _get_file('pid:urn:2', 'ida', file_format)]
-    requests_mock.get("https://metaksi/rest/v1/datasets/1/files", json=files)
+    requests_mock.get("https://metaksi/rest/v2/datasets/1/files", json=files)
 
     # Mock Ida
     requests_mock.get("https://86.50.169.61:4433/files/pid:urn:1/download",
@@ -584,10 +586,12 @@ def test_httperror(app, requests_mock, caplog):
     :param caplog: log capturing instance
     """
     # Mock metax to respond with HTTP 500 error to cause HTTPError exception
-    requests_mock.get('https://metaksi/rest/v1/datasets/1',
-                      status_code=500,
-                      reason='Metax error',
-                      text='Metax failed to process request')
+    requests_mock.get(
+        'https://metaksi/rest/v2/datasets/1?include_user_metadata=true',
+        status_code=500,
+        reason='Metax error',
+        text='Metax failed to process request'
+    )
 
     # Let app handle exceptions
     app.config['TESTING'] = False
@@ -613,6 +617,7 @@ def test_httperror(app, requests_mock, caplog):
         py3_error_msg in logged_messages
     )
     # Also the content of HTTP response should be logged
-    assert ('HTTP request to https://metaksi/rest/v1/datasets/1 failed. '
-            'Response from server was: Metax failed to process request')\
+    assert ('HTTP request to https://metaksi/rest/v2/datasets/1?'
+            'include_user_metadata=true failed. Response from server was: '
+            'Metax failed to process request')\
         in logged_messages
