@@ -271,7 +271,6 @@ def test_config(tmpdir):
         "dp_ssh_key = ~/.ssh/id_rsa",
         "sip_sign_key = ~/sip_sign_pas.pem",
         "metax_ssl_verification = False",
-        "mimetypes_conf = tests/data/dpres_mimetypes.json",
         "pas_storage_id = urn:nbn:fi:att:file-storage-pas"
     ])
 
