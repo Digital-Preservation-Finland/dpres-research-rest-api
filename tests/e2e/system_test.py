@@ -15,22 +15,21 @@ System environment setup
 
 Metax(metax-mockup) and IDA services are mocked.
 """
-import time
 import json
+import subprocess
+import time
 
-import requests
 import pytest
-import urllib3
-
+import requests
 import upload_rest_api.database
-from metax_access import (DS_STATE_INITIALIZED,
-                          DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
-                          DS_STATE_TECHNICAL_METADATA_GENERATED,
-                          DS_STATE_VALID_METADATA,
-                          DS_STATE_METADATA_CONFIRMED,
-                          DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
+import urllib3
+from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
                           DS_STATE_IN_DIGITAL_PRESERVATION,
-                          DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE)
+                          DS_STATE_INITIALIZED, DS_STATE_METADATA_CONFIRMED,
+                          DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
+                          DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE,
+                          DS_STATE_TECHNICAL_METADATA_GENERATED,
+                          DS_STATE_VALID_METADATA)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -63,6 +62,63 @@ def _init_upload_rest_api():
 
     # Creating test user
     upload_database.user("test").create("test_project", password="test")
+
+
+
+MONGO_COLLECTIONS_TO_CLEAR = {
+    "upload": "*",
+    "eventdb": "*",
+    "siptools-research": "*",
+    "locationdb": ("aips", "files")
+}
+
+DIRS_TO_CLEAR = (
+    "/var/spool/storage-rest-api/store-esp",
+    "/var/spool/storage-rest-api/store-kova",
+    "/var/spool/storage-rest-api/store-kova-full",
+    "/var/spool/siptools_research/file_cache",
+    "/var/spool/siptools_research/tmp",
+    "/var/spool/siptools_research/workspaces",
+    "/var/spool/preservation/local/dissemination",
+    "/var/spool/preservation/local/ingest",
+    "/var/spool/preservation/shared/dissemination",
+    "/var/spool/preservation/shared/ingest",
+    "/var/spool/upload/projects",
+    "/var/spool/upload/tmp",
+    "/home/fairdata/accepted",
+    "/home/fairdata/approved",
+    "/home/fairdata/disseminated",
+    "/home/fairdata/rejected",
+    "/home/fairdata/transfer",
+    "/mnt/storage_vol01/glusterfs_pool01/storage_vol01/files",
+)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def setup_e2e():
+    """
+    Cleanup procedure executed before each E2E test
+    """
+    upload_db = upload_rest_api.database.Database()
+
+    # Clear all applicable MongoDB collections
+    # This does *not* remove indexes, matching the pre-test state more closely
+    for db_name, collections in MONGO_COLLECTIONS_TO_CLEAR.items():
+        mongo_db = getattr(upload_db.client, db_name)
+
+        if collections == "*":
+            collections = mongo_db.list_collection_names()
+
+        for col_name in collections:
+            coll = getattr(mongo_db, col_name)
+            coll.delete_many({})
+
+    for path in DIRS_TO_CLEAR:
+        subprocess.run(
+            # `-mount` ensures other filesystems (eg. sshfs) are not touched
+            ["sudo", "find", path, "-mount", "-mindepth", "1", "-delete"],
+            check=False
+        )
 
 
 @pytest.mark.parametrize("filestorage, dataset_id",
