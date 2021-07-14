@@ -94,7 +94,7 @@ BASE_FILE = {
 def mock_upload_conf(monkeypatch):
     """Patch upload_rest_api configuration parsing."""
     monkeypatch.setattr(
-        upload_rest_api.database, "parse_conf",
+        upload_rest_api.config, "get_config",
         lambda conf: {"MONGO_HOST": "localhost", "MONGO_PORT": 27017}
     )
 
