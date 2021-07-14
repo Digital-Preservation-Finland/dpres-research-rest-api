@@ -16,6 +16,7 @@ System environment setup
 Metax(metax-mockup) and IDA services are mocked.
 """
 import json
+import pathlib
 import subprocess
 import time
 
@@ -47,22 +48,26 @@ def _init_upload_rest_api():
     upload_database = upload_rest_api.database.Database()
     # Adding identifiers
     files = upload_database.files
-    project_path = "/var/spool/upload/projects/test_project"
+    project_path = pathlib.Path("/var/spool/upload/projects/test_project")
     identifiers = [
         {
             "_id": "valid_tiff_local",
-            "file_path": "%s/valid_tiff.tiff" % project_path
+            "file_path":  str(project_path / "valid_tiff.tiff")
         },
         {
             "_id": "html_file_local",
-            "file_path": "%s/html_file" % project_path
+            "file_path":  str(project_path / "html_file")
         }
     ]
     files.insert(identifiers)
 
-    # Creating test user
+    # Creating test user. Project directory is created first to ensure
+    # correct directory ownership.
+    subprocess.run(
+        ["sudo", "-u", project_path.parent.owner(), 'mkdir', project_path],
+        check=True
+    )
     upload_database.user("test").create("test_project", password="test")
-
 
 
 MONGO_COLLECTIONS_TO_CLEAR = {
