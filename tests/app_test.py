@@ -263,9 +263,7 @@ def test_config(tmpdir):
         "metax_url = https://metaksi",
         "metax_user = tpas",
         "metax_password = ",
-        "ida_url = https://86.50.169.61:4433",
-        "ida_user = testuser_1",
-        "ida_password = ",
+        "ida_token= ",
         "dp_host = 86.50.168.218",
         "dp_user = tpas",
         "dp_ssh_key = ~/.ssh/id_rsa",
@@ -558,12 +556,11 @@ def test_validate_files(app, requests_mock, ida_status_code, file_format,
     requests_mock.get("https://metaksi/rest/v2/datasets/1/files", json=files)
 
     # Mock Ida
-    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:1/download",
-                      text='This file is valid UTF-8',
-                      status_code=ida_status_code)
-    requests_mock.get("https://86.50.169.61:4433/files/pid:urn:2/download",
-                      text='This file is valid UTF-8',
-                      status_code=ida_status_code)
+    requests_mock.post('https://ida.fd-test.csc.fi:4431/authorize',
+                       json={"token": 'foo'},
+                       status_code=ida_status_code)
+    requests_mock.get("https://ida.fd-test.csc.fi:4430/download",
+                      text='This file is valid UTF-8')
 
     # Test the response
     with app.test_client() as client:
