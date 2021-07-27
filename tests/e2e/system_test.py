@@ -143,17 +143,29 @@ def test_tpas_preservation(filestorage, dataset_id):
                   "rb") as _file:
             response = REQUESTS_SESSION.post(
                 "%s/files/valid_tiff.tiff" % UPLOAD_API_URL,
-                auth=("test", "test"), data=_file
+                auth=("test", "test"),
+                data=_file
             )
-            assert response.status_code == 200
+        assert response.status_code == 200
+
+        # Test that file metadata can be retrieved from files API
+        response = REQUESTS_SESSION.get(
+            "%s/files/valid_tiff.tiff" % UPLOAD_API_URL,
+            auth=("test", "test")
+        )
+        assert response.status_code == 200
+        assert response.json()['file_path'] == '/valid_tiff.tiff'
+        assert response.json()['identifier'] == 'valid_tiff_local'
+        assert response.json()['md5'] == '3cf7c3b90f5a52b2f817a1c5b3bfbc52'
 
         # POST html file
         with open("/var/www/html/files/html_file/download", "rb") as _file:
             response = REQUESTS_SESSION.post(
                 "%s/files/html_file" % UPLOAD_API_URL,
-                auth=("test", "test"), data=_file
+                auth=("test", "test"),
+                data=_file
             )
-            assert response.status_code == 200
+        assert response.status_code == 200
 
     response = REQUESTS_SESSION.get('{}/datasets/{}'.format(ADMIN_API_URL,
                                                             dataset_id))
