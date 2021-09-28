@@ -67,7 +67,10 @@ def _init_upload_rest_api():
         ["sudo", "-u", project_path.parent.owner(), 'mkdir', project_path],
         check=True
     )
-    upload_database.user("test").create("test_project", password="test")
+    upload_database.projects.create("test_project")
+    upload_database.user("test").create(
+        projects=["test_project"], password="test"
+    )
 
 
 MONGO_COLLECTIONS_TO_CLEAR = {
@@ -142,7 +145,7 @@ def test_tpas_preservation(filestorage, dataset_id):
         with open("/var/www/html/files/valid_tiff/download",
                   "rb") as _file:
             response = REQUESTS_SESSION.post(
-                "%s/files/valid_tiff.tiff" % UPLOAD_API_URL,
+                "%s/files/test_project/valid_tiff.tiff" % UPLOAD_API_URL,
                 auth=("test", "test"),
                 data=_file
             )
@@ -150,7 +153,7 @@ def test_tpas_preservation(filestorage, dataset_id):
 
         # Test that file metadata can be retrieved from files API
         response = REQUESTS_SESSION.get(
-            "%s/files/valid_tiff.tiff" % UPLOAD_API_URL,
+            "%s/files/test_project/valid_tiff.tiff" % UPLOAD_API_URL,
             auth=("test", "test")
         )
         assert response.status_code == 200
@@ -161,7 +164,7 @@ def test_tpas_preservation(filestorage, dataset_id):
         # POST html file
         with open("/var/www/html/files/html_file/download", "rb") as _file:
             response = REQUESTS_SESSION.post(
-                "%s/files/html_file" % UPLOAD_API_URL,
+                "%s/files/test_project/html_file" % UPLOAD_API_URL,
                 auth=("test", "test"),
                 data=_file
             )
