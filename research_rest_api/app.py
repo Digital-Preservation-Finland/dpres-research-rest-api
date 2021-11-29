@@ -5,7 +5,6 @@ import logging.handlers
 
 from flask import Flask, jsonify, abort, current_app
 from flask_cors import CORS
-from requests.exceptions import HTTPError
 
 from metax_access import ResourceNotAvailableError
 
