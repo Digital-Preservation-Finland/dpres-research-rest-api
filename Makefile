@@ -118,5 +118,3 @@ rpm-sources:
 	create-archive.sh
 	preprocess-spec-m4-macros.sh include/rhel7
 
-rpm: rpm-sources
-	build-rpm.sh
