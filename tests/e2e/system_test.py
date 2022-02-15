@@ -52,7 +52,7 @@ def _init_upload_rest_api():
     identifiers = [
         {
             "_id": "valid_tiff_local",
-            "file_path":  str(project_path / "valid_tiff.tiff")
+            "file_path":  str(project_path / "valid_tiff ä.tiff")
         },
         {
             "_id": "html_file_local",
@@ -144,7 +144,7 @@ def test_tpas_preservation(filestorage, dataset_id):
         # POST tiff file
         with open("tests/data/e2e_files/valid_tiff/download", "rb") as _file:
             response = REQUESTS_SESSION.post(
-                "%s/files/test_project/valid_tiff.tiff" % UPLOAD_API_URL,
+                "%s/files/test_project/valid_tiff ä.tiff" % UPLOAD_API_URL,
                 auth=("test", "test"),
                 data=_file
             )
@@ -152,11 +152,11 @@ def test_tpas_preservation(filestorage, dataset_id):
 
         # Test that file metadata can be retrieved from files API
         response = REQUESTS_SESSION.get(
-            "%s/files/test_project/valid_tiff.tiff" % UPLOAD_API_URL,
+            "%s/files/test_project/valid_tiff ä.tiff" % UPLOAD_API_URL,
             auth=("test", "test")
         )
         assert response.status_code == 200
-        assert response.json()['file_path'] == '/valid_tiff.tiff'
+        assert response.json()['file_path'] == '/valid_tiff ä.tiff'
         assert response.json()['identifier'] == 'valid_tiff_local'
         assert response.json()['md5'] == '3cf7c3b90f5a52b2f817a1c5b3bfbc52'
 
