@@ -142,8 +142,7 @@ def test_tpas_preservation(filestorage, dataset_id):
         _init_upload_rest_api()
 
         # POST tiff file
-        with open("/var/www/html/files/valid_tiff/download",
-                  "rb") as _file:
+        with open("tests/data/e2e_files/valid_tiff/download", "rb") as _file:
             response = REQUESTS_SESSION.post(
                 "%s/files/test_project/valid_tiff.tiff" % UPLOAD_API_URL,
                 auth=("test", "test"),
@@ -162,7 +161,7 @@ def test_tpas_preservation(filestorage, dataset_id):
         assert response.json()['md5'] == '3cf7c3b90f5a52b2f817a1c5b3bfbc52'
 
         # POST html file
-        with open("/var/www/html/files/html_file/download", "rb") as _file:
+        with open("tests/data/e2e_files/html_file/download", "rb") as _file:
             response = REQUESTS_SESSION.post(
                 "%s/files/test_project/html_file" % UPLOAD_API_URL,
                 auth=("test", "test"),
