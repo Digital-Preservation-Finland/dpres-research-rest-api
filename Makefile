@@ -99,7 +99,7 @@ killdocserver:
 	make -C doc killdocserver
 
 coverage:
-	${PYTHON} -m pytest tests --cov=research_rest_api --cov-report=html
+	${PYTHON} -m pytest tests/app_test.py --cov=research_rest_api --cov-report=html
 	coverage report -m
 	coverage html
 	coverage xml
