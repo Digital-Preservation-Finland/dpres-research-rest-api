@@ -21,7 +21,6 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 Requires:       python3 python3-flask python3-flask-cors httpd python3-mod_wsgi dpres-siptools-research metax-access
 BuildRequires:  python3-setuptools
-BuildRequires:  python3-httpretty
 BuildRequires:  python3-mock
 BuildRequires:  python3-mongomock
 BuildRequires:  python3-pytest-catchlog

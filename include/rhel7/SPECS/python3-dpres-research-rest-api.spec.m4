@@ -22,7 +22,6 @@ BuildArch:      noarch
 Requires:       python3 python36-flask python3-flask-cors httpd python3-mod_wsgi
 Requires:       python3-dpres-siptools-research python3-metax-access
 BuildRequires:  python3-setuptools
-BuildRequires:  python3-httpretty
 BuildRequires:  python36-mock
 BuildRequires:  python3-mongomock
 BuildRequires:  python36-pytest-catchlog

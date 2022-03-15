@@ -7,7 +7,6 @@ import copy
 import mongomock
 import pymongo
 import pytest
-import httpretty
 import mock
 
 import upload_rest_api
@@ -150,90 +149,115 @@ def _add_files_to_dataset(files, dataset):
         })
 
 
-def httpretty_register_file(uri, filename, match_querystring=True,
-                            methods=None, status=200):
-    """Read file and registers it to httpretty."""
-    if not methods:
-        methods = [httpretty.GET]
-
-    with open(filename) as open_file:
-        body = open_file.read()
-        for method in methods:
-            httpretty.register_uri(method, uri, body, status=status,
-                                   match_querystring=match_querystring)
+def _json_from_file(filepath):
+    """Deserialize JSON object from a file and return it as a Python object"""
+    with open(filepath) as json_file:
+        content = json.load(json_file)
+    return content
 
 
-def mock_metax():
-    """Mock Metax using HTTPretty.
+def _mock_metax(requests_mock):
+    """Mock Metax using requests_mock.
 
     Serve on valid metadata for dataset "1", and associated file "pid:urn:1"
     and "pid:urn:2".
     """
-    httpretty_register_file(
-        uri='https://metaksi/rest/v2/datasets/1/files',
-        filename='tests/data/metax_metadata/valid_dataset_files.json'
+    requests_mock.get(
+        'https://metaksi/rest/v2/datasets/1/files',
+        json=_json_from_file(
+            'tests/data/metax_metadata/valid_dataset_files.json'
+        )
     )
 
-    httpretty_register_file(
-        uri='https://metaksi/rest/v2/datasets/valid_dataset/files',
-        filename='tests/data/metax_metadata/valid_dataset_files.json'
+    requests_mock.get(
+        'https://metaksi/rest/v2/datasets/valid_dataset/files',
+        json=_json_from_file(
+            'tests/data/metax_metadata/valid_dataset_files.json'
+        )
     )
 
-    httpretty_register_file(
-        uri='https://metaksi/rest/v2/datasets/3/files',
-        filename='tests/data/metax_metadata/valid_dataset3_files.json'
+    requests_mock.get(
+         'https://metaksi/rest/v2/datasets/3/files',
+        json=_json_from_file(
+            'tests/data/metax_metadata/valid_dataset3_files.json'
+        )
     )
 
-    httpretty_register_file(
-        uri='https://metaksi/rest/v2/datasets/valid_dataset3/files',
-        filename='tests/data/metax_metadata/valid_dataset3_files.json'
+    requests_mock.get(
+        'https://metaksi/rest/v2/datasets/valid_dataset3/files',
+        json=_json_from_file(
+            'tests/data/metax_metadata/valid_dataset3_files.json'
+        )
     )
 
-    httpretty_register_file(
+    requests_mock.get(
         'https://metaksi/rest/v2/datasets/1?include_user_metadata=true',
-        'tests/data/metax_metadata/valid_dataset.json',
-        match_querystring=True,
-        methods=[httpretty.GET, httpretty.PATCH]
+        json=_json_from_file(
+            'tests/data/metax_metadata/valid_dataset.json',
+        )
     )
 
-    httpretty_register_file(
-        uri='https://metaksi/rest/v2/datasets/2?include_user_metadata=true',
-        filename='tests/data/metax_metadata/invalid_dataset2.json',
-        methods=[httpretty.GET, httpretty.PATCH]
+    requests_mock.patch(
+        'https://metaksi/rest/v2/datasets/1?include_user_metadata=true',
+        json=_json_from_file(
+            'tests/data/metax_metadata/valid_dataset.json',
+        )
     )
 
-    httpretty_register_file(
-        uri="https://metaksi/rest/v2/datasets/3?include_user_metadata=true",
-        filename="tests/data/metax_metadata/valid_dataset3.json",
-        methods=[httpretty.GET, httpretty.PATCH]
+    requests_mock.get(
+        'https://metaksi/rest/v2/datasets/2?include_user_metadata=true',
+        json=_json_from_file(
+            'tests/data/metax_metadata/invalid_dataset2.json',
+        )
     )
 
-    httpretty_register_file(
-        uri="https://metaksi/rest/v2/datasets/not_available_id?{}".format(
-            "include_user_metadata=true"
+    requests_mock.patch(
+        'https://metaksi/rest/v2/datasets/2?include_user_metadata=true',
+        json=_json_from_file(
+            'tests/data/metax_metadata/invalid_dataset2.json',
+        )
+    )
+
+    requests_mock.get(
+        "https://metaksi/rest/v2/datasets/3?include_user_metadata=true",
+        json=_json_from_file(
+            "tests/data/metax_metadata/valid_dataset3.json",
+        )
+    )
+
+    requests_mock.patch(
+        "https://metaksi/rest/v2/datasets/3?include_user_metadata=true",
+        json=_json_from_file(
+            "tests/data/metax_metadata/valid_dataset3.json",
+        )
+    )
+
+    requests_mock.get(
+        ("https://metaksi/rest/v2/datasets/not_available_id?"
+         "include_user_metadata=true"),
+        json=_json_from_file(
+            "tests/data/metax_metadata/not_found.json",
         ),
-        filename="tests/data/metax_metadata/not_found.json",
-        methods=[httpretty.GET],
-        status=404
+        status_code=404
     )
 
-    httpretty_register_file(
-        uri="https://metaksi/rest/v2/datasets/not_available_id/files",
-        filename="tests/data/metax_metadata/not_found.json",
-        methods=[httpretty.GET],
-        status=404
+    requests_mock.get(
+        "https://metaksi/rest/v2/datasets/not_available_id/files",
+        json=_json_from_file(
+            "tests/data/metax_metadata/not_found.json",
+        ),
+        status_code=404
     )
 
-    httpretty_register_file(
-        uri="https://metaksi/rest/v2/contracts/contract",
-        filename="tests/data/metax_metadata/contract.json",
-        methods=[httpretty.GET]
+    requests_mock.get(
+        "https://metaksi/rest/v2/contracts/contract",
+        json=_json_from_file(
+            "tests/data/metax_metadata/contract.json",
+        )
     )
 
-    httpretty.register_uri(
-        httpretty.POST,
+    requests_mock.post(
         re.compile('https://metaksi/rpc/(.*)'),
-        status=200
     )
 
 
@@ -282,7 +306,7 @@ def test_config(tmpdir):
 # funcarg-shadowing-fixture problem, when support for pytest version 2.x is not
 # required anymore (the name argument was introduced in pytest version 3.0).
 @pytest.fixture(scope="function")
-def app(request, test_config):
+def app(test_config, requests_mock):
     """Create web app and Mock Metax HTTP responses.
 
     :returns: An instance of the REST API web app.
@@ -302,12 +326,7 @@ def app(request, test_config):
     os.mkdir(tmp_dir)
 
     # Mock Metax
-    def _fin():
-        httpretty.reset()
-        httpretty.disable()
-    httpretty.enable()
-    request.addfinalizer(_fin)
-    mock_metax()
+    _mock_metax(requests_mock)
 
     return app_
 
