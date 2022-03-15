@@ -71,25 +71,6 @@ def _get_file(identifier, file_storage, file_format=None, version=None):
     return file_
 
 
-def _add_files_to_dataset(files, dataset):
-    """Add files to dataset.
-
-    :param: files: file identifier to be added
-    :param: dataset
-    :returns: ``None``
-    """
-    for _file in files:
-        files = dataset["research_dataset"]["files"]
-        files.append({
-            "identifier": _file,
-            "use_category": {
-                "pref_label": {
-                    "en": "label2"
-                }
-            }
-        })
-
-
 def _json_from_file(filepath):
     """Deserialize JSON object from a file and return it as a Python object"""
     with open(filepath) as json_file:
