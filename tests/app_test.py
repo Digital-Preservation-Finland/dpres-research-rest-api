@@ -15,65 +15,6 @@ from siptools_research.exceptions import InvalidDatasetError
 
 from research_rest_api.app import create_app
 
-BASE_DATASET = {
-    "identifier": "valid_dataset",
-    "contract": {
-        "id": 1,
-        "identifier": "contract"
-    },
-    "preservation_identifier": "foo",
-    "research_dataset": {
-        "provenance": [
-            {
-                "type": {
-                    "pref_label": {
-                        "en": "creation"
-                    }
-                },
-                "temporal": {
-                    "end_date": "2014-12-31T08:19:58Z",
-                    "start_date": "2014-01-01T08:19:58Z"
-                },
-                "description": {
-                    "en": "Description of provenance"
-                },
-                "preservation_event": {
-                    "identifier": "some:id",
-                    "pref_label": {
-                        "en": "Pre-severing"
-                    }
-                },
-                "event_outcome": {
-                    "pref_label": {
-                        "en": "(:unav)"
-                    }
-                },
-                "outcome_description": {
-                    "en": "Value unavailable, possibly unknown"
-                }
-            }
-        ],
-        "files": [
-            {
-                "identifier": "pid:urn:1",
-                "use_category": {
-                    "pref_label": {
-                        "en": "label1"
-                    }
-                }
-            },
-            {
-                "identifier": "pid:urn:2",
-                "use_category": {
-                    "pref_label": {
-                        "en": "label2"
-                    }
-                }
-            }
-        ]
-    }
-}
-
 BASE_FILE = {
     "file_storage": {},
     "parent_directory": {
@@ -401,18 +342,20 @@ def test_validate_metadata(app, requests_mock):
 
     :returns: None
     """
-    with open('tests/data/metax_metadata/valid_dataset.json') as file_:
-        mocked_response = json.load(file_)
-    requests_mock.get("https://metaksi/rest/v2/datasets/1",
-                      json=mocked_response)
+    requests_mock.get(
+        "https://metaksi/rest/v2/datasets/1",
+        json=_json_from_file(
+            'tests/data/metax_metadata/valid_dataset.json')
+    )
 
-    with open("tests/data/metax_metadata/contract.json") as file_:
-        mocked_response = json.load(file_)
-    requests_mock.get("https://metaksi/rest/v2/contracts/contract",
-                      json=mocked_response)
+    requests_mock.get(
+        "https://metaksi/rest/v2/contracts/contract",
+        json=_json_from_file(
+            'tests/data/metax_metadata/contract.json')
+    )
 
-    with open('tests/data/metax_metadata/valid_dataset_files.json') as file_:
-        mocked_response = json.load(file_)
+    mocked_response = _json_from_file(
+        'tests/data/metax_metadata/valid_dataset_files.json')
     requests_mock.get("https://metaksi/rest/v2/datasets/valid_dataset/files",
                       json=mocked_response)
     requests_mock.get("https://metaksi/rest/v2/datasets/1/files",
@@ -569,7 +512,11 @@ def test_validate_files(app, requests_mock, ida_status_code, file_format,
     :returns: None
     """
     # Mock Metax
-    requests_mock.get("https://metaksi/rest/v2/datasets/1", json=BASE_DATASET)
+    requests_mock.get(
+        "https://metaksi/rest/v2/datasets/1",
+        json=_json_from_file(
+            'tests/data/metax_metadata/valid_dataset3_files.json')
+    )
     files = [_get_file('pid:urn:1', 'ida', file_format),
              _get_file('pid:urn:2', 'ida', file_format)]
     requests_mock.get("https://metaksi/rest/v2/datasets/1/files", json=files)
