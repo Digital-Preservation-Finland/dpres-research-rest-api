@@ -1,5 +1,4 @@
 """Tests for ``research_rest_api.app`` module."""
-import re
 import json
 import os
 import copy
@@ -78,111 +77,6 @@ def _json_from_file(filepath):
     return content
 
 
-def _mock_metax(requests_mock):
-    """Mock Metax using requests_mock.
-
-    Serve on valid metadata for dataset "1", and associated file "pid:urn:1"
-    and "pid:urn:2".
-    """
-    requests_mock.get(
-        'https://metaksi/rest/v2/datasets/1/files',
-        json=_json_from_file(
-            'tests/data/metax_metadata/valid_dataset_files.json'
-        )
-    )
-
-    requests_mock.get(
-        'https://metaksi/rest/v2/datasets/valid_dataset/files',
-        json=_json_from_file(
-            'tests/data/metax_metadata/valid_dataset_files.json'
-        )
-    )
-
-    requests_mock.get(
-         'https://metaksi/rest/v2/datasets/3/files',
-        json=_json_from_file(
-            'tests/data/metax_metadata/valid_dataset3_files.json'
-        )
-    )
-
-    requests_mock.get(
-        'https://metaksi/rest/v2/datasets/valid_dataset3/files',
-        json=_json_from_file(
-            'tests/data/metax_metadata/valid_dataset3_files.json'
-        )
-    )
-
-    requests_mock.get(
-        'https://metaksi/rest/v2/datasets/1?include_user_metadata=true',
-        json=_json_from_file(
-            'tests/data/metax_metadata/valid_dataset.json',
-        )
-    )
-
-    requests_mock.patch(
-        'https://metaksi/rest/v2/datasets/1?include_user_metadata=true',
-        json=_json_from_file(
-            'tests/data/metax_metadata/valid_dataset.json',
-        )
-    )
-
-    requests_mock.get(
-        'https://metaksi/rest/v2/datasets/2?include_user_metadata=true',
-        json=_json_from_file(
-            'tests/data/metax_metadata/invalid_dataset2.json',
-        )
-    )
-
-    requests_mock.patch(
-        'https://metaksi/rest/v2/datasets/2?include_user_metadata=true',
-        json=_json_from_file(
-            'tests/data/metax_metadata/invalid_dataset2.json',
-        )
-    )
-
-    requests_mock.get(
-        "https://metaksi/rest/v2/datasets/3?include_user_metadata=true",
-        json=_json_from_file(
-            "tests/data/metax_metadata/valid_dataset3.json",
-        )
-    )
-
-    requests_mock.patch(
-        "https://metaksi/rest/v2/datasets/3?include_user_metadata=true",
-        json=_json_from_file(
-            "tests/data/metax_metadata/valid_dataset3.json",
-        )
-    )
-
-    requests_mock.get(
-        ("https://metaksi/rest/v2/datasets/not_available_id?"
-         "include_user_metadata=true"),
-        json=_json_from_file(
-            "tests/data/metax_metadata/not_found.json",
-        ),
-        status_code=404
-    )
-
-    requests_mock.get(
-        "https://metaksi/rest/v2/datasets/not_available_id/files",
-        json=_json_from_file(
-            "tests/data/metax_metadata/not_found.json",
-        ),
-        status_code=404
-    )
-
-    requests_mock.get(
-        "https://metaksi/rest/v2/contracts/contract",
-        json=_json_from_file(
-            "tests/data/metax_metadata/contract.json",
-        )
-    )
-
-    requests_mock.post(
-        re.compile('https://metaksi/rpc/(.*)'),
-    )
-
-
 # TODO: Use the name argument for pytest.fixture decorator to solve the
 # funcarg-shadowing-fixture problem, when support for pytest version 2.x is not
 # required anymore (the name argument was introduced in pytest version 3.0).
@@ -228,7 +122,7 @@ def test_config(tmpdir):
 # funcarg-shadowing-fixture problem, when support for pytest version 2.x is not
 # required anymore (the name argument was introduced in pytest version 3.0).
 @pytest.fixture(scope="function")
-def app(test_config, requests_mock):
+def app(test_config):
     """Create web app and Mock Metax HTTP responses.
 
     :returns: An instance of the REST API web app.
@@ -246,9 +140,6 @@ def app(test_config, requests_mock):
     os.mkdir(cache_dir)
     tmp_dir = os.path.join(conf.get("packaging_root"), "tmp")
     os.mkdir(tmp_dir)
-
-    # Mock Metax
-    _mock_metax(requests_mock)
 
     return app_
 
@@ -367,11 +258,18 @@ def test_validate_metadata(app, requests_mock):
     assert response_body["is_valid"] is True
 
 
-def test_validate_metadata_invalid_dataset(app):
+def test_validate_metadata_invalid_dataset(app, requests_mock):
     """Test the validate metadata endpoint with invalid dataset metadata.
 
     :returns: None
     """
+    # Mock Metax
+    requests_mock.get(
+        'https://metaksi/rest/v2/datasets/2?include_user_metadata=true',
+        json=_json_from_file(
+            'tests/data/metax_metadata/invalid_dataset2.json')
+    )
+
     # Test the response
     with app.test_client() as client:
         response = client.post('/dataset/2/validate/metadata')
@@ -391,11 +289,28 @@ def test_validate_metadata_invalid_dataset(app):
 
 
 # pylint: disable=invalid-name
-def test_validate_metadata_invalid_file(app):
+def test_validate_metadata_invalid_file(app, requests_mock):
     """Test the validate metadata end point with invalid file metadata.
 
     returns: ``None``
     """
+    # Mock Metax
+    requests_mock.get(
+        'https://metaksi/rest/v2/datasets/valid_dataset3/files',
+        json=_json_from_file(
+            'tests/data/metax_metadata/valid_dataset3_files.json')
+    )
+    requests_mock.get(
+        "https://metaksi/rest/v2/datasets/3?include_user_metadata=true",
+        json=_json_from_file(
+            "tests/data/metax_metadata/valid_dataset3.json")
+    )
+    requests_mock.get(
+        "https://metaksi/rest/v2/contracts/contract",
+        json=_json_from_file(
+            "tests/data/metax_metadata/contract.json")
+    )
+
     with app.test_client() as client:
         response = client.post("/dataset/3/validate/metadata")
     assert response.status_code == 200
@@ -415,13 +330,28 @@ def test_validate_metadata_invalid_file(app):
     ('validate/metadata', 'validate/files', 'preserve', 'genmetadata')
 )
 # pylint: disable=invalid-name
-def test_dataset_unavailable(app, action):
+def test_dataset_unavailable(app, action, requests_mock):
     """Test actions for dataset that is unavailable from Metax.
 
     API should respond with clear error message.
 
     :returns: ``None``
     """
+    # Mock Metax
+    requests_mock.get(
+        ("https://metaksi/rest/v2/datasets/not_available_id?"
+         "include_user_metadata=true"),
+        json=_json_from_file(
+            "tests/data/metax_metadata/not_found.json"),
+        status_code=404
+    )
+    requests_mock.get(
+        "https://metaksi/rest/v2/datasets/not_available_id/files",
+        json=_json_from_file(
+            "tests/data/metax_metadata/not_found.json"),
+        status_code=404
+    )
+
     # Test the response
     with app.test_client() as client:
         response = client.post('/dataset/not_available_id/{}'.format(action))
