@@ -96,7 +96,7 @@ def test_config(tmpdir):
 
     config = "\n".join([
         "[siptools_research]",
-        "packaging_root = {}".format(temp_spool_path),
+        f"packaging_root = {temp_spool_path}",
         "mongodb_host = localhost",
         "mongodb_database = siptools-research",
         "mongodb_collection = workflow",
@@ -355,7 +355,7 @@ def test_dataset_unavailable(app, action, requests_mock):
 
     # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/not_available_id/{}'.format(action))
+        response = client.post(f'/dataset/not_available_id/{action}')
     assert response.status_code == 404
 
     # Check the body of response
