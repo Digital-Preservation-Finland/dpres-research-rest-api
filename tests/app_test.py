@@ -72,7 +72,7 @@ def _get_file(identifier, file_storage, file_format=None, version=None):
 
 def _json_from_file(filepath):
     """Deserialize JSON object from a file and return it as a Python object"""
-    with open(filepath) as json_file:
+    with open(filepath, "rb") as json_file:
         content = json.load(json_file)
     return content
 
@@ -112,7 +112,7 @@ def test_config(tmpdir):
         "pas_storage_id = urn:nbn:fi:att:file-storage-pas"
     ])
 
-    with open(str(temp_config_path), "w+") as config_file:
+    with open(str(temp_config_path), "w+", encoding="utf-8") as config_file:
         config_file.write(config)
 
     return str(temp_config_path)
@@ -238,7 +238,8 @@ def test_validate_metadata(app, requests_mock):
 
     requests_mock.patch("https://metaksi/rest/v2/datasets/1", json={})
 
-    with open("tests/data/metax_metadata/valid_datacite.xml") as file_:
+    with open("tests/data/metax_metadata/valid_datacite.xml", "r",
+              encoding="utf-8") as file_:
         mocked_response = file_.read()
     requests_mock.get(
         ("https://metaksi/rest/v2/datasets/1?dataset_format=datacite&"
