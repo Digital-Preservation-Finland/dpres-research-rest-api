@@ -80,9 +80,9 @@ e2e-distributed-provision-preservation: .e2e/ansible-fetch-preservation
 e2e-test:
 	pytest-3 -svvv --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/e2e
 
-e2e-localhost-provision: e2e-localhost-provision-preservation e2e-localhost-provision-fairdata
+e2e-localhost-provision: e2e-localhost-provision-fairdata e2e-localhost-provision-preservation
 
-e2e-distributed-provision: e2e-distributed-provision-preservation e2e-distributed-provision-fairdata
+e2e-distributed-provision: e2e-distributed-provision-fairdata e2e-distributed-provision-preservation
 
 e2e-localhost: e2e-localhost-cleanup e2e-localhost-provision e2e-test
 
