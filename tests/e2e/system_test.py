@@ -35,6 +35,8 @@ from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
 
 from tusclient.client import TusClient
 
+from tests.utils import wait_for
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 METAX_API_URL = "https://metax.localhost:8443/rest/v2"
@@ -298,22 +300,26 @@ def _assert_preservation(dataset_identifier):
         )
         assert response.status_code == 202
 
-        # wait until dataset marked to be in digital preservation (state = 120)
-        # max wait time 5 minutes should be enough
-        counter = 0
-        passtate = DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION
-        while (counter < 60 and
-               passtate != DS_STATE_IN_DIGITAL_PRESERVATION and
-               passtate != DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE):
+        def _get_passtate(dataset_identifier):
             response = requests.get(
                 f'{ADMIN_API_URL}/datasets/{dataset_identifier}',
                 verify=False
             )
             assert response.status_code == 200
-            passtate = response.json()['passtate']
-            time.sleep(5)
-            counter += 1
-        assert passtate == DS_STATE_IN_DIGITAL_PRESERVATION
+            return response.json()['passtate']
+
+        # wait until dataset marked to be in digital preservation (state = 120)
+        # max wait time 5 minutes should be enough
+        wait_for(
+            lambda: _get_passtate(dataset_identifier) in (
+                DS_STATE_IN_DIGITAL_PRESERVATION,
+                DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE
+            ),
+            timeout=300,
+            interval=5
+        )
+        assert _get_passtate(dataset_identifier) \
+            == DS_STATE_IN_DIGITAL_PRESERVATION
     finally:
         print("===========================================================")
         print("Last response:")
