@@ -42,24 +42,9 @@ REQUESTS_SESSION.verify = False
 
 
 def _init_upload_rest_api():
-    """Add identifiers html_file_local and tiff_file_local to upload.files
-    collection and create user test:test
-    """
+    """Create user test:test to upload-rest-api."""
     upload_database = upload_rest_api.database.Database()
-    # Adding identifiers
-    files = upload_database.files
     project_path = pathlib.Path("/var/spool/upload/projects/test_project")
-    identifiers = [
-        {
-            "_id": "valid_tiff_local",
-            "file_path":  str(project_path / "valid_tiff ä.tiff")
-        },
-        {
-            "_id": "html_file_local",
-            "file_path":  str(project_path / "html_file")
-        }
-    ]
-    files.insert(identifiers)
 
     # Creating test user. Project directory is created first to ensure
     # correct directory ownership.
@@ -70,6 +55,16 @@ def _init_upload_rest_api():
     upload_database.projects.create("test_project")
     upload_database.user("test").create(
         projects=["test_project"], password="test"
+    )
+
+
+def _add_test_identifier(file_path, identifier):
+    """Add identifier to a file document in upload.files collection."""
+    project_path = pathlib.Path("/var/spool/upload/projects/test_project")
+    upload_database = upload_rest_api.database.Database()
+    upload_database.files.files.update_one(
+        {"_id": str(project_path / file_path)},
+        {"$set": {"identifier": identifier}}
     )
 
 
@@ -150,6 +145,8 @@ def test_tpas_preservation(filestorage, dataset_id):
             )
         assert response.status_code == 200
 
+        _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
+
         # Test that file metadata can be retrieved from files API
         response = REQUESTS_SESSION.get(
             "%s/files/test_project/valid_tiff ä.tiff" % UPLOAD_API_URL,
@@ -168,6 +165,8 @@ def test_tpas_preservation(filestorage, dataset_id):
                 data=_file
             )
         assert response.status_code == 200
+
+        _add_test_identifier("html_file", "html_file_local")
 
     response = REQUESTS_SESSION.get('{}/datasets/{}'.format(ADMIN_API_URL,
                                                             dataset_id))
