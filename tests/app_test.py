@@ -6,7 +6,7 @@ import copy
 import mongomock
 import pymongo
 import pytest
-import mock
+from unittest import mock
 
 import upload_rest_api
 from siptools_research.config import Configuration
@@ -238,7 +238,7 @@ def test_validate_metadata(app, requests_mock):
 
     requests_mock.patch("https://metaksi/rest/v2/datasets/1", json={})
 
-    with open("tests/data/metax_metadata/valid_datacite.xml", "r",
+    with open("tests/data/metax_metadata/valid_datacite.xml",
               encoding="utf-8") as file_:
         mocked_response = file_.read()
     requests_mock.get(

@@ -11,7 +11,6 @@ git+https://gitlab.ci.csc.fi/dpres/metax-access.git@develop#egg=metax_access
 # testing requirements
 coverage
 pytest-cov
-mock
 urllib3
 git+https://gitlab.ci.csc.fi/dpres/upload-rest-api.git@develop#egg=upload_rest_api
 requests_mock<=1.7.0
