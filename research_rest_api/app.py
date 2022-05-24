@@ -26,10 +26,7 @@ def create_app():
 
     """
     app = Flask(__name__)
-    try:
-        app.config.from_pyfile('tests/data/research_rest_api.conf')
-    except FileNotFoundError:
-        app.config.from_object('research_rest_api.default_config')
+    app.config.from_object('research_rest_api.default_config')
 
     CORS(app, resources={r"/*": {"origins": "*"}},
          supports_credentials=True)
