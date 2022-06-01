@@ -129,6 +129,18 @@ def setup_e2e():
         )
 
 
+def _check_uploaded_file(name, identifier, md5):
+    """Check that the uploaded file was saved with the expected metadata."""
+    response = REQUESTS_SESSION.get(
+        f"{UPLOAD_API_URL}/files/test_project/{name}",
+        auth=("test", "test")
+    )
+    assert response.status_code == 200
+    assert response.json()['file_path'] == f"/{name}"
+    assert response.json()['identifier'] == identifier
+    assert response.json()['md5'] == md5
+
+
 @pytest.mark.parametrize("filestorage, dataset_id",
                          [("ida", 100), ("local", 101), ("local_tus", 101)])
 def test_tpas_preservation(filestorage, dataset_id):
@@ -153,14 +165,11 @@ def test_tpas_preservation(filestorage, dataset_id):
         _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
 
         # Test that file metadata can be retrieved from files API
-        response = REQUESTS_SESSION.get(
-            "%s/files/test_project/valid_tiff ä.tiff" % UPLOAD_API_URL,
-            auth=("test", "test")
+        _check_uploaded_file(
+            name="valid_tiff ä.tiff",
+            identifier="valid_tiff_local",
+            md5="3cf7c3b90f5a52b2f817a1c5b3bfbc52"
         )
-        assert response.status_code == 200
-        assert response.json()['file_path'] == '/valid_tiff ä.tiff'
-        assert response.json()['identifier'] == 'valid_tiff_local'
-        assert response.json()['md5'] == '3cf7c3b90f5a52b2f817a1c5b3bfbc52'
 
         # POST html file
         with open("tests/data/e2e_files/html_file/download", "rb") as _file:
@@ -170,6 +179,13 @@ def test_tpas_preservation(filestorage, dataset_id):
                 data=_file
             )
         assert response.status_code == 200
+
+        _add_test_identifier("html_file", "html_file_local")
+        _check_uploaded_file(
+            name="html_file",
+            identifier="html_file_local",
+            md5="31ff97b5791a2050f08f471d6205f785"
+        )
     elif filestorage == "local_tus":
         _init_upload_rest_api()
 
@@ -194,15 +210,12 @@ def test_tpas_preservation(filestorage, dataset_id):
             verify_tls_cert=False
         ).upload()
 
-        # Test that file metadata can be retrieved from files API
-        response = REQUESTS_SESSION.get(
-            f"{UPLOAD_API_URL}/files/test_project/valid_tiff ä.tiff",
-            auth=("test", "test")
+        _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
+        _check_uploaded_file(
+            name="valid_tiff ä.tiff",
+            identifier="valid_tiff_local",
+            md5="3cf7c3b90f5a52b2f817a1c5b3bfbc52"
         )
-        assert response.status_code == 200
-        assert response.json()['file_path'] == '/valid_tiff ä.tiff'
-        assert response.json()['identifier'] == 'valid_tiff_local'
-        assert response.json()['md5'] == '3cf7c3b90f5a52b2f817a1c5b3bfbc52'
 
         tus_client.uploader(
             "tests/data/e2e_files/html_file/download",
@@ -217,6 +230,11 @@ def test_tpas_preservation(filestorage, dataset_id):
         ).upload()
 
         _add_test_identifier("html_file", "html_file_local")
+        _check_uploaded_file(
+            name="html_file",
+            identifier="html_file_local",
+            md5="31ff97b5791a2050f08f471d6205f785"
+        )
 
     response = REQUESTS_SESSION.get('{}/datasets/{}'.format(ADMIN_API_URL,
                                                             dataset_id))
