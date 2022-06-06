@@ -27,7 +27,6 @@ BuildRequires:  python3-mongomock
 BuildRequires:  python36-pytest-catchlog
 BuildRequires:  python3-requests-mock
 BuildRequires:  python3-upload-rest-api
-BuildRequires:  python3-tuspy
 
 %description
 REST API for metadata validation and SIP creation triggering
