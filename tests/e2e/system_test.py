@@ -18,6 +18,7 @@ Metax(metax-mockup) and IDA services are mocked.
 import json
 import pathlib
 import subprocess
+import base64
 import time
 
 import pytest
@@ -31,6 +32,8 @@ from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
                           DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
                           DS_STATE_VALID_METADATA)
+
+from tusclient.client import TusClient
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -125,7 +128,7 @@ def setup_e2e():
 
 
 @pytest.mark.parametrize("filestorage, dataset_id",
-                         [("ida", 100), ("local", 101)])
+                         [("ida", 100), ("local", 101), ("local_tus", 102)])
 def test_tpas_preservation(filestorage, dataset_id):
     """Test the whole preservation workflow using both IDA and upload-rest-api.
     """
@@ -165,6 +168,51 @@ def test_tpas_preservation(filestorage, dataset_id):
                 data=_file
             )
         assert response.status_code == 200
+    elif filestorage == "local_tus":
+        _init_upload_rest_api()
+
+        auth_value = base64.b64encode(b"test:test").decode("utf-8")
+        tus_client = TusClient(
+            f"{UPLOAD_API_URL}/files_tus",
+            headers={
+                "Authorization": f"Basic {auth_value}"
+            }
+        )
+
+        # Upload TIFF file
+        tus_client.uploader(
+            "tests/data/e2e_files/valid_tiff/download",
+            metadata={
+                "filename": "valid_tiff ä.tiff",
+                "project_id": "test_project",
+                "upload_path": "valid_tiff ä.tiff",
+                "type": "file"
+            },
+            metadata_encoding="utf-8",
+            verify_tls_cert=False
+        ).upload()
+
+        # Test that file metadata can be retrieved from files API
+        response = REQUESTS_SESSION.get(
+            f"{UPLOAD_API_URL}/files/test_project/valid_tiff ä.tiff",
+            auth=("test", "test")
+        )
+        assert response.status_code == 200
+        assert response.json()['file_path'] == '/valid_tiff ä.tiff'
+        assert response.json()['identifier'] == 'valid_tiff_local'
+        assert response.json()['md5'] == '3cf7c3b90f5a52b2f817a1c5b3bfbc52'
+
+        tus_client.uploader(
+            "tests/data/e2e_files/html_file/download",
+            metadata={
+                "filename": "html_file",
+                "project_id": "test_project",
+                "upload_path": "html_file",
+                "type": "file"
+            },
+            metadata_encoding="utf-8",
+            verify_tls_cert=False
+        ).upload()
 
         _add_test_identifier("html_file", "html_file_local")
 
