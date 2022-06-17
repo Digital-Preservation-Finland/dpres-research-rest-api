@@ -5,6 +5,10 @@ ETC = ${ROOT}/etc
 SHAREDIR = ${ROOT}${PREFIX}/share/dpres-research-rest-api
 
 PYTHON ?= python3
+PRESERVATION_ANSIBLE_BRANCH ?= develop
+FAIRDATA_ANSIBLE_BRANCH ?= develop
+RPM_REPOS ?= '"stable","master","develop"'
+
 
 all: info
 
@@ -111,6 +115,7 @@ clean: clean-rpm
 	rm -f coverage.xml
 	rm -rf htmlcov
 	rm -f junit.xml
+	rm -rf .e2e
 
 clean-rpm:
 	rm -rf rpmbuild
