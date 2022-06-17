@@ -15,8 +15,9 @@ from research_rest_api.app import create_app
 
 
 # TODO: Use the name argument for pytest.fixture decorator to solve the
-# funcarg-shadowing-fixture problem, when support for pytest version 2.x is not
-# required anymore (the name argument was introduced in pytest version 3.0).
+# funcarg-shadowing-fixture problem, when support for pytest version 2.x
+# is not required anymore (the name argument was introduced in pytest
+# version 3.0).
 @pytest.fixture(scope="function")
 def test_config(tmpdir):
     """Create a test configuration for siptools-research.
@@ -56,8 +57,9 @@ def test_config(tmpdir):
 
 
 # TODO: Use the name argument for pytest.fixture decorator to solve the
-# funcarg-shadowing-fixture problem, when support for pytest version 2.x is not
-# required anymore (the name argument was introduced in pytest version 3.0).
+# funcarg-shadowing-fixture problem, when support for pytest version 2.x
+# is not required anymore (the name argument was introduced in pytest
+# version 3.0).
 @pytest.fixture(scope="function")
 def app(test_config):
     """Create web app and Mock Metax HTTP responses.

@@ -19,7 +19,6 @@ import json
 import pathlib
 import subprocess
 import base64
-import time
 
 import pytest
 import requests
@@ -104,13 +103,11 @@ DIRS_TO_CLEAR = (
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_e2e():
-    """
-    Cleanup procedure executed before each E2E test
-    """
+    """Cleanup procedure executed before each E2E test."""
     upload_db = upload_rest_api.database.Database()
 
-    # Clear all applicable MongoDB collections
-    # This does *not* remove indexes, matching the pre-test state more closely
+    # Clear all applicable MongoDB collections. This does *not* remove
+    # indexes, matching the pre-test state more closely.
     for db_name, collections in MONGO_COLLECTIONS_TO_CLEAR.items():
         mongo_db = getattr(upload_db.client, db_name)
 
@@ -156,7 +153,7 @@ def test_tpas_preservation(filestorage, dataset_id):
         # POST tiff file
         with open("tests/data/e2e_files/valid_tiff/download", "rb") as _file:
             response = REQUESTS_SESSION.post(
-                "%s/files/test_project/valid_tiff ä.tiff" % UPLOAD_API_URL,
+                f"{UPLOAD_API_URL}/files/test_project/valid_tiff ä.tiff",
                 auth=("test", "test"),
                 data=_file
             )
@@ -174,7 +171,7 @@ def test_tpas_preservation(filestorage, dataset_id):
         # POST html file
         with open("tests/data/e2e_files/html_file/download", "rb") as _file:
             response = REQUESTS_SESSION.post(
-                "%s/files/test_project/html_file" % UPLOAD_API_URL,
+                f"{UPLOAD_API_URL}/files/test_project/html_file",
                 auth=("test", "test"),
                 data=_file
             )
@@ -236,15 +233,14 @@ def test_tpas_preservation(filestorage, dataset_id):
             md5="31ff97b5791a2050f08f471d6205f785"
         )
 
-    response = REQUESTS_SESSION.get('{}/datasets/{}'.format(ADMIN_API_URL,
-                                                            dataset_id))
+    response = REQUESTS_SESSION.get(f'{ADMIN_API_URL}/datasets/{dataset_id}')
     assert response.status_code == 200
     assert response.json()['passtate'] == DS_STATE_INITIALIZED
     _assert_preservation(response.json()['identifier'])
 
 
 def _assert_preservation(dataset_identifier):
-    """ Run the whole preservation workflow"""
+    """Run the whole preservation workflow."""
     try:
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/propose',
@@ -258,8 +254,8 @@ def _assert_preservation(dataset_identifier):
         assert passtate == DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION
         assert response.json()['passtateReasonDesc'] == 'Proposing'
         response = REQUESTS_SESSION.post(
-            '{}/research/dataset/{}/genmetadata'.format(ADMIN_API_URL,
-                                                        dataset_identifier)
+            f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}'
+            '/genmetadata'
         )
         assert response.status_code == 200
         response = REQUESTS_SESSION.get(
@@ -269,9 +265,8 @@ def _assert_preservation(dataset_identifier):
         passtate = response.json()['passtate']
         assert passtate == DS_STATE_TECHNICAL_METADATA_GENERATED
         response = REQUESTS_SESSION.post(
-            '{}/research/dataset/{}/validate/metadata'.format(
-                ADMIN_API_URL, dataset_identifier
-            )
+           f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}/validate'
+           '/metadata'
         )
         assert response.status_code == 200
         response = REQUESTS_SESSION.get(
@@ -280,8 +275,8 @@ def _assert_preservation(dataset_identifier):
         assert response.status_code == 200
         assert response.json()['passtate'] == DS_STATE_VALID_METADATA
         response = REQUESTS_SESSION.post(
-            '{}/research/dataset/{}/validate/files'.format(ADMIN_API_URL,
-                                                           dataset_identifier)
+            f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}'
+            '/validate/files'
         )
         assert response.status_code == 200
         response = REQUESTS_SESSION.get(
@@ -300,8 +295,8 @@ def _assert_preservation(dataset_identifier):
         assert response.status_code == 200
         assert response.json()['passtate'] == DS_STATE_METADATA_CONFIRMED
         response = REQUESTS_SESSION.post(
-            '{}/datasets/{}/preserve'.format(ADMIN_API_URL,
-                                             dataset_identifier))
+            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/preserve'
+        )
         assert response.status_code == 200
         response = REQUESTS_SESSION.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
@@ -313,8 +308,7 @@ def _assert_preservation(dataset_identifier):
             # switch to pas dataset
             dataset_identifier = response.json()['pasDatasetIdentifier']
         response = REQUESTS_SESSION.post(
-            '{}/research/dataset/{}/preserve'.format(ADMIN_API_URL,
-                                                     dataset_identifier)
+            f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}/preserve'
         )
         assert response.status_code == 202
 
@@ -326,8 +320,8 @@ def _assert_preservation(dataset_identifier):
             assert response.status_code == 200
             return response.json()['passtate']
 
-        # wait until dataset marked to be in digital preservation (state = 120)
-        # max wait time 5 minutes should be enough
+        # Wait until dataset marked to be in digital preservation
+        # (state = 120). Max wait time 5 minutes should be enough.
         wait_for(
             lambda: _get_passtate(dataset_identifier) in (
                 DS_STATE_IN_DIGITAL_PRESERVATION,
