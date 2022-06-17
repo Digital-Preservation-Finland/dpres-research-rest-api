@@ -1,14 +1,15 @@
-"""Fairdata siptools workflow system test
+"""Fairdata siptools workflow system test.
 
-This is a e2e test for verifying the fairdata siptools workflow functionality.
-The test simulates the Management UI (admin-web-ui) by using the REST APIs
-(admin-rest-api and research-rest-api) to propose, generate metadata, validate
-metadata, confirm and finally accept the dataset for digital preservation. The
-test waits until the preservation_state of the dataset will be changed to "In
-digital Preservation"(120). This means that the created SIP has been accepted
-for digital preservation by the preservation system.
+This is a e2e test for verifying the Fairdata digital preservation
+system functionality. The test simulates the Management interface
+(fddps-frontend) by using the API (admin-rest-api) to propose, generate
+metadata, validate metadata, confirm and finally accept the dataset for
+digital preservation. The test waits until the preservation_state of the
+dataset will be changed to "In digital Preservation" (120). This means
+that the created SIP has been accepted for digital preservation by the
+digital preservation system.
 
-The test dataset contains one HTML file and one TIFF file
+The test dataset contains one HTML file and one TIFF file.
 
 System environment setup
 ------------------------
