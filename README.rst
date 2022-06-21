@@ -74,6 +74,38 @@ To run this you need to have standard Python tools installed (e.g. pip).
 
 	FLASK_APP=run.py python -mflask run
 
+E2E testing
+-----------
+The E2E test in this repository does not test just the packaging REST API. It
+is a E2E test for the whole Fairdata digital preservation service. The test
+will install Digital Preservation System and Fairdata Digital Preservation
+Service on localhost.
+
+Install requirements::
+
+        yum install ansible python36-pytest python2-pip
+
+Alternatively, if you want to run test in virtual environment, install ansible
+and pytest in virtual environment using pip. Ansible-preservation-system does
+not work with newest ansible versions, but the version available on Centos 7
+should work. The test will use pytest from executable `pytest-3`::
+
+        pip install ansible==2.9.7 pytest
+        ln -s $VIRTUAL_ENV/bin/pytest $VIRTUAL_ENV/bin/pytest-3
+
+Choose RPM repositories to be used in test::
+
+        export RPM_REPOS='"stable","master","develop"'
+
+Choose the branch of ansible playbooks used for provisioning::
+
+        export PRESERVATION_ANSIBLE_BRANCH=develop
+        export FAIRDATA_ANSIBLE_BRANCH=develop
+
+Run e2e test::
+
+        make e2e-localhost
+
 
 Copyright
 ---------
