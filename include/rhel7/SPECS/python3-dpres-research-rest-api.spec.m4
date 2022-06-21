@@ -21,7 +21,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 Requires:       python3 python36-flask python3-flask-cors httpd python3-mod_wsgi
 Requires:       python3-dpres-siptools-research python3-metax-access
-BuildRequires:  python3-setuptools
+BuildRequires:  python3-setuptools python36-setuptools_scm
 BuildRequires:  python36-mock
 BuildRequires:  python3-mongomock
 BuildRequires:  python36-pytest-catchlog
@@ -41,7 +41,7 @@ find %{_sourcedir}
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install PREFIX="%{_prefix}" ROOT="%{buildroot}"
+make install PREFIX="%{_prefix}" ROOT="%{buildroot}" SETUPTOOLS_SCM_PRETEND_VERSION=%{file_version}
 
 %post
 

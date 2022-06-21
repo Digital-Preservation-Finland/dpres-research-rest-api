@@ -3,7 +3,6 @@
 import sys
 
 from setuptools import setup, find_packages
-from version import get_version
 from setuptools.command.test import test as TestCommand
 
 
@@ -34,6 +33,8 @@ def main():
     setup(
         name='dpres-research-rest-api',
         packages=find_packages(exclude=['tests', 'tests.*']),
+        setup_requires=['setuptools_scm'],
+        use_scm_version=True,
         install_requires=[
             "flask",
             "flask-cors",
@@ -43,8 +44,8 @@ def main():
             "dpres-siptools-research.git@develop",
         ],
         tests_require=['pytest'],
-        cmdclass={'test': PyTest},
-        version=get_version())
+        cmdclass={'test': PyTest}
+    )
 
 
 if __name__ == '__main__':
