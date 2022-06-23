@@ -121,10 +121,15 @@ def setup_e2e():
 
     for path in DIRS_TO_CLEAR:
         subprocess.run(
-            # `-mount` ensures other filesystems (eg. sshfs) are not touched
+            # `-mount` ensures other filesystems (eg. sshfs) are not
+            # touched
             ["sudo", "find", path, "-mount", "-mindepth", "1", "-delete"],
             check=False
         )
+
+    # Reset Metax mock
+    response = REQUESTS_SESSION.post(f'{METAX_API_URL}/reset')
+    assert response.status_code == 200
 
 
 def _check_uploaded_file(name, identifier, md5):
@@ -139,110 +144,126 @@ def _check_uploaded_file(name, identifier, md5):
     assert response.json()['md5'] == md5
 
 
-@pytest.mark.parametrize("filestorage, dataset_id",
-                         [("ida", 100), ("local", 101), ("local_tus", 102)])
-def test_tpas_preservation(filestorage, dataset_id):
-    """Test the whole preservation workflow using both IDA and upload-rest-api.
-    """
-    response = REQUESTS_SESSION.post(f'{METAX_API_URL}/reset')
+def test_preservation_local():
+    """Test the preservation workflow using upload-rest-api."""
+    # Initialize upload-rest-api
+    _init_upload_rest_api()
+
+    # POST tiff file
+    with open("tests/data/e2e_files/valid_tiff/download", "rb") as _file:
+        response = REQUESTS_SESSION.post(
+            f"{UPLOAD_API_URL}/files/test_project/valid_tiff ä.tiff",
+            auth=("test", "test"),
+            data=_file
+        )
     assert response.status_code == 200
 
-    # Upload files through upload-rest-api
-    if filestorage == "local":
-        _init_upload_rest_api()
+    _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
 
-        # POST tiff file
-        with open("tests/data/e2e_files/valid_tiff/download", "rb") as _file:
-            response = REQUESTS_SESSION.post(
-                f"{UPLOAD_API_URL}/files/test_project/valid_tiff ä.tiff",
-                auth=("test", "test"),
-                data=_file
-            )
-        assert response.status_code == 200
+    # Test that file metadata can be retrieved from files API
+    _check_uploaded_file(
+        name="valid_tiff ä.tiff",
+        identifier="valid_tiff_local",
+        md5="3cf7c3b90f5a52b2f817a1c5b3bfbc52"
+    )
 
-        _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
-
-        # Test that file metadata can be retrieved from files API
-        _check_uploaded_file(
-            name="valid_tiff ä.tiff",
-            identifier="valid_tiff_local",
-            md5="3cf7c3b90f5a52b2f817a1c5b3bfbc52"
+    # POST html file
+    with open("tests/data/e2e_files/html_file/download", "rb") as _file:
+        response = REQUESTS_SESSION.post(
+            f"{UPLOAD_API_URL}/files/test_project/html_file",
+            auth=("test", "test"),
+            data=_file
         )
-
-        # POST html file
-        with open("tests/data/e2e_files/html_file/download", "rb") as _file:
-            response = REQUESTS_SESSION.post(
-                f"{UPLOAD_API_URL}/files/test_project/html_file",
-                auth=("test", "test"),
-                data=_file
-            )
-        assert response.status_code == 200
-
-        _add_test_identifier("html_file", "html_file_local")
-        _check_uploaded_file(
-            name="html_file",
-            identifier="html_file_local",
-            md5="31ff97b5791a2050f08f471d6205f785"
-        )
-    elif filestorage == "local_tus":
-        _init_upload_rest_api()
-
-        auth_value = base64.b64encode(b"test:test").decode("utf-8")
-        tus_client = TusClient(
-            f"{UPLOAD_API_URL}/files_tus",
-            headers={
-                "Authorization": f"Basic {auth_value}"
-            }
-        )
-
-        # Upload TIFF file
-        tus_client.uploader(
-            "tests/data/e2e_files/valid_tiff/download",
-            metadata={
-                "filename": "valid_tiff ä.tiff",
-                "project_id": "test_project",
-                "upload_path": "valid_tiff ä.tiff",
-                "type": "file"
-            },
-            metadata_encoding="utf-8",
-            verify_tls_cert=False
-        ).upload()
-
-        _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
-        _check_uploaded_file(
-            name="valid_tiff ä.tiff",
-            identifier="valid_tiff_local",
-            md5="3cf7c3b90f5a52b2f817a1c5b3bfbc52"
-        )
-
-        tus_client.uploader(
-            "tests/data/e2e_files/html_file/download",
-            metadata={
-                "filename": "html_file",
-                "project_id": "test_project",
-                "upload_path": "html_file",
-                "type": "file"
-            },
-            metadata_encoding="utf-8",
-            verify_tls_cert=False
-        ).upload()
-
-        _add_test_identifier("html_file", "html_file_local")
-        _check_uploaded_file(
-            name="html_file",
-            identifier="html_file_local",
-            md5="31ff97b5791a2050f08f471d6205f785"
-        )
-
-    response = REQUESTS_SESSION.get(f'{ADMIN_API_URL}/datasets/{dataset_id}')
     assert response.status_code == 200
-    assert response.json()['passtate'] == DS_STATE_INITIALIZED
-    _assert_preservation(response.json()['identifier'])
+
+    _add_test_identifier("html_file", "html_file_local")
+
+    # Test that file metadata can be retrieved from files API
+    _check_uploaded_file(
+        name="html_file",
+        identifier="html_file_local",
+        md5="31ff97b5791a2050f08f471d6205f785"
+    )
+
+    # Test preservation
+    _assert_preservation(
+        "urn:nbn:fi:att:111111111-1111-1111-1111-111111111111"
+    )
+
+
+def test_preservation_local_tus():
+    """Test the preservation workflow using upload-rest-api TUS API."""
+    # Initialize upload-rest-api
+    _init_upload_rest_api()
+
+    auth_value = base64.b64encode(b"test:test").decode("utf-8")
+    tus_client = TusClient(
+        f"{UPLOAD_API_URL}/files_tus",
+        headers={
+            "Authorization": f"Basic {auth_value}"
+        }
+    )
+
+    # Upload TIFF file
+    tus_client.uploader(
+        "tests/data/e2e_files/valid_tiff/download",
+        metadata={
+            "filename": "valid_tiff ä.tiff",
+            "project_id": "test_project",
+            "upload_path": "valid_tiff ä.tiff",
+            "type": "file"
+        },
+        metadata_encoding="utf-8",
+        verify_tls_cert=False
+    ).upload()
+
+    _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
+    _check_uploaded_file(
+        name="valid_tiff ä.tiff",
+        identifier="valid_tiff_local",
+        md5="3cf7c3b90f5a52b2f817a1c5b3bfbc52"
+    )
+
+    tus_client.uploader(
+        "tests/data/e2e_files/html_file/download",
+        metadata={
+            "filename": "html_file",
+            "project_id": "test_project",
+            "upload_path": "html_file",
+            "type": "file"
+        },
+        metadata_encoding="utf-8",
+        verify_tls_cert=False
+    ).upload()
+
+    _add_test_identifier("html_file", "html_file_local")
+    _check_uploaded_file(
+        name="html_file",
+        identifier="html_file_local",
+        md5="31ff97b5791a2050f08f471d6205f785"
+    )
+
+    _assert_preservation(
+        "urn:nbn:fi:att:222222222-2222-2222-2222-222222222222"
+    )
+
+
+def test_preservation_ida():
+    """Test the preservation workflow using IDA."""
+    _assert_preservation(
+        "urn:nbn:fi:att:cr955e904-e3dd-4d7e-99f1-3fed446f96d5"
+    )
 
 
 def _assert_preservation(dataset_identifier):
     """Run the whole preservation workflow."""
     try:
+        response = REQUESTS_SESSION.get(
+            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
+        )
+        assert response.status_code == 200
+        assert response.json()['passtate'] == DS_STATE_INITIALIZED
+
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/propose',
             data={'message': 'Proposing'}
