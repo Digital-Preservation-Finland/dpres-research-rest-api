@@ -165,8 +165,18 @@ def test_preservation_local():
             auth=("test", "test"),
             data=_file
         )
-    assert response.status_code == 200
+    assert response.status_code == 202
 
+    # Replace the identifier of the file after metadata has been
+    # generated
+    wait_for(
+        lambda: REQUESTS_SESSION.get(
+            response.json()['polling_url'],
+            auth=("test", "test")
+        ).json()['status'] != 'pending',
+        timeout=30,
+        interval=1
+    )
     _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
 
     # Test that file metadata can be retrieved from files API
@@ -183,8 +193,18 @@ def test_preservation_local():
             auth=("test", "test"),
             data=_file
         )
-    assert response.status_code == 200
+    assert response.status_code == 202
 
+    # Replace the identifier of the file after metadata has been
+    # generated
+    wait_for(
+        lambda: REQUESTS_SESSION.get(
+            response.json()['polling_url'],
+            auth=("test", "test")
+        ).json()['status'] != 'pending',
+        timeout=30,
+        interval=1
+    )
     _add_test_identifier("html_file", "html_file_local")
 
     # Test that file metadata can be retrieved from files API
@@ -226,13 +246,25 @@ def test_preservation_local_tus():
         verify_tls_cert=False
     ).upload()
 
+    # Replace the identifier of the file after metadata has been
+    # generated
+    wait_for(
+        lambda: REQUESTS_SESSION.get(
+            f"{UPLOAD_API_URL}/files/test_project/valid_tiff ä.tiff",
+            auth=('test', 'test')
+        ).status_code != 404,
+        timeout=30,
+        interval=1
+    )
     _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
+
     _check_uploaded_file(
         name="valid_tiff ä.tiff",
         identifier="valid_tiff_local",
         md5="3cf7c3b90f5a52b2f817a1c5b3bfbc52"
     )
 
+    # Upload HTML file
     tus_client.uploader(
         "tests/data/e2e_files/html_file/download",
         metadata={
@@ -245,13 +277,25 @@ def test_preservation_local_tus():
         verify_tls_cert=False
     ).upload()
 
+    # Replace the identifier of the file after metadata has been
+    # generated
+    wait_for(
+        lambda: REQUESTS_SESSION.get(
+            f"{UPLOAD_API_URL}/files/test_project/html_file",
+            auth=('test', 'test')
+        ).status_code != 404,
+        timeout=30,
+        interval=1
+    )
     _add_test_identifier("html_file", "html_file_local")
+
     _check_uploaded_file(
         name="html_file",
         identifier="html_file_local",
         md5="31ff97b5791a2050f08f471d6205f785"
     )
 
+    # Test preservation
     _assert_preservation(
         "urn:nbn:fi:att:222222222-2222-2222-2222-222222222222"
     )
