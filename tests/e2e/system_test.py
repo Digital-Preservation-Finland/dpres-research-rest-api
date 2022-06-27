@@ -46,6 +46,15 @@ REQUESTS_SESSION = requests.Session()
 REQUESTS_SESSION.verify = False
 
 
+def _get_passtate(dataset_identifier):
+    response = requests.get(
+        f'{ADMIN_API_URL}/datasets/{dataset_identifier}',
+        verify=False
+    )
+    assert response.status_code == 200
+    return response.json()['passtate']
+
+
 def _init_upload_rest_api():
     """Create user test:test to upload-rest-api."""
     upload_database = upload_rest_api.database.Database()
@@ -258,74 +267,67 @@ def test_preservation_ida():
 def _assert_preservation(dataset_identifier):
     """Run the whole preservation workflow."""
     try:
+        # Ensure that the dataset is initialized
         response = REQUESTS_SESSION.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
         )
-        assert response.status_code == 200
-        assert response.json()['passtate'] == DS_STATE_INITIALIZED
+        assert _get_passtate(dataset_identifier) == DS_STATE_INITIALIZED
 
+        # Propose dataset for preservation
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/propose',
             data={'message': 'Proposing'}
         )
+        assert _get_passtate(dataset_identifier) \
+            == DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION
         response = REQUESTS_SESSION.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
         )
-        assert response.status_code == 200
-        passtate = response.json()['passtate']
-        assert passtate == DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION
         assert response.json()['passtateReasonDesc'] == 'Proposing'
+
+        # Generate metadata
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}'
             '/genmetadata'
         )
         assert response.status_code == 200
-        response = REQUESTS_SESSION.get(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
-        )
-        assert response.status_code == 200
-        passtate = response.json()['passtate']
-        assert passtate == DS_STATE_TECHNICAL_METADATA_GENERATED
+        assert _get_passtate(dataset_identifier) \
+            == DS_STATE_TECHNICAL_METADATA_GENERATED
+
+        # Validate metadata
         response = REQUESTS_SESSION.post(
            f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}/validate'
            '/metadata'
         )
         assert response.status_code == 200
-        response = REQUESTS_SESSION.get(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
-        )
-        assert response.status_code == 200
-        assert response.json()['passtate'] == DS_STATE_VALID_METADATA
+        assert _get_passtate(dataset_identifier) == DS_STATE_VALID_METADATA
+
+        # Validate files
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}'
             '/validate/files'
         )
         assert response.status_code == 200
-        response = REQUESTS_SESSION.get(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
-        )
-        assert response.status_code == 200
-        assert response.json()['passtate'] == DS_STATE_VALID_METADATA
+        assert _get_passtate(dataset_identifier) == DS_STATE_VALID_METADATA
+
+        # Confirm metadata
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/confirm',
             data={'confirmed': 'true'}
         )
         assert response.status_code == 200
-        response = REQUESTS_SESSION.get(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
-        )
-        assert response.status_code == 200
-        assert response.json()['passtate'] == DS_STATE_METADATA_CONFIRMED
+        assert _get_passtate(dataset_identifier) == DS_STATE_METADATA_CONFIRMED
+
+        # Preserve dataset
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/preserve'
         )
         assert response.status_code == 200
+        assert _get_passtate(dataset_identifier) \
+            == DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION
         response = REQUESTS_SESSION.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
         )
-        assert response.status_code == 200
-        passtate = response.json()['passtate']
-        assert passtate == DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION
         if response.json()['isPASDataset'] is False:
             # switch to pas dataset
             dataset_identifier = response.json()['pasDatasetIdentifier']
@@ -333,14 +335,6 @@ def _assert_preservation(dataset_identifier):
             f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}/preserve'
         )
         assert response.status_code == 202
-
-        def _get_passtate(dataset_identifier):
-            response = requests.get(
-                f'{ADMIN_API_URL}/datasets/{dataset_identifier}',
-                verify=False
-            )
-            assert response.status_code == 200
-            return response.json()['passtate']
 
         # Wait until dataset marked to be in digital preservation
         # (state = 120). Max wait time 5 minutes should be enough.
