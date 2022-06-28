@@ -144,19 +144,13 @@ def app(test_config):
     return app_
 
 
-def test_index():
+def test_index(app):
     """Test the application index page.
 
     :returns: None
     """
-    # Create app and change the default config file path
-    app_ = create_app()
-    app_.config.update(
-        SIPTOOLS_RESEARCH_CONF='tests/data/siptools_research.conf'
-    )
-
     # Test the response
-    with app_.test_client() as client:
+    with app.test_client() as client:
         response = client.get('/')
 
     assert response.status_code == 400
