@@ -173,7 +173,7 @@ def test_dataset_preserve(mock_function, app):
 
 
 @mock.patch('research_rest_api.app.generate_metadata')
-def test_dataset_genmetadata(_, app):
+def test_dataset_genmetadata(mock_function, app):
     """Test the genmetadata method.
 
     :returns: None
@@ -182,6 +182,9 @@ def test_dataset_genmetadata(_, app):
     with app.test_client() as client:
         response = client.post('/dataset/1/genmetadata')
 
+    mock_function.assert_called_with(
+        '1', app.config.get('SIPTOOLS_RESEARCH_CONF')
+    )
     assert response.status_code == 200
 
 
