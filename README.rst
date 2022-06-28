@@ -34,7 +34,7 @@ The request returns message::
        "is_valid": <validation_result>
    }
 
-<validation result> is ``true`` if dataset metadata is valid, and ``false`` is metadata is invalid or missing. The <error_message> is empty if dataset metadata is valid.
+<validation result> is ``true`` if dataset metadata is valid, and ``false`` if metadata is invalid or missing. The <error_message> is empty if dataset metadata is valid.
 
 
 Dataset preservation
