@@ -169,6 +169,10 @@ def test_dataset_preserve(mock_function, app):
     mock_function.assert_called_with(
         '1', app.config.get('SIPTOOLS_RESEARCH_CONF')
     )
+
+    response_json = json.loads(response.data)
+    assert response_json["dataset_id"] == '1'
+    assert response_json["status"] == 'packaging'
     assert response.status_code == 202
 
 
@@ -185,6 +189,12 @@ def test_dataset_genmetadata(mock_function, app):
     mock_function.assert_called_with(
         '1', app.config.get('SIPTOOLS_RESEARCH_CONF')
     )
+
+    response_json = json.loads(response.data)
+    assert response_json["dataset_id"] == '1'
+    assert response_json["success"] is True
+    assert response_json["error"] == ''
+    assert response_json["detailed_error"] == ''
     assert response.status_code == 200
 
 
@@ -200,6 +210,7 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
         response = client.post('/dataset/1/genmetadata')
 
     response_json = json.loads(response.data)
+    assert response_json["dataset_id"] == '1'
     assert response_json["success"] is False
     assert response_json["error"] == 'Dataset is invalid'
     assert response_json["detailed_error"] == 'foo'
