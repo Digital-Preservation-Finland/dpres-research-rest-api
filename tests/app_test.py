@@ -1,7 +1,6 @@
 """Tests for ``research_rest_api.app`` module."""
 import json
 import os
-import copy
 
 import mongomock
 import pymongo
@@ -10,23 +9,11 @@ from unittest import mock
 
 import upload_rest_api
 from siptools_research.config import Configuration
-from siptools_research.exceptions import InvalidDatasetError
+from siptools_research.exceptions import (
+    InvalidDatasetError, InvalidFileError, MissingFileError
+)
 
 from research_rest_api.app import create_app
-
-BASE_FILE = {
-    "file_storage": {},
-    "parent_directory": {
-        "identifier": "pid:urn:dir:wf1"
-    },
-    "checksum": {
-        "algorithm": "md5",
-        "value": "58284d6cdd8deaffe082d063580a9df3"
-    },
-    "file_characteristics": {
-        "file_format": "text/plain",
-    }
-}
 
 
 @pytest.fixture(autouse=True)
@@ -56,18 +43,6 @@ def testmongoclient(monkeypatch):
         """Return already initialized mongomock.MongoClient."""
         return mongoclient
     monkeypatch.setattr(pymongo, 'MongoClient', mock_mongoclient)
-
-
-def _get_file(identifier, file_storage, file_format=None, version=None):
-    file_ = copy.deepcopy(BASE_FILE)
-    file_['identifier'] = identifier
-    file_['file_path'] = "/path/" + identifier
-    file_['file_storage']['identifier'] = file_storage
-    if file_format:
-        file_['file_characteristics']['file_format'] = file_format
-    if version:
-        file_['file_characteristics']['format_version'] = version
-    return file_
 
 
 def _json_from_file(filepath):
@@ -205,6 +180,7 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
     :returns: ``None``
     """
     generate_metadata_mock.side_effect = InvalidDatasetError('foo')
+
     # Test the response
     with app.test_client() as client:
         response = client.post('/dataset/1/genmetadata')
@@ -217,121 +193,52 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
     assert response.status_code == 400
 
 
-def test_validate_metadata(app, requests_mock):
+@mock.patch("research_rest_api.app.validate_metadata")
+def test_validate_metadata(mock_function, app):
     """Test the validate metadata endpoint.
 
     :returns: None
     """
-    requests_mock.get(
-        "https://metaksi/rest/v2/datasets/1",
-        json=_json_from_file(
-            'tests/data/metax_metadata/valid_dataset.json')
-    )
-
-    requests_mock.get(
-        "https://metaksi/rest/v2/contracts/contract",
-        json=_json_from_file(
-            'tests/data/metax_metadata/contract.json')
-    )
-
-    mocked_response = _json_from_file(
-        'tests/data/metax_metadata/valid_dataset_files.json')
-    requests_mock.get("https://metaksi/rest/v2/datasets/valid_dataset/files",
-                      json=mocked_response)
-    requests_mock.get("https://metaksi/rest/v2/datasets/1/files",
-                      json=mocked_response)
-
-    requests_mock.get("https://metaksi/rest/v2/directories/pid:urn:dir:wf1",
-                      json={"directory_path": "foo"})
-
-    requests_mock.patch("https://metaksi/rest/v2/datasets/1", json={})
-
-    with open("tests/data/metax_metadata/valid_datacite.xml",
-              encoding="utf-8") as file_:
-        mocked_response = file_.read()
-    requests_mock.get(
-        ("https://metaksi/rest/v2/datasets/1?dataset_format=datacite&"
-         "dummy_doi=true"),
-        text=mocked_response,
-        complete_qs=True
-    )
-
     # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/1/validate/metadata')
+        response = client.post("/dataset/1/validate/metadata")
     assert response.status_code == 200
 
+    mock_function.assert_called_with(
+        "1", app.config.get("SIPTOOLS_RESEARCH_CONF"), dummy_doi="true"
+    )
+
     # Check the body of response
-    response_body = json.loads(response.data)
-    assert response_body["error"] == ""
-    assert response_body["is_valid"] is True
+    response_json = json.loads(response.data)
+    assert response_json["dataset_id"] == "1"
+    assert response_json["is_valid"] is True
+    assert response_json["error"] == ""
+    assert response_json["detailed_error"] == ""
 
 
-def test_validate_metadata_invalid_dataset(app, requests_mock):
-    """Test the validate metadata endpoint with invalid dataset metadata.
+@mock.patch("research_rest_api.app.validate_metadata")
+def test_validate_metadata_invalid_metadata(mock_function, app):
+    """Test the validate metadata endpoint when metadata is invalid.
 
     :returns: None
     """
-    # Mock Metax
-    requests_mock.get(
-        'https://metaksi/rest/v2/datasets/2?include_user_metadata=true',
-        json=_json_from_file(
-            'tests/data/metax_metadata/invalid_dataset2.json')
-    )
+    mock_function.side_effect = InvalidDatasetError("foo")
 
     # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/2/validate/metadata')
+        response = client.post("/dataset/2/validate/metadata")
     assert response.status_code == 200
+
+    mock_function.assert_called_with(
+        "2", app.config.get("SIPTOOLS_RESEARCH_CONF"), dummy_doi="true"
+    )
 
     # Check the body of response
-    response_body = json.loads(response.data)
-    assert response_body["is_valid"] is False
-    assert response_body["error"] == "Metadata did not pass validation"
-    assert response_body["detailed_error"].startswith(
-        "'description' is a required property\n"
-        "\n"
-        "Failed validating 'required' in schema['properties']"
-        "['research_dataset']['properties']['provenance']['items']:\n"
-        "    {'properties"
-    )
-
-
-# pylint: disable=invalid-name
-def test_validate_metadata_invalid_file(app, requests_mock):
-    """Test the validate metadata end point with invalid file metadata.
-
-    returns: ``None``
-    """
-    # Mock Metax
-    requests_mock.get(
-        'https://metaksi/rest/v2/datasets/valid_dataset3/files',
-        json=_json_from_file(
-            'tests/data/metax_metadata/valid_dataset3_files.json')
-    )
-    requests_mock.get(
-        "https://metaksi/rest/v2/datasets/3?include_user_metadata=true",
-        json=_json_from_file(
-            "tests/data/metax_metadata/valid_dataset3.json")
-    )
-    requests_mock.get(
-        "https://metaksi/rest/v2/contracts/contract",
-        json=_json_from_file(
-            "tests/data/metax_metadata/contract.json")
-    )
-
-    with app.test_client() as client:
-        response = client.post("/dataset/3/validate/metadata")
-    assert response.status_code == 200
-
-    response_body = json.loads(response.data)
-    assert not response_body["is_valid"]
-
-    assert response_body["error"] == "Metadata did not pass validation"
-    assert response_body["detailed_error"].startswith(
-        "Validation error in metadata of path/to/file3: 'file_storage' is"
-        " a required property"
-    )
+    response_json = json.loads(response.data)
+    assert response_json["dataset_id"] == "2"
+    assert response_json["is_valid"] is False
+    assert response_json["error"] == "Metadata did not pass validation"
+    assert response_json["detailed_error"] == "foo"
 
 
 @pytest.mark.parametrize(
@@ -373,12 +280,10 @@ def test_dataset_unavailable(app, action, requests_mock):
 
 
 @pytest.mark.parametrize(
-    ("ida_status_code", "file_format", "expected_response"),
+    ("expected_response", "error"),
     [
         # Valid metadata
         (
-            200,
-            "text/plain",
             {
                 "dataset_id": "1",
                 "is_valid": True,
@@ -386,12 +291,11 @@ def test_dataset_unavailable(app, action, requests_mock):
                 "detailed_error": "",
                 "missing_files": [],
                 "invalid_files": [],
-            }
+            },
+            None
         ),
         # Wrong file format in file metadata
         (
-            200,
-            "image/tiff",
             {
                 "dataset_id": "1",
                 "is_valid": False,
@@ -400,12 +304,14 @@ def test_dataset_unavailable(app, action, requests_mock):
                                    "\npid:urn:1\npid:urn:2"),
                 "missing_files": [],
                 "invalid_files": ["pid:urn:1", "pid:urn:2"],
-            }
+            },
+            InvalidFileError(
+                "2 files are not well-formed",
+                files=["pid:urn:1", "pid:urn:2"]
+            )
         ),
         # Files are not available in Ida
         (
-            404,
-            "text/plain",
             {
                 "dataset_id": "1",
                 "is_valid": False,
@@ -414,44 +320,31 @@ def test_dataset_unavailable(app, action, requests_mock):
                                    "\npid:urn:1\npid:urn:2"),
                 "missing_files": ["pid:urn:1", "pid:urn:2"],
                 "invalid_files": []
-            }
+            },
+            MissingFileError(
+                "2 files are missing",
+                files=["pid:urn:1", "pid:urn:2"]
+            )
         ),
     ]
 )
-def test_validate_files(app, requests_mock, ida_status_code, file_format,
-                        expected_response):
+@mock.patch("research_rest_api.app.validate_files")
+def test_validate_files(mock_function, app, expected_response, error):
     """Test the validate/files endpoint.
 
-    Test dataset contains two valid text files.
-
-    :param app: Flask application
-    :param requests_mock: Requests mocker
-    :param ida_status_code: Status code of mocked Ida HTTP Response
-    :param file_format: File format in file metadata
-    :param expected_response: Expected API response data
     :returns: None
     """
-    # Mock Metax
-    requests_mock.get(
-        "https://metaksi/rest/v2/datasets/1",
-        json=_json_from_file(
-            'tests/data/metax_metadata/valid_dataset3_files.json')
-    )
-    files = [_get_file('pid:urn:1', 'ida', file_format),
-             _get_file('pid:urn:2', 'ida', file_format)]
-    requests_mock.get("https://metaksi/rest/v2/datasets/1/files", json=files)
-
-    # Mock Ida
-    requests_mock.post('https://ida.fd-test.csc.fi:4431/authorize',
-                       json={"token": 'foo'},
-                       status_code=ida_status_code)
-    requests_mock.get("https://ida.fd-test.csc.fi:4430/download",
-                      text='This file is valid UTF-8')
+    if error:
+        mock_function.side_effect = error
 
     # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/1/validate/files')
+        response = client.post("/dataset/1/validate/files")
     assert response.status_code == 200
+
+    mock_function.assert_called_with(
+        "1", app.config.get("SIPTOOLS_RESEARCH_CONF")
+    )
 
     # Check the body of response
     assert json.loads(response.data) == expected_response
