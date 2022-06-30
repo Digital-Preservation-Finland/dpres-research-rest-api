@@ -2,6 +2,7 @@
 import json
 import os
 
+import flask
 import mongomock
 import pymongo
 import pytest
@@ -12,6 +13,7 @@ from siptools_research.config import Configuration
 from siptools_research.exceptions import (
     InvalidDatasetError, InvalidFileError, MissingFileError
 )
+from metax_access import ResourceNotAvailableError
 
 from research_rest_api.app import create_app
 
@@ -43,13 +45,6 @@ def testmongoclient(monkeypatch):
         """Return already initialized mongomock.MongoClient."""
         return mongoclient
     monkeypatch.setattr(pymongo, 'MongoClient', mock_mongoclient)
-
-
-def _json_from_file(filepath):
-    """Deserialize JSON object from a file and return it as a Python object"""
-    with open(filepath, "rb") as json_file:
-        content = json.load(json_file)
-    return content
 
 
 # TODO: Use the name argument for pytest.fixture decorator to solve the
@@ -242,44 +237,6 @@ def test_validate_metadata_invalid_metadata(mock_function, app):
 
 
 @pytest.mark.parametrize(
-    'action',
-    ('validate/metadata', 'validate/files', 'preserve', 'genmetadata')
-)
-# pylint: disable=invalid-name
-def test_dataset_unavailable(app, action, requests_mock):
-    """Test actions for dataset that is unavailable from Metax.
-
-    API should respond with clear error message.
-
-    :returns: ``None``
-    """
-    # Mock Metax
-    requests_mock.get(
-        ("https://metaksi/rest/v2/datasets/not_available_id?"
-         "include_user_metadata=true"),
-        json=_json_from_file(
-            "tests/data/metax_metadata/not_found.json"),
-        status_code=404
-    )
-    requests_mock.get(
-        "https://metaksi/rest/v2/datasets/not_available_id/files",
-        json=_json_from_file(
-            "tests/data/metax_metadata/not_found.json"),
-        status_code=404
-    )
-
-    # Test the response
-    with app.test_client() as client:
-        response = client.post(f'/dataset/not_available_id/{action}')
-    assert response.status_code == 404
-
-    # Check the body of response
-    response_body = json.loads(response.data)
-    assert response_body["code"] == 404
-    assert response_body["error"] == "Dataset not found"
-
-
-@pytest.mark.parametrize(
     ("expected_response", "error"),
     [
         # Valid metadata
@@ -350,49 +307,67 @@ def test_validate_files(mock_function, app, expected_response, error):
     assert json.loads(response.data) == expected_response
 
 
-def test_httperror(app, requests_mock, caplog):
-    """Test HTTPError handling.
-
-    API should respond with "500 internal server error" if HTTPError occurs.
-    The content of response to failed HTTP request should be logged.
+@pytest.mark.parametrize(
+    ("code", "message", "expected_error_message", "expected_log_message"),
+    [
+        (404, "x", "404 Not Found: x", "404 Not Found: x"),
+        (400, "x", "400 Bad Request: x", "400 Bad Request: x"),
+        (500, "x", "Internal server error", "500 Internal Server Error: x"),
+    ]
+)
+def test_http_exception_handling(
+    app, caplog, code, message, expected_error_message, expected_log_message
+):
+    """Test that API responds with correct error messages when HTTP errors
+    occur.
 
     :param app: Flask application
-    :param requests_mock: Request mocker
+    :param caplog: log capturing instance
+    :param code: status code of the HTTP error
+    :param message: message given when the HTTP error is raised
+    :param expected_error_message: The error message that should be shown to
+                                   the user
+    :param expected_log_message: The error message that should be written to
+                                 the logs
+    """
+    @app.route('/test')
+    def _raise_exception():
+        """Raise exception."""
+        flask.abort(code, message)
+
+    with app.test_client() as client:
+        response = client.get("/test")
+
+    assert json.loads(response.data) == {
+        "code": code,
+        "error": expected_error_message
+    }
+
+    assert len(caplog.records) == 1
+    assert caplog.records[0].message == expected_log_message
+
+
+def test_metax_error_handler(app, caplog):
+    """Test that API responds correctly when resource is not available in
+    Metax.
+
+    :param app: Flask application
     :param caplog: log capturing instance
     """
-    # Mock metax to respond with HTTP 500 error to cause HTTPError exception
-    requests_mock.get(
-        'https://metaksi/rest/v2/datasets/1?include_user_metadata=true',
-        status_code=500,
-        reason='Metax error',
-        text='Metax failed to process request'
-    )
+    error_message = "Dataset not available."
 
-    # Let app handle exceptions
-    app.config['TESTING'] = False
+    @app.route('/test')
+    def _raise_exception():
+        """Raise exception."""
+        raise ResourceNotAvailableError(error_message)
 
-    # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/1/validate/metadata')
-    assert response.status_code == 500
-    assert json.loads(response.data) \
-        == {"code": 500, "error": "Internal server error"}
+        response = client.get("/test")
 
-    # Check logs
-    logged_messages = [record.message for record in caplog.records]
-    # HTTPError should be logged by default
-    py3_error_msg = (
-        '500 Internal Server Error: The server encountered an '
-        'internal error and was unable to complete your request. Either '
-        'the server is overloaded or there is an error in the application.'
-    )
-    py2_error_msg = '500 Server Error: Metax error'
-    assert (
-        py2_error_msg in logged_messages or
-        py3_error_msg in logged_messages
-    )
-    # Also the content of HTTP response should be logged
-    assert ('HTTP request to https://metaksi/rest/v2/datasets/1?'
-            'include_user_metadata=true failed. Response from server was: '
-            'Metax failed to process request')\
-        in logged_messages
+    assert json.loads(response.data) == {
+        "code": 404,
+        "error": error_message
+    }
+
+    assert len(caplog.records) == 1
+    assert caplog.records[0].message == error_message
