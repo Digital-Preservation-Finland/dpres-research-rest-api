@@ -3,12 +3,9 @@ import json
 import os
 
 import flask
-import mongomock
-import pymongo
 import pytest
 from unittest import mock
 
-import upload_rest_api
 from siptools_research.config import Configuration
 from siptools_research.exceptions import (
     InvalidDatasetError, InvalidFileError, MissingFileError
@@ -16,35 +13,6 @@ from siptools_research.exceptions import (
 from metax_access import ResourceNotAvailableError
 
 from research_rest_api.app import create_app
-
-
-@pytest.fixture(autouse=True)
-def mock_upload_conf(monkeypatch):
-    """Patch upload_rest_api configuration parsing."""
-    monkeypatch.setattr(
-        upload_rest_api.config, "get_config",
-        lambda conf: {"MONGO_HOST": "localhost", "MONGO_PORT": 27017}
-    )
-
-
-@pytest.fixture(scope="function", autouse=True)
-def testmongoclient(monkeypatch):
-    """Monkeypatch pymongo.MongoClient class.
-
-    An instance of mongomock.MongoClient is created in beginning of test.
-    Whenever pymongo.MongoClient() is called during the test, the already
-    initialized mongomock.MongoClient is used instead.
-
-    :param monkeypatch: pytest `monkeypatch` fixture
-    :returns: ``None``
-    """
-    mongoclient = mongomock.MongoClient()
-    # pylint: disable=unused-argument
-
-    def mock_mongoclient(*args, **kwargs):
-        """Return already initialized mongomock.MongoClient."""
-        return mongoclient
-    monkeypatch.setattr(pymongo, 'MongoClient', mock_mongoclient)
 
 
 # TODO: Use the name argument for pytest.fixture decorator to solve the
