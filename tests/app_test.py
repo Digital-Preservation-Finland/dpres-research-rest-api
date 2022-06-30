@@ -1,5 +1,4 @@
 """Tests for ``research_rest_api.app`` module."""
-import json
 import os
 
 import flask
@@ -103,15 +102,16 @@ def test_dataset_preserve(mock_function, app):
     # Test the response
     with app.test_client() as client:
         response = client.post('/dataset/1/preserve')
+    assert response.status_code == 202
 
     mock_function.assert_called_with(
         '1', app.config.get('SIPTOOLS_RESEARCH_CONF')
     )
 
-    response_json = json.loads(response.data)
-    assert response_json["dataset_id"] == '1'
-    assert response_json["status"] == 'packaging'
-    assert response.status_code == 202
+    assert response.json == {
+        "dataset_id": '1',
+        "status": 'packaging'
+    }
 
 
 @mock.patch('research_rest_api.app.generate_metadata')
@@ -123,17 +123,18 @@ def test_dataset_genmetadata(mock_function, app):
     # Test the response
     with app.test_client() as client:
         response = client.post('/dataset/1/genmetadata')
+    assert response.status_code == 200
 
     mock_function.assert_called_with(
         '1', app.config.get('SIPTOOLS_RESEARCH_CONF')
     )
 
-    response_json = json.loads(response.data)
-    assert response_json["dataset_id"] == '1'
-    assert response_json["success"] is True
-    assert response_json["error"] == ''
-    assert response_json["detailed_error"] == ''
-    assert response.status_code == 200
+    assert response.json == {
+        "dataset_id": '1',
+        "success": True,
+        "error": '',
+        "detailed_error": ''
+    }
 
 
 @mock.patch('research_rest_api.app.generate_metadata')
@@ -147,13 +148,14 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
     # Test the response
     with app.test_client() as client:
         response = client.post('/dataset/1/genmetadata')
-
-    response_json = json.loads(response.data)
-    assert response_json["dataset_id"] == '1'
-    assert response_json["success"] is False
-    assert response_json["error"] == 'Dataset is invalid'
-    assert response_json["detailed_error"] == 'foo'
     assert response.status_code == 400
+
+    assert response.json == {
+        "dataset_id": '1',
+        "success": False,
+        "error": 'Dataset is invalid',
+        "detailed_error": 'foo'
+    }
 
 
 @mock.patch("research_rest_api.app.validate_metadata")
@@ -172,11 +174,12 @@ def test_validate_metadata(mock_function, app):
     )
 
     # Check the body of response
-    response_json = json.loads(response.data)
-    assert response_json["dataset_id"] == "1"
-    assert response_json["is_valid"] is True
-    assert response_json["error"] == ""
-    assert response_json["detailed_error"] == ""
+    assert response.json == {
+        "dataset_id": "1",
+        "is_valid": True,
+        "error": "",
+        "detailed_error": ""
+    }
 
 
 @mock.patch("research_rest_api.app.validate_metadata")
@@ -197,11 +200,12 @@ def test_validate_metadata_invalid_metadata(mock_function, app):
     )
 
     # Check the body of response
-    response_json = json.loads(response.data)
-    assert response_json["dataset_id"] == "2"
-    assert response_json["is_valid"] is False
-    assert response_json["error"] == "Metadata did not pass validation"
-    assert response_json["detailed_error"] == "foo"
+    assert response.json == {
+        "dataset_id": "2",
+        "is_valid": False,
+        "error": "Metadata did not pass validation",
+        "detailed_error": "foo"
+    }
 
 
 @pytest.mark.parametrize(
@@ -272,7 +276,7 @@ def test_validate_files(mock_function, app, expected_response, error):
     )
 
     # Check the body of response
-    assert json.loads(response.data) == expected_response
+    assert response.json == expected_response
 
 
 @pytest.mark.parametrize(
@@ -306,7 +310,7 @@ def test_http_exception_handling(
     with app.test_client() as client:
         response = client.get("/test")
 
-    assert json.loads(response.data) == {
+    assert response.json == {
         "code": code,
         "error": expected_error_message
     }
@@ -332,7 +336,7 @@ def test_metax_error_handler(app, caplog):
     with app.test_client() as client:
         response = client.get("/test")
 
-    assert json.loads(response.data) == {
+    assert response.json == {
         "code": 404,
         "error": error_message
     }
