@@ -1,15 +1,15 @@
 """Tests for ``research_rest_api.app`` module."""
 import os
+from unittest import mock
 
 import flask
 import pytest
-from unittest import mock
 
+from metax_access import ResourceNotAvailableError
 from siptools_research.config import Configuration
 from siptools_research.exceptions import (
     InvalidDatasetError, InvalidFileError, MissingFileError
 )
-from metax_access import ResourceNotAvailableError
 
 from research_rest_api.app import create_app
 
@@ -69,7 +69,7 @@ def app(test_config):
     app_.config.update(
         SIPTOOLS_RESEARCH_CONF=test_config
     )
-    app_.config['TESTING'] = True
+    app_.config["TESTING"] = True
 
     # Create temporary directories
     conf = Configuration(test_config)
@@ -84,77 +84,76 @@ def app(test_config):
 def test_index(app):
     """Test the application index page.
 
-    :returns: None
+    :param app: Flask application
     """
-    # Test the response
     with app.test_client() as client:
-        response = client.get('/')
+        response = client.get("/")
 
     assert response.status_code == 400
 
 
-@mock.patch('research_rest_api.app.preserve_dataset')
+@mock.patch("research_rest_api.app.preserve_dataset")
 def test_dataset_preserve(mock_function, app):
     """Test the preserve method.
 
-    :returns: None
+    :param mock_function: mocked dpres_siptools function
+    :param app: Flask application
     """
-    # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/1/preserve')
+        response = client.post("/dataset/1/preserve")
     assert response.status_code == 202
 
     mock_function.assert_called_with(
-        '1', app.config.get('SIPTOOLS_RESEARCH_CONF')
+        "1", app.config.get("SIPTOOLS_RESEARCH_CONF")
     )
 
     assert response.json == {
-        "dataset_id": '1',
-        "status": 'packaging'
+        "dataset_id": "1",
+        "status": "packaging"
     }
 
 
-@mock.patch('research_rest_api.app.generate_metadata')
+@mock.patch("research_rest_api.app.generate_metadata")
 def test_dataset_genmetadata(mock_function, app):
     """Test the genmetadata method.
 
-    :returns: None
+    :param mock_function: mocked dpres_siptools function
+    :param app: Flask application
     """
-    # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/1/genmetadata')
+        response = client.post("/dataset/1/genmetadata")
     assert response.status_code == 200
 
     mock_function.assert_called_with(
-        '1', app.config.get('SIPTOOLS_RESEARCH_CONF')
+        "1", app.config.get("SIPTOOLS_RESEARCH_CONF")
     )
 
     assert response.json == {
-        "dataset_id": '1',
+        "dataset_id": "1",
         "success": True,
-        "error": '',
-        "detailed_error": ''
+        "error": "",
+        "detailed_error": ""
     }
 
 
-@mock.patch('research_rest_api.app.generate_metadata')
-def test_dataset_genmetadata_error(generate_metadata_mock, app):
+@mock.patch("research_rest_api.app.generate_metadata")
+def test_dataset_genmetadata_error(mock_function, app):
     """Test that genmetadata method can handle metadata generation errors.
 
-    :returns: ``None``
+    :param mock_function: mocked dpres_siptools function
+    :param app: Flask application
     """
-    generate_metadata_mock.side_effect = InvalidDatasetError('foo')
+    mock_function.side_effect = InvalidDatasetError("foo")
 
-    # Test the response
     with app.test_client() as client:
-        response = client.post('/dataset/1/genmetadata')
+        response = client.post("/dataset/1/genmetadata")
     assert response.status_code == 400
 
     assert response.json == {
-        "dataset_id": '1',
+        "dataset_id": "1",
         "success": False,
-        "error": 'Dataset is invalid',
-        "detailed_error": 'foo'
+        "error": "Dataset is invalid",
+        "detailed_error": "foo"
     }
 
 
@@ -162,9 +161,9 @@ def test_dataset_genmetadata_error(generate_metadata_mock, app):
 def test_validate_metadata(mock_function, app):
     """Test the validate metadata endpoint.
 
-    :returns: None
+    :param mock_function: mocked dpres_siptools function
+    :param app: Flask application
     """
-    # Test the response
     with app.test_client() as client:
         response = client.post("/dataset/1/validate/metadata")
     assert response.status_code == 200
@@ -173,7 +172,6 @@ def test_validate_metadata(mock_function, app):
         "1", app.config.get("SIPTOOLS_RESEARCH_CONF"), dummy_doi="true"
     )
 
-    # Check the body of response
     assert response.json == {
         "dataset_id": "1",
         "is_valid": True,
@@ -186,11 +184,11 @@ def test_validate_metadata(mock_function, app):
 def test_validate_metadata_invalid_metadata(mock_function, app):
     """Test the validate metadata endpoint when metadata is invalid.
 
-    :returns: None
+    :param mock_function: mocked dpres_siptools function
+    :param app: Flask application
     """
     mock_function.side_effect = InvalidDatasetError("foo")
 
-    # Test the response
     with app.test_client() as client:
         response = client.post("/dataset/2/validate/metadata")
     assert response.status_code == 200
@@ -199,7 +197,6 @@ def test_validate_metadata_invalid_metadata(mock_function, app):
         "2", app.config.get("SIPTOOLS_RESEARCH_CONF"), dummy_doi="true"
     )
 
-    # Check the body of response
     assert response.json == {
         "dataset_id": "2",
         "is_valid": False,
@@ -261,12 +258,14 @@ def test_validate_metadata_invalid_metadata(mock_function, app):
 def test_validate_files(mock_function, app, expected_response, error):
     """Test the validate/files endpoint.
 
-    :returns: None
+    :param mock_function: mocked dpres_siptools function
+    :param app: Flask application
+    :param expected_response: The response that should be shown to the user
+    :param error: An error that occurs in dpres_siptools
     """
     if error:
         mock_function.side_effect = error
 
-    # Test the response
     with app.test_client() as client:
         response = client.post("/dataset/1/validate/files")
     assert response.status_code == 200
@@ -275,7 +274,6 @@ def test_validate_files(mock_function, app, expected_response, error):
         "1", app.config.get("SIPTOOLS_RESEARCH_CONF")
     )
 
-    # Check the body of response
     assert response.json == expected_response
 
 
@@ -302,7 +300,7 @@ def test_http_exception_handling(
     :param expected_log_message: The error message that should be written to
                                  the logs
     """
-    @app.route('/test')
+    @app.route("/test")
     def _raise_exception():
         """Raise exception."""
         flask.abort(code, message)
@@ -328,7 +326,7 @@ def test_metax_error_handler(app, caplog):
     """
     error_message = "Dataset not available."
 
-    @app.route('/test')
+    @app.route("/test")
     def _raise_exception():
         """Raise exception."""
         raise ResourceNotAvailableError(error_message)
