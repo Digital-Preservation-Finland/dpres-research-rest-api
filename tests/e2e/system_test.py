@@ -20,9 +20,12 @@ import json
 import pathlib
 import subprocess
 import base64
+import logging
 
 import pytest
 import requests
+import tusclient.client
+import tusclient.exceptions
 import upload_rest_api.database
 import urllib3
 from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
@@ -33,7 +36,6 @@ from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
                           DS_STATE_VALID_METADATA)
 
-from tusclient.client import TusClient
 
 from tests.utils import wait_for
 
@@ -226,7 +228,7 @@ def test_preservation_local_tus():
     _init_upload_rest_api()
 
     auth_value = base64.b64encode(b"test:test").decode("utf-8")
-    tus_client = TusClient(
+    tus_client = tusclient.client.TusClient(
         f"{UPLOAD_API_URL}/files_tus",
         headers={
             "Authorization": f"Basic {auth_value}"
@@ -234,17 +236,21 @@ def test_preservation_local_tus():
     )
 
     # Upload TIFF file
-    tus_client.uploader(
-        "tests/data/e2e_files/valid_tiff/download",
-        metadata={
-            "filename": "valid_tiff ä.tiff",
-            "project_id": "test_project",
-            "upload_path": "valid_tiff ä.tiff",
-            "type": "file"
-        },
-        metadata_encoding="utf-8",
-        verify_tls_cert=False
-    ).upload()
+    try:
+        tus_client.uploader(
+            "tests/data/e2e_files/valid_tiff/download",
+            metadata={
+                "filename": "valid_tiff ä.tiff",
+                "project_id": "test_project",
+                "upload_path": "valid_tiff ä.tiff",
+                "type": "file"
+            },
+            metadata_encoding="utf-8",
+            verify_tls_cert=False
+        ).upload()
+    except tusclient.exceptions.TusCommunicationError as error:
+        logging.error(error.response_content)
+        raise
 
     # Replace the identifier of the file after metadata has been
     # generated
@@ -265,17 +271,21 @@ def test_preservation_local_tus():
     )
 
     # Upload HTML file
-    tus_client.uploader(
-        "tests/data/e2e_files/html_file/download",
-        metadata={
-            "filename": "html_file",
-            "project_id": "test_project",
-            "upload_path": "html_file",
-            "type": "file"
-        },
-        metadata_encoding="utf-8",
-        verify_tls_cert=False
-    ).upload()
+    try:
+        tus_client.uploader(
+            "tests/data/e2e_files/html_file/download",
+            metadata={
+                "filename": "html_file",
+                "project_id": "test_project",
+                "upload_path": "html_file",
+                "type": "file"
+            },
+            metadata_encoding="utf-8",
+            verify_tls_cert=False
+        ).upload()
+    except tusclient.exceptions.TusCommunicationError as error:
+        logging.error(error.response_content)
+        raise
 
     # Replace the identifier of the file after metadata has been
     # generated
