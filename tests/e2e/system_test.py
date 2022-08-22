@@ -157,7 +157,7 @@ def test_preservation_local():
             auth=("test", "test"),
             data=_file
         )
-    assert response.status_code == 200
+    response.raise_for_status()
 
     # Test that file metadata can be retrieved from files API
     _check_uploaded_file(
@@ -172,7 +172,7 @@ def test_preservation_local():
             auth=("test", "test"),
             data=_file
         )
-    assert response.status_code == 200
+    response.raise_for_status()
 
     # Test that file metadata can be retrieved from files API
     _check_uploaded_file(
