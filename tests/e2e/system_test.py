@@ -74,16 +74,6 @@ def _init_upload_rest_api():
     )
 
 
-def _add_test_identifier(file_path, identifier):
-    """Add identifier to a file document in upload.files collection."""
-    project_path = pathlib.Path("/var/spool/upload/projects/test_project")
-    upload_database = upload_rest_api.database.Database()
-    upload_database.files.files.update_one(
-        {"_id": str(project_path / file_path)},
-        {"$set": {"identifier": identifier}}
-    )
-
-
 MONGO_COLLECTIONS_TO_CLEAR = {
     "upload": "*",
     "eventdb": "*",
@@ -143,7 +133,7 @@ def setup_e2e():
     assert response.status_code == 200
 
 
-def _check_uploaded_file(name, identifier, md5):
+def _check_uploaded_file(name, md5):
     """Check that the uploaded file was saved with the expected metadata."""
     response = REQUESTS_SESSION.get(
         f"{UPLOAD_API_URL}/files/test_project/{name}",
@@ -151,7 +141,7 @@ def _check_uploaded_file(name, identifier, md5):
     )
     assert response.status_code == 200
     assert response.json()['file_path'] == f"/{name}"
-    assert response.json()['identifier'] == identifier
+    assert response.json()['identifier'].startswith('urn:uuid:')
     assert response.json()['md5'] == md5
 
 
@@ -163,60 +153,34 @@ def test_preservation_local():
     # POST tiff file
     with open("tests/data/e2e_files/valid_tiff/download", "rb") as _file:
         response = REQUESTS_SESSION.post(
-            f"{UPLOAD_API_URL}/files/test_project/valid_tiff ä.tiff",
+            f"{UPLOAD_API_URL}/files/test_project/e2e-test-local/valid_tiff ä.tiff",
             auth=("test", "test"),
             data=_file
         )
-    assert response.status_code == 202
-
-    # Replace the identifier of the file after metadata has been
-    # generated
-    wait_for(
-        lambda: REQUESTS_SESSION.get(
-            response.json()['polling_url'],
-            auth=("test", "test")
-        ).json()['status'] != 'pending',
-        timeout=30,
-        interval=1
-    )
-    _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
+    assert response.status_code == 200
 
     # Test that file metadata can be retrieved from files API
     _check_uploaded_file(
-        name="valid_tiff ä.tiff",
-        identifier="valid_tiff_local",
+        name="e2e-test-local/valid_tiff ä.tiff",
         md5="3cf7c3b90f5a52b2f817a1c5b3bfbc52"
     )
 
     # POST html file
     with open("tests/data/e2e_files/html_file/download", "rb") as _file:
         response = REQUESTS_SESSION.post(
-            f"{UPLOAD_API_URL}/files/test_project/html_file",
+            f"{UPLOAD_API_URL}/files/test_project/e2e-test-local/html_file",
             auth=("test", "test"),
             data=_file
         )
-    assert response.status_code == 202
-
-    # Replace the identifier of the file after metadata has been
-    # generated
-    wait_for(
-        lambda: REQUESTS_SESSION.get(
-            response.json()['polling_url'],
-            auth=("test", "test")
-        ).json()['status'] != 'pending',
-        timeout=30,
-        interval=1
-    )
-    _add_test_identifier("html_file", "html_file_local")
+    assert response.status_code == 200
 
     # Test that file metadata can be retrieved from files API
     _check_uploaded_file(
-        name="html_file",
-        identifier="html_file_local",
+        name="e2e-test-local/html_file",
         md5="31ff97b5791a2050f08f471d6205f785"
     )
 
-    # Test preservation
+    # Preserve dataset
     _assert_preservation(
         "urn:nbn:fi:att:111111111-1111-1111-1111-111111111111"
     )
@@ -242,7 +206,7 @@ def test_preservation_local_tus():
             metadata={
                 "filename": "valid_tiff ä.tiff",
                 "project_id": "test_project",
-                "upload_path": "valid_tiff ä.tiff",
+                "upload_path": "e2e-test-local-tus/valid_tiff ä.tiff",
                 "type": "file"
             },
             metadata_encoding="utf-8",
@@ -252,21 +216,8 @@ def test_preservation_local_tus():
         logging.error(error.response_content)
         raise
 
-    # Replace the identifier of the file after metadata has been
-    # generated
-    wait_for(
-        lambda: REQUESTS_SESSION.get(
-            f"{UPLOAD_API_URL}/files/test_project/valid_tiff ä.tiff",
-            auth=('test', 'test')
-        ).status_code != 404,
-        timeout=30,
-        interval=1
-    )
-    _add_test_identifier("valid_tiff ä.tiff", "valid_tiff_local")
-
     _check_uploaded_file(
-        name="valid_tiff ä.tiff",
-        identifier="valid_tiff_local",
+        name="e2e-test-local-tus/valid_tiff ä.tiff",
         md5="3cf7c3b90f5a52b2f817a1c5b3bfbc52"
     )
 
@@ -277,7 +228,7 @@ def test_preservation_local_tus():
             metadata={
                 "filename": "html_file",
                 "project_id": "test_project",
-                "upload_path": "html_file",
+                "upload_path": "e2e-test-local-tus/html_file",
                 "type": "file"
             },
             metadata_encoding="utf-8",
@@ -287,21 +238,8 @@ def test_preservation_local_tus():
         logging.error(error.response_content)
         raise
 
-    # Replace the identifier of the file after metadata has been
-    # generated
-    wait_for(
-        lambda: REQUESTS_SESSION.get(
-            f"{UPLOAD_API_URL}/files/test_project/html_file",
-            auth=('test', 'test')
-        ).status_code != 404,
-        timeout=30,
-        interval=1
-    )
-    _add_test_identifier("html_file", "html_file_local")
-
     _check_uploaded_file(
-        name="html_file",
-        identifier="html_file_local",
+        name="e2e-test-local-tus/html_file",
         md5="31ff97b5791a2050f08f471d6205f785"
     )
 
