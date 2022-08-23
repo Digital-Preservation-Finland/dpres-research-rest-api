@@ -24,10 +24,10 @@ import logging
 
 import pytest
 import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import tusclient.client
 import tusclient.exceptions
 import upload_rest_api.database
-import urllib3
 from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
                           DS_STATE_IN_DIGITAL_PRESERVATION,
                           DS_STATE_INITIALIZED, DS_STATE_METADATA_CONFIRMED,
@@ -39,7 +39,7 @@ from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
 
 from tests.utils import wait_for
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 METAX_API_URL = "https://metax.localhost:8443/rest/v2"
 UPLOAD_API_URL = "https://packaging.localhost:8443/filestorage/api/v1"
