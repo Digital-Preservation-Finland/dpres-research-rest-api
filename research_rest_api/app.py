@@ -129,6 +129,11 @@ def create_app():
         try:
             generate_metadata(dataset_id,
                               app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        except MissingFileError as exc:
+            success = False
+            error = "Dataset is invalid"
+            detailed_error = '{}:\n{}'.format(str(exc), '\n'.join(exc.files))
+            status_code = 400
         except InvalidDatasetError as exc:
             success = False
             error = "Dataset is invalid"
