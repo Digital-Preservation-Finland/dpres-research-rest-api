@@ -82,7 +82,7 @@ e2e-distributed-provision-preservation: .e2e/ansible-fetch-preservation
 	cd .e2e/ansible-preservation ; ansible-galaxy install -r requirements.yml --force ; ansible-playbook -i inventory/pouta-fairdata-pas testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 e2e-test:
-	pytest-3 -svvv --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/e2e
+	pytest-3 -svvv -ra --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/e2e
 
 e2e-localhost-provision: e2e-localhost-provision-preservation e2e-localhost-provision-fairdata
 
