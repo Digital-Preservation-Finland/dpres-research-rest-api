@@ -1,4 +1,3 @@
-# pylint: disable=unused-variable
 """Application instance factory."""
 import logging
 import logging.handlers
@@ -165,8 +164,6 @@ def create_app():
 
         :returns: HTTP Response
         """
-        current_app.logger.error(error, exc_info=True)
-
         response = jsonify({"code": 404, "error": str(error)})
         response.status_code = 404
 
@@ -178,8 +175,6 @@ def create_app():
 
         :returns: HTTP Response
         """
-        current_app.logger.error(error, exc_info=True)
-
         response = jsonify({"code": 400, "error": str(error)})
         response.status_code = 400
 
@@ -201,8 +196,6 @@ def create_app():
     @app.errorhandler(ResourceNotAvailableError)
     def metax_error(error):
         """Handle ResourceNotAvailableError."""
-        current_app.logger.error(error, exc_info=True)
-
         response = jsonify({"code": 404, "error": str(error)})
         response.status_code = 404
         return response

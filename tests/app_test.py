@@ -315,8 +315,11 @@ def test_http_exception_handling(
         "error": expected_error_message
     }
 
-    assert len(caplog.records) == 1
-    assert caplog.records[0].message == expected_log_message
+    if code > 499:
+        assert len(caplog.records) == 1
+        assert caplog.records[0].message == expected_log_message
+    else:
+        assert not caplog.records
 
 
 def test_metax_error_handler(app, caplog):
@@ -341,5 +344,4 @@ def test_metax_error_handler(app, caplog):
         "error": error_message
     }
 
-    assert len(caplog.records) == 1
-    assert caplog.records[0].message == error_message
+    assert len(caplog.records) == 0
