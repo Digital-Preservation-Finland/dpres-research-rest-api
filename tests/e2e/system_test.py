@@ -16,18 +16,16 @@ System environment setup
 
 Metax(metax-mockup) and IDA services are mocked.
 """
+import base64
 import json
+import logging
 import pathlib
 import subprocess
-import base64
-import logging
 
 import pytest
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import tusclient.client
 import tusclient.exceptions
-import upload_rest_api.database
 from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
                           DS_STATE_IN_DIGITAL_PRESERVATION,
                           DS_STATE_INITIALIZED, DS_STATE_METADATA_CONFIRMED,
@@ -35,7 +33,10 @@ from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
                           DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
                           DS_STATE_VALID_METADATA)
-
+from pymongo import MongoClient
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from upload_rest_api.config import CONFIG
+from upload_rest_api.models import Project, User
 
 from tests.utils import wait_for
 
@@ -59,7 +60,6 @@ def _get_passtate(dataset_identifier):
 
 def _init_upload_rest_api():
     """Create user test:test to upload-rest-api."""
-    upload_database = upload_rest_api.database.Database()
     project_path = pathlib.Path("/var/spool/upload/projects/test_project")
 
     # Creating test user. Project directory is created first to ensure
@@ -68,10 +68,8 @@ def _init_upload_rest_api():
         ["sudo", "-u", project_path.parent.owner(), 'mkdir', project_path],
         check=True
     )
-    upload_database.projects.create("test_project")
-    upload_database.user("test").create(
-        projects=["test_project"], password="test"
-    )
+    Project.create(identifier="test_project")
+    User.create(username="test", projects=["test_project"], password="test")
 
 
 MONGO_COLLECTIONS_TO_CLEAR = {
@@ -106,12 +104,12 @@ DIRS_TO_CLEAR = (
 @pytest.fixture(scope="function", autouse=True)
 def setup_e2e():
     """Cleanup procedure executed before each E2E test."""
-    upload_db = upload_rest_api.database.Database()
+    mongo_client = MongoClient(CONFIG["MONGO_HOST"], CONFIG["MONGO_PORT"])
 
     # Clear all applicable MongoDB collections. This does *not* remove
     # indexes, matching the pre-test state more closely.
     for db_name, collections in MONGO_COLLECTIONS_TO_CLEAR.items():
-        mongo_db = getattr(upload_db.client, db_name)
+        mongo_db = getattr(mongo_client, db_name)
 
         if collections == "*":
             collections = mongo_db.list_collection_names()
