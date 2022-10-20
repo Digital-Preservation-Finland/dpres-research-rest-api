@@ -1,6 +1,5 @@
 """Tests for ``research_rest_api.app`` module."""
 import os
-from unittest import mock
 
 import flask
 import pytest
@@ -94,13 +93,14 @@ def test_index(app):
     assert response.status_code == 400
 
 
-@mock.patch("research_rest_api.app.preserve_dataset")
-def test_dataset_preserve(mock_function, app):
+def test_dataset_preserve(mocker, app):
     """Test the preserve method.
 
-    :param mock_function: mocked dpres_siptools function
+    :param mocker: pytest-mock mocker
     :param app: Flask application
     """
+    mock_function = mocker.patch("research_rest_api.app.preserve_dataset")
+
     with app.test_client() as client:
         response = client.post("/dataset/1/preserve")
     assert response.status_code == 202
@@ -115,13 +115,14 @@ def test_dataset_preserve(mock_function, app):
     }
 
 
-@mock.patch("research_rest_api.app.generate_metadata")
-def test_dataset_genmetadata(mock_function, app):
+def test_dataset_genmetadata(mocker, app):
     """Test the genmetadata method.
 
-    :param mock_function: mocked dpres_siptools function
+    :param mock_function: pytest-mock mocker
     :param app: Flask application
     """
+    mock_function = mocker.patch("research_rest_api.app.generate_metadata")
+
     with app.test_client() as client:
         response = client.post("/dataset/1/genmetadata")
     assert response.status_code == 200
@@ -138,14 +139,14 @@ def test_dataset_genmetadata(mock_function, app):
     }
 
 
-@mock.patch("research_rest_api.app.generate_metadata")
-def test_dataset_genmetadata_error(mock_function, app):
+def test_dataset_genmetadata_error(mocker, app):
     """Test that genmetadata method can handle metadata generation errors.
 
-    :param mock_function: mocked dpres_siptools function
+    :param mocker: pytest-mock mocker
     :param app: Flask application
     """
-    mock_function.side_effect = InvalidDatasetError("foo")
+    mocker.patch("research_rest_api.app.generate_metadata",
+                 side_effect=InvalidDatasetError('foo'))
 
     with app.test_client() as client:
         response = client.post("/dataset/1/genmetadata")
@@ -159,13 +160,14 @@ def test_dataset_genmetadata_error(mock_function, app):
     }
 
 
-@mock.patch("research_rest_api.app.validate_metadata")
-def test_validate_metadata(mock_function, app):
+def test_validate_metadata(mocker, app):
     """Test the validate metadata endpoint.
 
-    :param mock_function: mocked dpres_siptools function
+    :param mocker: pytest-mock mocker
     :param app: Flask application
     """
+    mock_function = mocker.patch("research_rest_api.app.validate_metadata")
+
     with app.test_client() as client:
         response = client.post("/dataset/1/validate/metadata")
     assert response.status_code == 200
@@ -182,14 +184,14 @@ def test_validate_metadata(mock_function, app):
     }
 
 
-@mock.patch("research_rest_api.app.validate_metadata")
-def test_validate_metadata_invalid_metadata(mock_function, app):
+def test_validate_metadata_invalid_metadata(mocker, app):
     """Test the validate metadata endpoint when metadata is invalid.
 
-    :param mock_function: mocked dpres_siptools function
+    :param mocker: pytest-mock mocker
     :param app: Flask application
     """
-    mock_function.side_effect = InvalidDatasetError("foo")
+    mock_function = mocker.patch("research_rest_api.app.validate_metadata",
+                                 side_effect=InvalidDatasetError("foo"))
 
     with app.test_client() as client:
         response = client.post("/dataset/2/validate/metadata")
@@ -256,15 +258,16 @@ def test_validate_metadata_invalid_metadata(mock_function, app):
         ),
     ]
 )
-@mock.patch("research_rest_api.app.validate_files")
-def test_validate_files(mock_function, app, expected_response, error):
+def test_validate_files(mocker, app, expected_response, error):
     """Test the validate/files endpoint.
 
-    :param mock_function: mocked dpres_siptools function
+    :param mocker: pytest-mock mocker
     :param app: Flask application
-    :param expected_response: The response that should be shown to the user
+    :param expected_response: The response that should be shown to the
+                              user
     :param error: An error that occurs in dpres_siptools
     """
+    mock_function = mocker.patch("research_rest_api.app.validate_files")
     if error:
         mock_function.side_effect = error
 
