@@ -37,7 +37,7 @@ def test_dataset_preserve(mocker, app):
 
     assert response.json == {
         "dataset_id": "1",
-        "status": "packaging"
+        "status": "preserving"
     }
 
 
@@ -88,53 +88,22 @@ def test_dataset_genmetadata_error(mocker, app):
     }
 
 
-def test_validate_metadata(mocker, app):
-    """Test the validate metadata endpoint.
+def test_dataset_package(mocker, app):
+    """Test packaging dataset.
 
     :param mocker: pytest-mock mocker
     :param app: Flask application
     """
-    mock_function = mocker.patch("research_rest_api.app.validate_metadata")
+    mock_function = mocker.patch("research_rest_api.app.package_dataset")
 
     with app.test_client() as client:
-        response = client.post("/dataset/1/validate/metadata")
-    assert response.status_code == 200
+        response = client.post("/dataset/1/package")
+    assert response.status_code == 202
 
-    mock_function.assert_called_with(
-        "1", app.config.get("SIPTOOLS_RESEARCH_CONF"), dummy_doi="true"
-    )
+    mock_function.assert_called_with("1",
+                                     app.config.get("SIPTOOLS_RESEARCH_CONF"))
 
-    assert response.json == {
-        "dataset_id": "1",
-        "is_valid": True,
-        "error": "",
-        "detailed_error": ""
-    }
-
-
-def test_validate_metadata_invalid_metadata(mocker, app):
-    """Test the validate metadata endpoint when metadata is invalid.
-
-    :param mocker: pytest-mock mocker
-    :param app: Flask application
-    """
-    mock_function = mocker.patch("research_rest_api.app.validate_metadata",
-                                 side_effect=InvalidDatasetError("foo"))
-
-    with app.test_client() as client:
-        response = client.post("/dataset/2/validate/metadata")
-    assert response.status_code == 200
-
-    mock_function.assert_called_with(
-        "2", app.config.get("SIPTOOLS_RESEARCH_CONF"), dummy_doi="true"
-    )
-
-    assert response.json == {
-        "dataset_id": "2",
-        "is_valid": False,
-        "error": "Metadata did not pass validation",
-        "detailed_error": "foo"
-    }
+    assert response.json == {"dataset_id": "1", "status": "packaging"}
 
 
 @pytest.mark.parametrize(

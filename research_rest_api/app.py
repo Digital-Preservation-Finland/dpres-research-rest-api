@@ -8,7 +8,7 @@ from flask_cors import CORS
 from metax_access import ResourceNotAvailableError
 
 from siptools_research import (generate_metadata, preserve_dataset,
-                               validate_metadata, validate_files)
+                               validate_files, package_dataset)
 from siptools_research.exceptions import InvalidDatasetError
 from siptools_research.exceptions import InvalidFileError
 from siptools_research.exceptions import MissingFileError
@@ -30,35 +30,18 @@ def create_app():
     CORS(app, resources={r"/*": {"origins": "*"}},
          supports_credentials=True)
 
-    @app.route('/dataset/<dataset_id>/validate/metadata', methods=['POST'])
-    def validate_dataset_metadata(dataset_id):
-        """Validate dataset metadata.
+    @app.route('/dataset/<dataset_id>/package', methods=['POST'])
+    def package(dataset_id):
+        """Trigger packaging workflow for dataset.
 
         :returns: HTTP Response
         """
-        # Validate dataset metadata
-
-        try:
-            validate_metadata(
-                dataset_id,
-                app.config.get('SIPTOOLS_RESEARCH_CONF'),
-                dummy_doi="true"
-            )
-        except InvalidDatasetError as exc:
-            is_valid = False
-            error = "Metadata did not pass validation"
-            detailed_error = str(exc)
-        else:
-            is_valid = True
-            error = ''
-            detailed_error = ''
+        package_dataset(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
 
         response = jsonify({'dataset_id': dataset_id,
-                            'is_valid': is_valid,
-                            'error': error,
-                            'detailed_error': detailed_error})
+                            'status': 'packaging'})
+        response.status_code = 202
 
-        response.status_code = 200
         return response
 
     @app.route('/dataset/<dataset_id>/validate/files', methods=['POST'])
@@ -67,8 +50,6 @@ def create_app():
 
         :returns: HTTP Response
         """
-        # Validate dataset files
-
         try:
             validate_files(
                 dataset_id,
@@ -105,7 +86,7 @@ def create_app():
 
     @app.route('/dataset/<dataset_id>/preserve', methods=['POST'])
     def preserve(dataset_id):
-        """Trigger packaging of dataset.
+        """Trigger preservation workflow for dataset.
 
         :returns: HTTP Response
         """
@@ -114,7 +95,7 @@ def create_app():
         preserve_dataset(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
 
         response = jsonify({'dataset_id': dataset_id,
-                            'status': 'packaging'})
+                            'status': 'preserving'})
         response.status_code = 202
 
         return response

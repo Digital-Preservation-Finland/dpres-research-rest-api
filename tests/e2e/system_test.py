@@ -33,10 +33,12 @@ import tusclient.client
 import tusclient.exceptions
 from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
                           DS_STATE_IN_DIGITAL_PRESERVATION,
+                          DS_STATE_IN_PACKAGING_SERVICE,
                           DS_STATE_INITIALIZED, DS_STATE_METADATA_CONFIRMED,
                           DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
                           DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
+                          DS_STATE_VALIDATING_METADATA,
                           DS_STATE_VALID_METADATA)
 from pymongo import MongoClient
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -449,8 +451,8 @@ def _assert_preservation(dataset_identifier):
 
         # Generate metadata
         response = REQUESTS_SESSION.post(
-            f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}'
-            '/genmetadata'
+            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
+            '/generate-metadata'
         )
         assert response.status_code == 200
         assert _get_passtate(dataset_identifier) \
@@ -458,16 +460,21 @@ def _assert_preservation(dataset_identifier):
 
         # Validate metadata
         response = REQUESTS_SESSION.post(
-           f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}/validate'
-           '/metadata'
+           f'{ADMIN_API_URL}/datasets/{dataset_identifier}/validate-metadata'
         )
-        assert response.status_code == 200
+        assert response.status_code == 202
+        # Wait until dataset is validated
+        wait_for(
+            lambda: _get_passtate(dataset_identifier)
+            != DS_STATE_VALIDATING_METADATA,
+            timeout=300,
+            interval=5
+        )
         assert _get_passtate(dataset_identifier) == DS_STATE_VALID_METADATA
 
         # Validate files
         response = REQUESTS_SESSION.post(
-            f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}'
-            '/validate/files'
+            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/validate-files'
         )
         assert response.status_code == 200
         assert _get_passtate(dataset_identifier) == DS_STATE_VALID_METADATA
@@ -484,7 +491,7 @@ def _assert_preservation(dataset_identifier):
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/preserve'
         )
-        assert response.status_code == 200
+        assert response.status_code == 202
 
         # New DPRES dataset might have been created when the dataset was
         # accepted for preservation. Check for it.
@@ -496,11 +503,7 @@ def _assert_preservation(dataset_identifier):
             dataset_identifier = response.json()['pasDatasetIdentifier']
 
         assert _get_passtate(dataset_identifier) \
-            == DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION
-        response = REQUESTS_SESSION.post(
-            f'{ADMIN_API_URL}/research/dataset/{dataset_identifier}/preserve'
-        )
-        assert response.status_code == 202
+            == DS_STATE_IN_PACKAGING_SERVICE
 
         # Wait until dataset marked to be in digital preservation
         # (state = 120). Max wait time 5 minutes should be enough.
