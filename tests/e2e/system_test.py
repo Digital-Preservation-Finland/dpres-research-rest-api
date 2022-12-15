@@ -431,13 +431,13 @@ def test_preservation_ida():
 def _assert_preservation(dataset_identifier):
     """Run the whole preservation workflow."""
     try:
-        # Ensure that the dataset is initialized
+        logging.debug("Ensure that the dataset is initialized")
         response = REQUESTS_SESSION.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
         )
         assert _get_passtate(dataset_identifier) == DS_STATE_INITIALIZED
 
-        # Propose dataset for preservation
+        logging.debug("Propose dataset for preservation")
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/propose',
             data={'message': 'Proposing'}
@@ -449,7 +449,7 @@ def _assert_preservation(dataset_identifier):
         )
         assert response.json()['passtateReasonDesc'] == 'Proposing'
 
-        # Generate metadata
+        logging.debug("Generate metadata")
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
             '/generate-metadata'
@@ -458,12 +458,12 @@ def _assert_preservation(dataset_identifier):
         assert _get_passtate(dataset_identifier) \
             == DS_STATE_TECHNICAL_METADATA_GENERATED
 
-        # Validate metadata
+        logging.debug("Start validating metadata")
         response = REQUESTS_SESSION.post(
            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/validate-metadata'
         )
         assert response.status_code == 202
-        # Wait until dataset is validated
+        logging.debug("Wait until dataset is validated")
         wait_for(
             lambda: _get_passtate(dataset_identifier)
             != DS_STATE_VALIDATING_METADATA,
@@ -472,14 +472,14 @@ def _assert_preservation(dataset_identifier):
         )
         assert _get_passtate(dataset_identifier) == DS_STATE_VALID_METADATA
 
-        # Validate files
+        logging.debug("Validate files")
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/validate-files'
         )
         assert response.status_code == 200
         assert _get_passtate(dataset_identifier) == DS_STATE_VALID_METADATA
 
-        # Confirm metadata
+        logging.debug("Confirm metadata")
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/confirm',
             data={'confirmed': 'true'}
@@ -487,7 +487,7 @@ def _assert_preservation(dataset_identifier):
         assert response.status_code == 200
         assert _get_passtate(dataset_identifier) == DS_STATE_METADATA_CONFIRMED
 
-        # Preserve dataset
+        logging.debug("Preserve dataset")
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/preserve'
         )
