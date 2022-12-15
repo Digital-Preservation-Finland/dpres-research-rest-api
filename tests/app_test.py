@@ -1,85 +1,11 @@
 """Tests for ``research_rest_api.app`` module."""
-import os
-
 import flask
 import pytest
 
 from metax_access import ResourceNotAvailableError
-from siptools_research.config import Configuration
 from siptools_research.exceptions import (
     InvalidDatasetError, InvalidFileError, MissingFileError
 )
-
-from research_rest_api.app import create_app
-
-
-# TODO: Use the name argument for pytest.fixture decorator to solve the
-# funcarg-shadowing-fixture problem, when support for pytest version 2.x
-# is not required anymore (the name argument was introduced in pytest
-# version 3.0).
-@pytest.fixture(scope="function")
-def test_config(tmpdir):
-    """Create a test configuration for siptools-research.
-
-    :returns: Path to configuration file
-    file path.
-    """
-    temp_config_path = tmpdir.join("etc",
-                                   "siptools-research").ensure(dir=True)
-    temp_config_path = temp_config_path.join("siptools-research.conf")
-    temp_spool_path = tmpdir.join("var",
-                                  "spool",
-                                  "siptools-research").ensure(dir=True)
-
-    config = "\n".join([
-        "[siptools_research]",
-        f"packaging_root = {temp_spool_path}",
-        "mongodb_host = localhost",
-        "mongodb_database = siptools-research",
-        "mongodb_collection = workflow",
-        "metax_url = https://metaksi",
-        "metax_user = tpas",
-        "metax_password = ",
-        "ida_token= ",
-        "dp_host = 86.50.168.218",
-        "dp_user = tpas",
-        "dp_ssh_key = ~/.ssh/id_rsa",
-        "sip_sign_key = ~/sip_sign_pas.pem",
-        "metax_ssl_verification = False",
-        "pas_storage_id = urn:nbn:fi:att:file-storage-pas"
-    ])
-
-    with open(str(temp_config_path), "w+", encoding="utf-8") as config_file:
-        config_file.write(config)
-
-    return str(temp_config_path)
-
-
-# TODO: Use the name argument for pytest.fixture decorator to solve the
-# funcarg-shadowing-fixture problem, when support for pytest version 2.x
-# is not required anymore (the name argument was introduced in pytest
-# version 3.0).
-@pytest.fixture(scope="function")
-def app(test_config):
-    """Create web app and Mock Metax HTTP responses.
-
-    :returns: An instance of the REST API web app.
-    """
-    # Create app and change the default config file path
-    app_ = create_app()
-    app_.config.update(
-        SIPTOOLS_RESEARCH_CONF=test_config
-    )
-    app_.config["TESTING"] = True
-
-    # Create temporary directories
-    conf = Configuration(test_config)
-    cache_dir = os.path.join(conf.get("packaging_root"), "file_cache")
-    os.mkdir(cache_dir)
-    tmp_dir = os.path.join(conf.get("packaging_root"), "tmp")
-    os.mkdir(tmp_dir)
-
-    return app_
 
 
 def test_index(app):
@@ -140,7 +66,9 @@ def test_dataset_genmetadata(mocker, app):
 
 
 def test_dataset_genmetadata_error(mocker, app):
-    """Test that genmetadata method can handle metadata generation errors.
+    """Test generating metadata for invalid dataset.
+
+    The API should respond with 400 "Bad request" error.
 
     :param mocker: pytest-mock mocker
     :param app: Flask application
@@ -283,32 +211,33 @@ def test_validate_files(mocker, app, expected_response, error):
 
 
 @pytest.mark.parametrize(
-    ("code", "message", "expected_error_message", "expected_log_message"),
+    ("code", "expected_error_message", "expected_log_message"),
     [
-        (404, "x", "404 Not Found: x", "404 Not Found: x"),
-        (400, "x", "400 Bad Request: x", "400 Bad Request: x"),
-        (500, "x", "Internal server error", "500 Internal Server Error: x"),
+        (404, "404 Not Found: foo", "404 Not Found: foo"),
+        (400, "400 Bad Request: foo", "400 Bad Request: foo"),
+        (500, "Internal server error", "500 Internal Server Error: foo"),
     ]
 )
 def test_http_exception_handling(
-    app, caplog, code, message, expected_error_message, expected_log_message
+    app, caplog, code, expected_error_message, expected_log_message
 ):
-    """Test that API responds with correct error messages when HTTP errors
+    """Test HTTP error handling.
+
+    Tests that API responds with correct error messages when HTTP errors
     occur.
 
     :param app: Flask application
     :param caplog: log capturing instance
     :param code: status code of the HTTP error
-    :param message: message given when the HTTP error is raised
-    :param expected_error_message: The error message that should be shown to
-                                   the user
-    :param expected_log_message: The error message that should be written to
-                                 the logs
+    :param expected_error_message: The error message that should be
+                                   shown to the user
+    :param expected_log_message: The error message that should be
+                                 written to the logs
     """
     @app.route("/test")
     def _raise_exception():
         """Raise exception."""
-        flask.abort(code, message)
+        flask.abort(code, "foo")
 
     with app.test_client() as client:
         response = client.get("/test")
@@ -326,7 +255,9 @@ def test_http_exception_handling(
 
 
 def test_metax_error_handler(app, caplog):
-    """Test that API responds correctly when resource is not available in
+    """Test Metax 404 error handling.
+
+    Test that API responds correctly when resource is not available in
     Metax.
 
     :param app: Flask application
