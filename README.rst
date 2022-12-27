@@ -81,6 +81,10 @@ is a E2E test for the whole Fairdata digital preservation service. The test
 will install Digital Preservation System and Fairdata Digital Preservation
 Service on localhost.
 
+Access to Gitlab is required to set up e2e-test, so ensure that yout access token is installed::
+
+        vim ~/.netrc
+
 Install requirements::
 
         yum install ansible python36-pytest python2-pip
@@ -105,6 +109,16 @@ Choose the branch of ansible playbooks used for provisioning::
 Run e2e test::
 
         make e2e-localhost
+
+Troubleshooting
+^^^^^^^^^^^^^^^
+The test cleanup might remove git, which will cause test failure. When it
+happens, simply reinstall git::
+
+        yum install git
+
+and try to run the tests again.
+
 
 
 Copyright
