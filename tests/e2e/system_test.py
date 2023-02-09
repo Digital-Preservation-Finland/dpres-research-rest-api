@@ -25,6 +25,7 @@ import pathlib
 import shutil
 import subprocess
 import datetime
+import configparser
 
 import pytest
 import requests
@@ -46,9 +47,33 @@ from tests.utils import wait_for
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-METAX_API_URL = "https://metax.localhost:8443/rest/v2"
-UPLOAD_API_URL = "https://packaging.localhost:8443/filestorage/api/v1"
-ADMIN_API_URL = "https://manage.localhost:8443/secure/api/1.0"
+
+def _get_metax_url():
+    # TODO: /etc/siptools_research.conf might have stricter permissions
+    # in the future, so this might fail.
+    data = pathlib.Path("/etc/siptools_research.conf").read_text("utf-8")
+
+    config = configparser.ConfigParser()
+    config.read_string(data)
+
+    return config["siptools_research"]["metax_url"]
+
+
+def _get_upload_url():
+    return json.loads(
+        pathlib.Path("/var/www/html/config.json").read_text("utf-8")
+    )["uploadApiUrl"]
+
+
+def _get_admin_url():
+    return json.loads(
+        pathlib.Path("/var/www/html/config.json").read_text("utf-8")
+    )["apiUrl"]
+
+
+METAX_API_URL = f"{_get_metax_url()}/rest/v2"
+UPLOAD_API_URL = f"{_get_upload_url()}/v1"
+ADMIN_API_URL = f"{_get_admin_url()}/secure/api/1.0"
 REQUESTS_SESSION = requests.Session()
 REQUESTS_SESSION.verify = False
 
