@@ -41,7 +41,8 @@ from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
 from pymongo import MongoClient
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from upload_rest_api.config import CONFIG
-from upload_rest_api.models import Project, User
+from upload_rest_api.models.project import Project
+from upload_rest_api.models.user import User
 
 from tests.utils import wait_for
 
