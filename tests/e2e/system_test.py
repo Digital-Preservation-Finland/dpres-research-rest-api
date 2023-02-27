@@ -14,8 +14,8 @@ The test dataset contains one HTML file and one TIFF file.
 System environment setup
 ------------------------
 
-IDA service is mocked. Metax is installed and deployed on the same machine
-via ansible-fairdata-pas.
+IDA service is mocked. Metax is installed and deployed on the same
+machine via ansible-fairdata-pas.
 """
 import base64
 import json
@@ -31,15 +31,14 @@ import pytest
 import requests
 import tusclient.client
 import tusclient.exceptions
-from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
-                          DS_STATE_IN_DIGITAL_PRESERVATION,
+from metax_access import (DS_STATE_IN_DIGITAL_PRESERVATION,
                           DS_STATE_IN_PACKAGING_SERVICE,
                           DS_STATE_INITIALIZED, DS_STATE_METADATA_CONFIRMED,
                           DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
                           DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
-                          DS_STATE_VALIDATING_METADATA,
-                          DS_STATE_VALID_METADATA)
+                          DS_STATE_VALID_METADATA,
+                          DS_STATE_VALIDATING_METADATA)
 from pymongo import MongoClient
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from upload_rest_api.config import CONFIG
@@ -449,18 +448,28 @@ def _assert_preservation(dataset_identifier):
         )
         assert response.json()['passtateReasonDesc'] == 'Proposing'
 
-        logging.debug("Generate metadata")
+        logging.debug("Start generating metadata")
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
             '/generate-metadata'
         )
-        assert response.status_code == 200
+        assert response.status_code == 202
+        assert _get_passtate(dataset_identifier) \
+            == DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION
+
+        logging.debug("Wait until metadata is generated")
+        wait_for(
+            lambda: _get_passtate(dataset_identifier)
+            != DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
+            timeout=300,
+            interval=5
+        )
         assert _get_passtate(dataset_identifier) \
             == DS_STATE_TECHNICAL_METADATA_GENERATED
 
-        logging.debug("Start validating metadata")
+        logging.debug("Start validating dataset")
         response = REQUESTS_SESSION.post(
-           f'{ADMIN_API_URL}/datasets/{dataset_identifier}/validate-metadata'
+           f'{ADMIN_API_URL}/datasets/{dataset_identifier}/validate'
         )
         assert response.status_code == 202
         logging.debug("Wait until dataset is validated")
@@ -470,13 +479,6 @@ def _assert_preservation(dataset_identifier):
             timeout=300,
             interval=5
         )
-        assert _get_passtate(dataset_identifier) == DS_STATE_VALID_METADATA
-
-        logging.debug("Validate files")
-        response = REQUESTS_SESSION.post(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/validate-files'
-        )
-        assert response.status_code == 200
         assert _get_passtate(dataset_identifier) == DS_STATE_VALID_METADATA
 
         logging.debug("Confirm metadata")

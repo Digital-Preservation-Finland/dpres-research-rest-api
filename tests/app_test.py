@@ -3,9 +3,6 @@ import flask
 import pytest
 
 from metax_access import ResourceNotAvailableError
-from siptools_research.exceptions import (
-    InvalidDatasetError, InvalidFileError, MissingFileError
-)
 
 
 def test_index(app):
@@ -20,12 +17,12 @@ def test_index(app):
 
 
 def test_dataset_preserve(mocker, app):
-    """Test the preserve method.
+    """Test preserving dataset.
 
     :param mocker: pytest-mock mocker
     :param app: Flask application
     """
-    mock_function = mocker.patch("research_rest_api.app.preserve_dataset")
+    mock_function = mocker.patch("siptools_research.preserve_dataset")
 
     with app.test_client() as client:
         response = client.post("/dataset/1/preserve")
@@ -41,17 +38,17 @@ def test_dataset_preserve(mocker, app):
     }
 
 
-def test_dataset_genmetadata(mocker, app):
-    """Test the genmetadata method.
+def test_dataset_generate_metadata(mocker, app):
+    """Test the generating metadata.
 
-    :param mock_function: pytest-mock mocker
+    :param mocker: pytest-mock mocker
     :param app: Flask application
     """
-    mock_function = mocker.patch("research_rest_api.app.generate_metadata")
+    mock_function = mocker.patch("siptools_research.generate_metadata")
 
     with app.test_client() as client:
-        response = client.post("/dataset/1/genmetadata")
-    assert response.status_code == 200
+        response = client.post("/dataset/1/generate-metadata")
+    assert response.status_code == 202
 
     mock_function.assert_called_with(
         "1", app.config.get("SIPTOOLS_RESEARCH_CONF")
@@ -59,104 +56,31 @@ def test_dataset_genmetadata(mocker, app):
 
     assert response.json == {
         "dataset_id": "1",
-        "success": True,
-        "error": "",
-        "detailed_error": ""
+        "status": "generating metadata"
     }
 
 
-def test_dataset_genmetadata_error(mocker, app):
-    """Test generating metadata for invalid dataset.
-
-    The API should respond with 400 "Bad request" error.
+def test_dataset_validate_metadata(mocker, app):
+    """Test validating dataset metadata.
 
     :param mocker: pytest-mock mocker
     :param app: Flask application
     """
-    mocker.patch("research_rest_api.app.generate_metadata",
-                 side_effect=InvalidDatasetError('foo'))
+    mock_function = mocker.patch("siptools_research.validate_metadata")
 
     with app.test_client() as client:
-        response = client.post("/dataset/1/genmetadata")
-    assert response.status_code == 400
-
-    assert response.json == {
-        "dataset_id": "1",
-        "success": False,
-        "error": "Dataset is invalid",
-        "detailed_error": "foo"
-    }
-
-
-def test_dataset_package(mocker, app):
-    """Test packaging dataset.
-
-    :param mocker: pytest-mock mocker
-    :param app: Flask application
-    """
-    mock_function = mocker.patch("research_rest_api.app.package_dataset")
-
-    with app.test_client() as client:
-        response = client.post("/dataset/1/package")
+        response = client.post("/dataset/1/validate-metadata")
     assert response.status_code == 202
 
     mock_function.assert_called_with("1",
                                      app.config.get("SIPTOOLS_RESEARCH_CONF"))
 
-    assert response.json == {"dataset_id": "1", "status": "packaging"}
+    assert response.json \
+        == {"dataset_id": "1", "status": "validating metadata"}
 
 
-@pytest.mark.parametrize(
-    ("expected_response", "error"),
-    [
-        # Valid metadata
-        (
-            {
-                "dataset_id": "1",
-                "is_valid": True,
-                "error": "",
-                "detailed_error": "",
-                "missing_files": [],
-                "invalid_files": [],
-            },
-            None
-        ),
-        # Wrong file format in file metadata
-        (
-            {
-                "dataset_id": "1",
-                "is_valid": False,
-                "error": "2 files are not well-formed",
-                "detailed_error": ("2 files are not well-formed:"
-                                   "\npid:urn:1\npid:urn:2"),
-                "missing_files": [],
-                "invalid_files": ["pid:urn:1", "pid:urn:2"],
-            },
-            InvalidFileError(
-                "2 files are not well-formed",
-                files=["pid:urn:1", "pid:urn:2"]
-            )
-        ),
-        # Files are not available in Ida
-        (
-            {
-                "dataset_id": "1",
-                "is_valid": False,
-                "error": "2 files are missing",
-                "detailed_error": ("2 files are missing:"
-                                   "\npid:urn:1\npid:urn:2"),
-                "missing_files": ["pid:urn:1", "pid:urn:2"],
-                "invalid_files": []
-            },
-            MissingFileError(
-                "2 files are missing",
-                files=["pid:urn:1", "pid:urn:2"]
-            )
-        ),
-    ]
-)
-def test_validate_files(mocker, app, expected_response, error):
-    """Test the validate/files endpoint.
+def test_validate_dataset(mocker, app):
+    """Test validating files and metadata.
 
     :param mocker: pytest-mock mocker
     :param app: Flask application
@@ -164,19 +88,17 @@ def test_validate_files(mocker, app, expected_response, error):
                               user
     :param error: An error that occurs in dpres_siptools
     """
-    mock_function = mocker.patch("research_rest_api.app.validate_files")
-    if error:
-        mock_function.side_effect = error
+    mock_function = mocker.patch("siptools_research.validate_dataset")
 
     with app.test_client() as client:
-        response = client.post("/dataset/1/validate/files")
-    assert response.status_code == 200
+        response = client.post("/dataset/1/validate")
+    assert response.status_code == 202
 
     mock_function.assert_called_with(
         "1", app.config.get("SIPTOOLS_RESEARCH_CONF")
     )
 
-    assert response.json == expected_response
+    assert response.json == {"dataset_id": "1", "status": "validating dataset"}
 
 
 @pytest.mark.parametrize(

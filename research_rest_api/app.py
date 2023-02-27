@@ -7,11 +7,7 @@ from flask_cors import CORS
 
 from metax_access import ResourceNotAvailableError
 
-from siptools_research import (generate_metadata, preserve_dataset,
-                               validate_files, package_dataset)
-from siptools_research.exceptions import InvalidDatasetError
-from siptools_research.exceptions import InvalidFileError
-from siptools_research.exceptions import MissingFileError
+import siptools_research
 
 
 logging.basicConfig(level=logging.ERROR)
@@ -30,58 +26,36 @@ def create_app():
     CORS(app, resources={r"/*": {"origins": "*"}},
          supports_credentials=True)
 
-    @app.route('/dataset/<dataset_id>/package', methods=['POST'])
-    def package(dataset_id):
-        """Trigger packaging workflow for dataset.
+    @app.route('/dataset/<dataset_id>/validate-metadata', methods=['POST'])
+    def validate_metadata(dataset_id):
+        """Trigger metadata validation workflow for dataset.
 
         :returns: HTTP Response
         """
-        package_dataset(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        siptools_research.validate_metadata(
+            dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
+        )
 
         response = jsonify({'dataset_id': dataset_id,
-                            'status': 'packaging'})
+                            'status': 'validating metadata'})
         response.status_code = 202
 
         return response
 
-    @app.route('/dataset/<dataset_id>/validate/files', methods=['POST'])
-    def validate_dataset_files(dataset_id):
-        """Validate dataset files.
+    @app.route('/dataset/<dataset_id>/validate', methods=['POST'])
+    def validate_dataset(dataset_id):
+        """Validate dataset metadata and files.
 
         :returns: HTTP Response
         """
-        try:
-            validate_files(
-                dataset_id,
-                app.config.get('SIPTOOLS_RESEARCH_CONF')
-            )
-        except InvalidFileError as exc:
-            is_valid = False
-            error = str(exc)
-            detailed_error = '{}:\n{}'.format(str(exc), '\n'.join(exc.files))
-            missing_files = []
-            invalid_files = exc.files
-        except MissingFileError as exc:
-            is_valid = False
-            error = str(exc)
-            detailed_error = '{}:\n{}'.format(str(exc), '\n'.join(exc.files))
-            missing_files = exc.files
-            invalid_files = []
-        else:
-            is_valid = True
-            error = ''
-            detailed_error = ''
-            missing_files = []
-            invalid_files = []
+        siptools_research.validate_dataset(
+            dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
+        )
 
         response = jsonify({'dataset_id': dataset_id,
-                            'is_valid': is_valid,
-                            'missing_files': missing_files,
-                            'invalid_files': invalid_files,
-                            'error': error,
-                            'detailed_error': detailed_error})
+                            'status': 'validating dataset'})
+        response.status_code = 202
 
-        response.status_code = 200
         return response
 
     @app.route('/dataset/<dataset_id>/preserve', methods=['POST'])
@@ -92,7 +66,9 @@ def create_app():
         """
         # Trigger dataset preservation using function provided by
         # siptools_research package.
-        preserve_dataset(dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF'))
+        siptools_research.preserve_dataset(
+            dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
+        )
 
         response = jsonify({'dataset_id': dataset_id,
                             'status': 'preserving'})
@@ -100,38 +76,20 @@ def create_app():
 
         return response
 
-    @app.route('/dataset/<dataset_id>/genmetadata', methods=['POST'])
-    def genmetadata(dataset_id):
+    @app.route('/dataset/<dataset_id>/generate-metadata', methods=['POST'])
+    def generate_metadata(dataset_id):
         """Generate technical metadata and store it to Metax.
 
         :returns: HTTP Response
         """
-        try:
-            generate_metadata(dataset_id,
-                              app.config.get('SIPTOOLS_RESEARCH_CONF'))
-        except MissingFileError as exc:
-            success = False
-            error = "Dataset is invalid"
-            detailed_error = '{}:\n{}'.format(str(exc), '\n'.join(exc.files))
-            status_code = 400
-        except InvalidDatasetError as exc:
-            success = False
-            error = "Dataset is invalid"
-            detailed_error = str(exc)
-            status_code = 400
-        else:
-            success = True
-            error = ""
-            detailed_error = ""
-            status_code = 200
+        siptools_research.generate_metadata(
+            dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
+        )
 
-        response = jsonify({
-            'dataset_id': dataset_id,
-            'success': success,
-            'error': error,
-            'detailed_error': detailed_error
-        })
-        response.status_code = status_code
+        response = jsonify({'dataset_id': dataset_id,
+                            'status': 'generating metadata'})
+        response.status_code = 202
+
         return response
 
     @app.route('/')
