@@ -521,7 +521,11 @@ def _assert_preservation(dataset_identifier):
             == DS_STATE_IN_DIGITAL_PRESERVATION
     finally:
         print("===========================================================")
+        print("Last request:")
+        print(f"{response.request.method} {response.request.url}")
+        print(f"Body: {response.request.body}")
+        print("===========================================================")
         print("Last response:")
-        print("Status:" + str(response.status_code))
-        print("Response: " + json.dumps(response.json(), indent=4))
+        print(f"Status: {response.status_code}")
+        print(f"Response: {json.dumps(response.json(), indent=4)}")
         print("===========================================================")
