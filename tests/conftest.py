@@ -39,7 +39,7 @@ def test_config(tmpdir):
         "metax_url = https://metaksi",
         "metax_user = tpas",
         "metax_password = ",
-        "ida_token= ",
+        "fd_download_service_token= ",
         "dp_host = 86.50.168.218",
         "dp_user = tpas",
         "dp_ssh_key = ~/.ssh/id_rsa",
