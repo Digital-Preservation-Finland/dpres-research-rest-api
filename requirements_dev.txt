@@ -1,6 +1,11 @@
-flask==1.1.2
-Werkzeug==1.0.1
-requests==2.14.2
+flask==1.1.2 ; python_version == '3.6'
+Werkzeug==1.0.1 ; python_version == '3.6'
+requests==2.14.2 ; python_version == '3.6'
+
+flask ; python_version > '3.6'
+Werkzeug ; python_version > '3.6'
+requests ; python_version > '3.6'
+
 flask_cors
 git+https://gitlab.ci.csc.fi/dpres/dpres-siptools-research.git@develop#egg=siptools_research
 git+https://gitlab.ci.csc.fi/dpres/metax-access.git@develop#egg=metax_access
@@ -11,6 +16,7 @@ pytest-cov
 pytest-mock
 urllib3
 git+https://gitlab.ci.csc.fi/dpres/upload-rest-api.git@develop#egg=upload_rest_api
-requests_mock<=1.7.0
+requests_mock<=1.7.0 ; python_version == '3.6'
+requests_mock ; python_version > '3.6'
 mongomock
 tuspy
