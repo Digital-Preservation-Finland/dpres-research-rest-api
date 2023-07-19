@@ -436,22 +436,9 @@ def _assert_preservation(dataset_identifier):
         )
         assert _get_passtate(dataset_identifier) == DS_STATE_INITIALIZED
 
-        logging.debug("Propose dataset for preservation")
+        logging.debug("Identify files")
         response = REQUESTS_SESSION.post(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/propose',
-            data={'message': 'Proposing'}
-        )
-        assert _get_passtate(dataset_identifier) \
-            == DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION
-        response = REQUESTS_SESSION.get(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
-        )
-        assert response.json()['passtateReasonDesc'] == 'Proposing'
-
-        logging.debug("Start generating metadata")
-        response = REQUESTS_SESSION.post(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
-            '/generate-metadata'
+            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/generate-metadata',
         )
         assert response.status_code == 202
         assert _get_passtate(dataset_identifier) \
@@ -467,11 +454,16 @@ def _assert_preservation(dataset_identifier):
         assert _get_passtate(dataset_identifier) \
             == DS_STATE_TECHNICAL_METADATA_GENERATED
 
-        logging.debug("Start validating dataset")
+        logging.debug("Propose dataset for preservation")
         response = REQUESTS_SESSION.post(
-           f'{ADMIN_API_URL}/datasets/{dataset_identifier}/validate'
+            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/propose',
+            data={'message': 'Foobar'}
         )
         assert response.status_code == 202
+        response = REQUESTS_SESSION.get(
+            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
+        )
+        assert response.json()['passtateReasonDesc'] == 'Foobar'
         logging.debug("Wait until dataset is validated")
         wait_for(
             lambda: _get_passtate(dataset_identifier)
@@ -479,14 +471,6 @@ def _assert_preservation(dataset_identifier):
             timeout=300,
             interval=5
         )
-        assert _get_passtate(dataset_identifier) == DS_STATE_VALID_METADATA
-
-        logging.debug("Confirm metadata")
-        response = REQUESTS_SESSION.post(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/confirm',
-            data={'confirmed': 'true'}
-        )
-        assert response.status_code == 200
         assert _get_passtate(dataset_identifier) == DS_STATE_METADATA_CONFIRMED
 
         logging.debug("Preserve dataset")
