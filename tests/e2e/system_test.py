@@ -34,10 +34,9 @@ import tusclient.exceptions
 from metax_access import (DS_STATE_IN_DIGITAL_PRESERVATION,
                           DS_STATE_IN_PACKAGING_SERVICE,
                           DS_STATE_INITIALIZED, DS_STATE_METADATA_CONFIRMED,
-                          DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
+                          DS_STATE_GENERATING_METADATA,
                           DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
-                          DS_STATE_VALID_METADATA,
                           DS_STATE_VALIDATING_METADATA)
 from pymongo import MongoClient
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -442,12 +441,12 @@ def _assert_preservation(dataset_identifier):
         )
         assert response.status_code == 202
         assert _get_passtate(dataset_identifier) \
-            == DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION
+            == DS_STATE_GENERATING_METADATA
 
         logging.debug("Wait until metadata is generated")
         wait_for(
             lambda: _get_passtate(dataset_identifier)
-            != DS_STATE_PROPOSED_FOR_DIGITAL_PRESERVATION,
+            != DS_STATE_GENERATING_METADATA,
             timeout=300,
             interval=5
         )
