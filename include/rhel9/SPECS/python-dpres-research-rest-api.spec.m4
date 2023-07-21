@@ -38,8 +38,8 @@ REST API for metadata validation and SIP creation triggering
 
 %package -n python3-dpres-research-rest-api
 Summary: %{summary}
-Requires: %{py3_dist metax-access}
-Requires: %{py3_dist siptools-research}
+Requires: %{py3_dist metax_access}
+Requires: %{py3_dist siptools_research}
 
 %description -n python3-dpres-research-rest-api %_description
 
@@ -52,7 +52,7 @@ export SETUPTOOLS_SCM_PRETEND_VERSION=%{file_version}
 
 %install
 %pyproject_install
-%pyproject_save_files dpres_research_rest_api
+%pyproject_save_files research_rest_api
 
 %files -n python3-dpres-research-rest-api -f %{pyproject_files}
 %license LICENSE
