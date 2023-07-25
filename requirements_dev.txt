@@ -20,3 +20,16 @@ requests_mock<=1.7.0 ; python_version == '3.6'
 requests_mock ; python_version > '3.6'
 mongomock
 tuspy
+
+# requirements of dpres-siptools
+git+https://gitlab.ci.csc.fi/dpres/xml-helpers.git@develop#egg=xml_helpers
+git+https://gitlab.ci.csc.fi/dpres/mets.git@develop#egg=mets
+git+https://gitlab.ci.csc.fi/dpres/premis.git@develop#egg=premis
+git+https://gitlab.ci.csc.fi/dpres/dpres-signature.git@develop#egg=dpres_signature
+git+https://gitlab.ci.csc.fi/dpres/nisomix.git@develop#egg=nisomix
+git+https://gitlab.ci.csc.fi/dpres/addml.git@develop#egg=addml
+git+https://gitlab.ci.csc.fi/dpres/audiomd.git@develop#egg=audiomd
+git+https://gitlab.ci.csc.fi/dpres/videomd.git@develop#egg=videomd
+git+https://gitlab.ci.csc.fi/dpres/ffmpeg-python.git#egg=ffmpeg_python
+git+https://gitlab.ci.csc.fi/dpres/fido.git@develop#egg=opf_fido
+git+https://gitlab.ci.csc.fi/dpres/file-scraper.git@develop#egg=file_scraper
