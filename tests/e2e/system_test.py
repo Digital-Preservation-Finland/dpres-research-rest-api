@@ -32,7 +32,7 @@ import requests
 import tusclient.client
 import tusclient.exceptions
 from metax_access import (DS_STATE_IN_DIGITAL_PRESERVATION,
-                          DS_STATE_IN_PACKAGING_SERVICE,
+                          DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
                           DS_STATE_INITIALIZED, DS_STATE_METADATA_CONFIRMED,
                           DS_STATE_GENERATING_METADATA,
                           DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE,
@@ -488,7 +488,7 @@ def _assert_preservation(dataset_identifier):
             dataset_identifier = response.json()['pasDatasetIdentifier']
 
         assert _get_passtate(dataset_identifier) \
-            == DS_STATE_IN_PACKAGING_SERVICE
+            == DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION
 
         # Wait until dataset marked to be in digital preservation
         # (state = 120). Max wait time 5 minutes should be enough.
