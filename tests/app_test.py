@@ -60,25 +60,6 @@ def test_dataset_generate_metadata(mocker, app):
     }
 
 
-def test_dataset_validate_metadata(mocker, app):
-    """Test validating dataset metadata.
-
-    :param mocker: pytest-mock mocker
-    :param app: Flask application
-    """
-    mock_function = mocker.patch("siptools_research.validate_metadata")
-
-    with app.test_client() as client:
-        response = client.post("/dataset/1/validate-metadata")
-    assert response.status_code == 202
-
-    mock_function.assert_called_with("1",
-                                     app.config.get("SIPTOOLS_RESEARCH_CONF"))
-
-    assert response.json \
-        == {"dataset_id": "1", "status": "validating metadata"}
-
-
 def test_validate_dataset(mocker, app):
     """Test validating files and metadata.
 

@@ -26,22 +26,6 @@ def create_app():
     CORS(app, resources={r"/*": {"origins": "*"}},
          supports_credentials=True)
 
-    @app.route('/dataset/<dataset_id>/validate-metadata', methods=['POST'])
-    def validate_metadata(dataset_id):
-        """Trigger metadata validation workflow for dataset.
-
-        :returns: HTTP Response
-        """
-        siptools_research.validate_metadata(
-            dataset_id, app.config.get('SIPTOOLS_RESEARCH_CONF')
-        )
-
-        response = jsonify({'dataset_id': dataset_id,
-                            'status': 'validating metadata'})
-        response.status_code = 202
-
-        return response
-
     @app.route('/dataset/<dataset_id>/validate', methods=['POST'])
     def validate_dataset(dataset_id):
         """Validate dataset metadata and files.
