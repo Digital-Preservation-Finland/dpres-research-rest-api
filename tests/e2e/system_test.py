@@ -62,13 +62,13 @@ def _get_metax_url():
 
 def _get_upload_url():
     return json.loads(
-        pathlib.Path("/var/www/html/config.json").read_text("utf-8")
+        pathlib.Path("/usr/share/nginx/html/fddps-frontend/config.json").read_text("utf-8")
     )["uploadApiUrl"]
 
 
 def _get_admin_url():
     return json.loads(
-        pathlib.Path("/var/www/html/config.json").read_text("utf-8")
+        pathlib.Path("/usr/share/nginx/html/fddps-frontend/config.json").read_text("utf-8")
     )["apiUrl"]
 
 
