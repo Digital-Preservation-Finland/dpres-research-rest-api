@@ -71,13 +71,13 @@ e2e-distributed-provision-fairdata: .e2e/ansible-fetch-fairdata
 		fi
 
 e2e-localhost-cleanup: .e2e/ansible-fetch-preservation
-	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/localhost external_roles/test-cleanup/cleanup.yml
+	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/localhost_disk_only external_roles/test-cleanup/cleanup.yml
 
 e2e-distributed-cleanup: .e2e/ansible-fetch-preservation
 	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/pouta-fairdata-pas external_roles/test-cleanup/cleanup.yml
 
 e2e-localhost-provision-preservation: .e2e/ansible-fetch-preservation
-	cd .e2e/ansible-preservation ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/localhost testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+	cd .e2e/ansible-preservation ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/localhost_disk_only testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 e2e-distributed-provision-preservation: .e2e/ansible-fetch-preservation
 	cd .e2e/ansible-preservation ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/pouta-fairdata-pas testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
