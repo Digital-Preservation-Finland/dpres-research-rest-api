@@ -9,6 +9,8 @@ PRESERVATION_ANSIBLE_BRANCH ?= develop
 FAIRDATA_ANSIBLE_BRANCH ?= develop
 RPM_REPOS ?= '"stable","master","develop"'
 
+DPS_E2E_MACHINE ?= fairdata-pas-instance
+
 ANSIBLE_INSTALL_COMMAND = ansible-galaxy role install -f -r requirements.yml; ansible-galaxy collection install -f -r requirements.yml || true
 
 all: info
@@ -54,7 +56,7 @@ e2e-localhost-provision-fairdata: .e2e/ansible-fetch-fairdata
 	cd .e2e/ansible-fairdata ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 e2e-distributed-provision-fairdata: .e2e/ansible-fetch-fairdata
-	cd .e2e/ansible-fairdata ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}], "dp_host": "fairdata-pas-instance"}'
+	cd .e2e/ansible-fairdata ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}], "dp_host": "${DPS_E2E_MACHINE}"}'
 
 .e2e/ansible-preservation:
 	git clone https://gitlab.ci.csc.fi/dpres/ansible-preservation-system.git .e2e/ansible-preservation
