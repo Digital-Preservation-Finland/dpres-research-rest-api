@@ -76,13 +76,13 @@ e2e-localhost-cleanup: .e2e/ansible-fetch-preservation
 	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/localhost_disk_only external_roles/test-cleanup/cleanup.yml
 
 e2e-distributed-cleanup: .e2e/ansible-fetch-preservation
-	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/pouta-fairdata-pas external_roles/test-cleanup/cleanup.yml
+	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/pouta-fairdata-pas -l ${DPS_E2E_MACHINE} external_roles/test-cleanup/cleanup.yml
 
 e2e-localhost-provision-preservation: .e2e/ansible-fetch-preservation
 	cd .e2e/ansible-preservation ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/localhost_disk_only testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 e2e-distributed-provision-preservation: .e2e/ansible-fetch-preservation
-	cd .e2e/ansible-preservation ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/pouta-fairdata-pas testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
+	cd .e2e/ansible-preservation ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/pouta-fairdata-pas -l ${DPS_E2E_MACHINE} testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
 e2e-test:
 	pytest-3 -svvv -ra --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/e2e
