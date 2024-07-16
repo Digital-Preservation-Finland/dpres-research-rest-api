@@ -483,7 +483,7 @@ def _assert_preservation(dataset_identifier):
         response = REQUESTS_SESSION.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
         )
-        if response.json()['isPASDataset'] is False:
+        if response.json()['pasDatasetIdentifier']:
             # switch to pas dataset
             dataset_identifier = response.json()['pasDatasetIdentifier']
 
