@@ -48,6 +48,9 @@ from tests.utils import wait_for
 
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 def _get_metax_url():
     # TODO: /etc/siptools_research.conf might have stricter permissions
@@ -377,7 +380,7 @@ def test_preservation_local_tus():
             verify_tls_cert=False
         ).upload()
     except tusclient.exceptions.TusCommunicationError as error:
-        logging.error(error.response_content)
+        logger.error(error.response_content)
         raise
 
     _check_uploaded_file(
@@ -404,7 +407,7 @@ def test_preservation_local_tus():
             verify_tls_cert=False
         ).upload()
     except tusclient.exceptions.TusCommunicationError as error:
-        logging.error(error.response_content)
+        logger.error(error.response_content)
         raise
 
     _check_uploaded_file(
@@ -429,13 +432,13 @@ def test_preservation_ida():
 def _assert_preservation(dataset_identifier):
     """Run the whole preservation workflow."""
     try:
-        logging.debug("Ensure that the dataset is initialized")
+        logger.debug("Ensure that the dataset is initialized")
         response = REQUESTS_SESSION.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
         )
         assert _get_passtate(dataset_identifier) == DS_STATE_INITIALIZED
 
-        logging.debug("Identify files")
+        logger.debug("Identify files")
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/generate-metadata',
         )
@@ -443,7 +446,7 @@ def _assert_preservation(dataset_identifier):
         assert _get_passtate(dataset_identifier) \
             == DS_STATE_GENERATING_METADATA
 
-        logging.debug("Wait until metadata is generated")
+        logger.debug("Wait until metadata is generated")
         wait_for(
             lambda: _get_passtate(dataset_identifier)
             != DS_STATE_GENERATING_METADATA,
@@ -453,7 +456,7 @@ def _assert_preservation(dataset_identifier):
         assert _get_passtate(dataset_identifier) \
             == DS_STATE_TECHNICAL_METADATA_GENERATED
 
-        logging.debug("Propose dataset for preservation")
+        logger.debug("Propose dataset for preservation")
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/propose',
             data={'message': 'Foobar'}
@@ -463,7 +466,7 @@ def _assert_preservation(dataset_identifier):
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
         )
         assert response.json()['passtateReasonDesc'] == 'Foobar'
-        logging.debug("Wait until dataset is validated")
+        logger.debug("Wait until dataset is validated")
         wait_for(
             lambda: _get_passtate(dataset_identifier)
             != DS_STATE_VALIDATING_METADATA,
@@ -472,7 +475,7 @@ def _assert_preservation(dataset_identifier):
         )
         assert _get_passtate(dataset_identifier) == DS_STATE_METADATA_CONFIRMED
 
-        logging.debug("Preserve dataset")
+        logger.debug("Preserve dataset")
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/preserve'
         )
