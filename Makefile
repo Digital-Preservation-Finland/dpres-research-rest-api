@@ -9,7 +9,7 @@ PRESERVATION_ANSIBLE_BRANCH ?= develop
 FAIRDATA_ANSIBLE_BRANCH ?= develop
 RPM_REPOS ?= '"stable","master","develop"'
 
-DPS_E2E_MACHINE ?= fairdata-pas-instance
+DPS_E2E_MACHINE ?= fddps-e2e-pas-instance-rhel9
 
 ANSIBLE_INSTALL_COMMAND = ansible-galaxy role install -f -r requirements.yml; ansible-galaxy collection install -f -r requirements.yml || true
 
