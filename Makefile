@@ -9,8 +9,6 @@ PRESERVATION_ANSIBLE_BRANCH ?= develop
 FAIRDATA_ANSIBLE_BRANCH ?= develop
 RPM_REPOS ?= '"stable","master","develop"'
 
-DPS_E2E_MACHINE ?= fddps-e2e-pas-instance-rhel9
-
 ANSIBLE_INSTALL_COMMAND = ansible-galaxy role install -f -r requirements.yml; ansible-galaxy collection install -f -r requirements.yml || true
 
 all: info
@@ -55,9 +53,6 @@ test:
 e2e-localhost-provision: .e2e/ansible-fetch-fairdata
 	cd .e2e/ansible-fairdata ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
 
-e2e-distributed-provision-fairdata: .e2e/ansible-fetch-fairdata
-	cd .e2e/ansible-fairdata ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/e2e-test site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}], "dp_host": "${DPS_E2E_MACHINE}"}'
-
 .e2e/ansible-preservation:
 	git clone https://gitlab.ci.csc.fi/dpres/ansible-preservation-system.git .e2e/ansible-preservation
 
@@ -75,20 +70,13 @@ e2e-distributed-provision-fairdata: .e2e/ansible-fetch-fairdata
 e2e-localhost-cleanup: .e2e/ansible-fetch-preservation
 	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/localhost_disk_only external_roles/test-cleanup/cleanup.yml
 
-e2e-distributed-cleanup: .e2e/ansible-fetch-preservation
-	cd .e2e/ansible-preservation ; ansible-playbook -i inventory/pouta-fairdata-pas -l ${DPS_E2E_MACHINE} external_roles/test-cleanup/cleanup.yml
-
-e2e-distributed-provision-preservation: .e2e/ansible-fetch-preservation
-	cd .e2e/ansible-preservation ; $(ANSIBLE_INSTALL_COMMAND) ; ansible-playbook -i inventory/pouta-fairdata-pas -l ${DPS_E2E_MACHINE} testing-site.yml -e '{"rpm_repos_pouta": [${RPM_REPOS}]}'
-
 e2e-test:
 	pytest-3 -svvv -ra --junitprefix=dpres-research-rest-api --junitxml=junit.xml tests/e2e
 
-e2e-distributed-provision: e2e-distributed-provision-preservation e2e-distributed-provision-fairdata
-
 e2e-localhost: e2e-localhost-cleanup e2e-localhost-provision e2e-test
 
-e2e-distributed: e2e-distributed-cleanup e2e-localhost-cleanup e2e-distributed-provision e2e-test
+# TODO: Distributed e2e-test is currently exactly same as localhost e2e-test
+e2e-distributed: e2e-localhost-cleanup e2e-localhost-provision e2e-test
 
 docs:
 	make -C doc html
