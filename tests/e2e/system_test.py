@@ -17,6 +17,7 @@ System environment setup
 IDA service is mocked. Metax is installed and deployed on the same
 machine via ansible-fairdata-pas.
 """
+import configparser
 import json
 import logging
 import pathlib
@@ -33,6 +34,7 @@ from metax_access import (
     DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE,
     DS_STATE_TECHNICAL_METADATA_GENERATED,
     DS_STATE_VALIDATING_METADATA,
+    Metax,
 )
 from pymongo import MongoClient
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -54,6 +56,38 @@ def _get_admin_url():
 ADMIN_API_URL = f"{_get_admin_url()}/secure/api/1.0"
 REQUESTS_SESSION = requests.Session()
 REQUESTS_SESSION.verify = False
+
+DATASET = {
+    "title": {
+        "en": "E2e-test dataset"
+    },
+    "description": {
+        "en": "adsf"
+    },
+    "fileset": {
+        "storage_service": "ida",
+        "csc_project": "testproject"
+    },
+    "actors": [
+        {
+            "roles": [
+                "publisher",
+                "creator"
+            ],
+            "organization": {
+                "url": "http://uri.suomi.fi/codelist/fairdata/organization/code/10076",
+            }
+        }
+    ],
+    "keyword": [
+        "testkeyword"
+    ],
+    "metadata_owner": {
+        "organization": "csc.fi",
+        "user": "testuser"
+    },
+    "data_catalog": "urn:nbn:fi:att:data-catalog-ida"
+}
 
 
 def _get_passtate(dataset_identifier):
@@ -125,7 +159,19 @@ def setup_e2e():
 
 def test_preservation_ida():
     """Test the preservation workflow using IDA."""
-    dataset_identifier = "cr955e904-e3dd-4d7e-99f1-3fed446f96d5"
+    # Read Metax config file that should be installed with ansible
+    configuration = configparser.ConfigParser()
+    configuration.read("/etc/metax.cfg")
+
+    # Initialize metax client and post test dataset to Metax
+    metax_client = Metax(
+        url=configuration["metax"]["url"],
+        token=configuration["metax"]["token"],
+        verify=False,
+        api_version="v3"
+    )
+    dataset = metax_client.post_dataset(DATASET)
+    dataset_identifier = dataset["id"]
 
     try:
         logger.debug("Ensure that the dataset is initialized")
