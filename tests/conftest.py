@@ -45,7 +45,6 @@ def test_config(tmpdir):
         "dp_ssh_key = ~/.ssh/id_rsa",
         "sip_sign_key = ~/sip_sign_pas.pem",
         "metax_ssl_verification = False",
-        "pas_storage_id = urn:nbn:fi:att:file-storage-pas"
     ])
 
     with open(str(temp_config_path), "w+", encoding="utf-8") as config_file:
