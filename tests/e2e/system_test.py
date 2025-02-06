@@ -62,11 +62,23 @@ DATASET = {
         "en": "E2e-test dataset"
     },
     "description": {
-        "en": "adsf"
+        "en": "Test description"
     },
     "fileset": {
+        # These files are added to Metax in ansible playbook
+        "file_actions": [
+            {
+                "action": "add",
+                "storage_identifier": "dfea5aa8-c9bc-4333-8eab-0b17ee6fba14"
+            },
+            {
+                "action": "add",
+                "storage_identifier": "647b22ed-3eea-4a5f-9680-17f7c5e02a41"
+            }
+        ],
         "storage_service": "ida",
-        "csc_project": "testproject"
+        # This project is created in ansible playbook
+        "csc_project": "system_test_project_ida"
     },
     "actors": [
         {
@@ -75,6 +87,7 @@ DATASET = {
                 "creator"
             ],
             "organization": {
+                # Randomly picked organisation (Aalto yliopisto)
                 "url": "http://uri.suomi.fi/codelist/fairdata/organization/code/10076",
             }
         }
@@ -160,6 +173,7 @@ def setup_e2e():
 def test_preservation_ida():
     """Test the preservation workflow using IDA."""
     # Read Metax config file that should be installed with ansible
+    # playbook
     configuration = configparser.ConfigParser()
     configuration.read("/etc/metax.cfg")
 
