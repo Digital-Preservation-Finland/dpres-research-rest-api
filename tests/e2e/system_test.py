@@ -31,6 +31,7 @@ from metax_access import (
     DS_STATE_IN_DIGITAL_PRESERVATION,
     DS_STATE_INITIALIZED,
     DS_STATE_METADATA_CONFIRMED,
+    DS_STATE_NONE,
     DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE,
     DS_STATE_TECHNICAL_METADATA_GENERATED,
     DS_STATE_VALIDATING_METADATA,
@@ -188,6 +189,22 @@ def test_preservation_ida():
     dataset_identifier = dataset["id"]
 
     try:
+        logger.debug(
+            "Ensure that the dataset does not have preservation state"
+        )
+        response = REQUESTS_SESSION.get(
+            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
+        )
+        assert _get_passtate(dataset_identifier) == DS_STATE_NONE
+
+        logger.debug("Set contract")
+        response = REQUESTS_SESSION.post(
+            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/agreement',
+            json={
+                "identifier": "urn:uuid:abcd1234-abcd-1234-5678-abcd1234abcd"
+            }
+        )
+
         logger.debug("Ensure that the dataset is initialized")
         response = REQUESTS_SESSION.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
