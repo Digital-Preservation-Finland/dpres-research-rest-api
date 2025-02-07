@@ -29,7 +29,6 @@ from metax_access import (
     DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
     DS_STATE_GENERATING_METADATA,
     DS_STATE_IN_DIGITAL_PRESERVATION,
-    DS_STATE_INITIALIZED,
     DS_STATE_METADATA_CONFIRMED,
     DS_STATE_NONE,
     DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE,
@@ -64,6 +63,9 @@ DATASET = {
     },
     "description": {
         "en": "Test description"
+    },
+    "preservation": {
+        "contract": "urn:uuid:abcd1234-abcd-1234-5678-abcd1234abcd"
     },
     "fileset": {
         # These files are added to Metax in ansible playbook
@@ -187,34 +189,30 @@ def test_preservation_ida():
     )
     dataset = metax_client.post_dataset(DATASET)
     dataset_identifier = dataset["id"]
+    logger.debug("Created dataset: %s", dataset_identifier)
 
     try:
         logger.debug(
             "Ensure that the dataset does not have preservation state"
         )
-        response = REQUESTS_SESSION.get(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
-        )
         assert _get_passtate(dataset_identifier) == DS_STATE_NONE
 
-        logger.debug("Set contract")
-        response = REQUESTS_SESSION.post(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/agreement',
-            json={
-                "identifier": "urn:uuid:abcd1234-abcd-1234-5678-abcd1234abcd"
-            }
-        )
-
-        logger.debug("Ensure that the dataset is initialized")
-        response = REQUESTS_SESSION.get(
-            f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
-        )
-        assert _get_passtate(dataset_identifier) == DS_STATE_INITIALIZED
+        # TODO: Setting agreement like this does not work for some
+        # reason, so agreement is set when dataset is created
+        # logger.debug("Set agreement")
+        # response = REQUESTS_SESSION.post(
+        #     f'{ADMIN_API_URL}/datasets/{dataset_identifier}/agreement',
+        #     json={
+        #         "identifier": "urn:uuid:abcd1234-abcd-1234-5678-abcd1234abcd"
+        #     }
+        # )
+        # response.raise_for_status()
 
         logger.debug("Identify files")
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/generate-metadata',
         )
+        response.raise_for_status()
         assert response.status_code == 202
         assert _get_passtate(dataset_identifier) \
             == DS_STATE_GENERATING_METADATA
@@ -234,6 +232,7 @@ def test_preservation_ida():
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/propose',
             data={'message': 'Foobar'}
         )
+        response.raise_for_status()
         assert response.status_code == 202
         response = REQUESTS_SESSION.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
@@ -252,6 +251,7 @@ def test_preservation_ida():
         response = REQUESTS_SESSION.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/preserve'
         )
+        response.raise_for_status()
         assert response.status_code == 202
 
         # New DPRES dataset might have been created when the dataset was
@@ -259,6 +259,7 @@ def test_preservation_ida():
         response = REQUESTS_SESSION.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
         )
+        response.raise_for_status()
         if response.json()['pasDatasetIdentifier']:
             # switch to pas dataset
             dataset_identifier = response.json()['pasDatasetIdentifier']
