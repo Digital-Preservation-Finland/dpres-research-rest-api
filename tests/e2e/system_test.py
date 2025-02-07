@@ -64,10 +64,6 @@ DATASET = {
     "description": {
         "en": "Test description"
     },
-    # TODO: Setting agreement does not work, agreement id is added here
-    "preservation": {
-        "contract": "urn:uuid:abcd1234-abcd-1234-5678-abcd1234abcd"
-    },
     "fileset": {
         # These files are added to Metax in ansible playbook
         "file_actions": [
@@ -212,16 +208,14 @@ def test_preservation_ida():
         )
         assert _get_passtate(dataset_identifier) == DS_STATE_NONE
 
-        # TODO: Setting agreement like this does not work for some
-        # reason, so agreement is set when dataset is created
-        # logger.debug("Set agreement")
-        # response = REQUESTS_SESSION.post(
-        #     f'{ADMIN_API_URL}/datasets/{dataset_identifier}/agreement',
-        #     json={
-        #         "identifier": "urn:uuid:abcd1234-abcd-1234-5678-abcd1234abcd"
-        #     }
-        # )
-        # response.raise_for_status()
+        logger.debug("Set agreement")
+        response = REQUESTS_SESSION.post(
+            f'{ADMIN_API_URL}/datasets/{dataset_identifier}/agreement',
+            data={
+                "identifier": "urn:uuid:abcd1234-abcd-1234-5678-abcd1234abcd"
+            }
+        )
+        response.raise_for_status()
 
         logger.debug("Identify files")
         response = REQUESTS_SESSION.post(
