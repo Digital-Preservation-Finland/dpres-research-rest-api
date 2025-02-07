@@ -117,13 +117,12 @@ DATASET = {
 }
 
 
-def _get_passtate(dataset_identifier):
-    response = requests.get(
-        f'{ADMIN_API_URL}/datasets/{dataset_identifier}',
-        verify=False
-    )
-    assert response.status_code == 200
-    return response.json()['passtate']
+def _get_passtate(metax, dataset_identifier):
+    dataset = metax.get_dataset(dataset_identifier)
+    if dataset["preservation"]["dataset_version"]["id"]:
+        return dataset["preservation"]["dataset_version"]["preservation_state"]
+    else:
+        return dataset["preservation"]["state"]
 
 
 MONGO_COLLECTIONS_TO_CLEAR = {
@@ -206,7 +205,7 @@ def test_preservation_ida():
         logger.debug(
             "Ensure that the dataset does not have preservation state"
         )
-        assert _get_passtate(dataset_identifier) == DS_STATE_NONE
+        assert _get_passtate(metax_client, dataset_identifier) == DS_STATE_NONE
 
         logger.debug("Set agreement")
         response = REQUESTS_SESSION.post(
@@ -223,17 +222,17 @@ def test_preservation_ida():
         )
         response.raise_for_status()
         assert response.status_code == 202
-        assert _get_passtate(dataset_identifier) \
+        assert _get_passtate(metax_client, dataset_identifier) \
             == DS_STATE_GENERATING_METADATA
 
         logger.debug("Wait until metadata is generated")
         wait_for(
-            lambda: _get_passtate(dataset_identifier)
+            lambda: _get_passtate(metax_client, dataset_identifier)
             != DS_STATE_GENERATING_METADATA,
             timeout=300,
             interval=5
         )
-        assert _get_passtate(dataset_identifier) \
+        assert _get_passtate(metax_client, dataset_identifier) \
             == DS_STATE_TECHNICAL_METADATA_GENERATED
 
         logger.debug("Propose dataset for preservation")
@@ -249,12 +248,13 @@ def test_preservation_ida():
         assert response.json()['passtateReasonDesc'] == 'Foobar'
         logger.debug("Wait until dataset is validated")
         wait_for(
-            lambda: _get_passtate(dataset_identifier)
+            lambda: _get_passtate(metax_client, dataset_identifier)
             != DS_STATE_VALIDATING_METADATA,
             timeout=300,
             interval=5
         )
-        assert _get_passtate(dataset_identifier) == DS_STATE_METADATA_CONFIRMED
+        assert _get_passtate(metax_client, dataset_identifier) \
+            == DS_STATE_METADATA_CONFIRMED
 
         logger.debug("Preserve dataset")
         response = REQUESTS_SESSION.post(
@@ -273,20 +273,20 @@ def test_preservation_ida():
             # switch to pas dataset
             dataset_identifier = response.json()['pasDatasetIdentifier']
 
-        assert _get_passtate(dataset_identifier) \
+        assert _get_passtate(metax_client, dataset_identifier) \
             == DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION
 
         # Wait until dataset marked to be in digital preservation
         # (state = 120). Max wait time 5 minutes should be enough.
         wait_for(
-            lambda: _get_passtate(dataset_identifier) in (
+            lambda: _get_passtate(metax_client, dataset_identifier) in (
                 DS_STATE_IN_DIGITAL_PRESERVATION,
                 DS_STATE_REJECTED_IN_DIGITAL_PRESERVATION_SERVICE
             ),
             timeout=300,
             interval=5
         )
-        assert _get_passtate(dataset_identifier) \
+        assert _get_passtate(metax_client, dataset_identifier) \
             == DS_STATE_IN_DIGITAL_PRESERVATION
     finally:
         print("===========================================================")
