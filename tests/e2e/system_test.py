@@ -86,9 +86,14 @@ DATASET = {
                 "publisher",
                 "creator"
             ],
+            "person": {
+                "name": "Teppo Testaaja",
+                "email": "test@test.com"
+            },
             "organization": {
-                # Randomly picked organisation (Aalto yliopisto)
-                "url": "http://uri.suomi.fi/codelist/fairdata/organization/code/10076",
+                "pref_label": {
+                    "fi": "Mysteeriorganisaatio"
+                }
             }
         }
     ],
