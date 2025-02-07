@@ -64,6 +64,7 @@ DATASET = {
     "description": {
         "en": "Test description"
     },
+    # TODO: Setting agreement does not work, agreement id is added here
     "preservation": {
         "contract": "urn:uuid:abcd1234-abcd-1234-5678-abcd1234abcd"
     },
@@ -102,7 +103,21 @@ DATASET = {
         "organization": "csc.fi",
         "user": "testuser"
     },
-    "data_catalog": "urn:nbn:fi:att:data-catalog-ida"
+    "data_catalog": "urn:nbn:fi:att:data-catalog-ida",
+    # The dataset must have DOI at least before METS is created
+    "generate_pid_on_publish": "DOI",
+    "state": "published",
+    # Dataset has to have access rights when publishing
+    "access_rights": {
+        "license": [
+            {
+                "url": "http://uri.suomi.fi/codelist/fairdata/license/code/CC0-1.0"
+            }
+        ],
+        "access_type": {
+            "url": "http://uri.suomi.fi/codelist/fairdata/access_type/code/open"
+        },
+    },
 }
 
 
