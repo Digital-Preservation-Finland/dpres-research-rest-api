@@ -200,7 +200,6 @@ def test_preservation_ida():
         url=configuration["metax"]["url"],
         token=configuration["metax"]["token"],
         verify=False,
-        api_version="v3"
     )
     dataset = metax_client.post_dataset(DATASET)
     dataset_identifier = dataset["id"]
