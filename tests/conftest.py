@@ -37,14 +37,13 @@ def test_config(tmpdir):
         "mongodb_database = siptools-research",
         "mongodb_collection = workflow",
         "metax_url = https://metaksi",
-        "metax_user = tpas",
-        "metax_password = ",
+        "metax_token = ",
+        "metax_ssl_verification = False",
         "fd_download_service_token= ",
         "dp_host = 86.50.168.218",
         "dp_user = tpas",
         "dp_ssh_key = ~/.ssh/id_rsa",
         "sip_sign_key = ~/sip_sign_pas.pem",
-        "metax_ssl_verification = False",
     ])
 
     with open(str(temp_config_path), "w+", encoding="utf-8") as config_file:
