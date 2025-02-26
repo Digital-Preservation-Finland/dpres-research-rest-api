@@ -190,15 +190,15 @@ def setup_e2e():
 
 def test_preservation_ida():
     """Test the preservation workflow using IDA."""
-    # Read Metax config file that should be installed with ansible
+    # Read siptools-research config that should be installed with ansible
     # playbook
     configuration = configparser.ConfigParser()
-    configuration.read("/etc/metax.cfg")
+    configuration.read("/etc/siptools_research.conf")
 
     # Initialize metax client and post test dataset to Metax
     metax_client = Metax(
-        url=configuration["metax"]["url"],
-        token=configuration["metax"]["token"],
+        url=configuration["siptools_research"]["metax_url"],
+        token=configuration["siptools_research"]["metax_token"],
         verify=False,
     )
     dataset = metax_client.post_dataset(DATASET)
