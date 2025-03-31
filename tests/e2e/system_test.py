@@ -19,6 +19,7 @@ machine via ansible-fairdata-pas.
 """
 import base64
 import configparser
+import contextlib
 import copy
 import datetime
 import json
@@ -38,6 +39,7 @@ from metax_access import (DS_STATE_ACCEPTED_TO_DIGITAL_PRESERVATION,
                           DS_STATE_TECHNICAL_METADATA_GENERATED,
                           DS_STATE_VALIDATING_METADATA, Metax)
 from pymongo import MongoClient
+from requests.auth import AuthBase
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from upload_rest_api.config import CONFIG
 from upload_rest_api.models.project import Project
@@ -66,8 +68,6 @@ def _get_admin_url():
 
 ADMIN_API_URL = f"{_get_admin_url()}/secure/api/1.0"
 UPLOAD_API_URL = f"{_get_upload_url()}/v1"
-REQUESTS_SESSION = requests.Session()
-REQUESTS_SESSION.verify = False
 
 DATASET = {
     "title": {
@@ -159,6 +159,71 @@ DIRS_TO_CLEAR = (
 DATA_CATALOG_PAS = "urn:nbn:fi:att:data-catalog-pas"
 
 
+@pytest.fixture(scope="session")
+def http_client():
+    """
+    Requests HTTP session that is configured to automatically set correct
+    authentication for each FDDPS endpoint
+    """
+    # Yes, we're reading a configuration file using 'sudo'.
+    admin_config_text = subprocess.run(
+        ["sudo", "cat", "/etc/admin_rest_api.conf"],
+        check=True, capture_output=True
+    ).stdout.decode("utf-8")
+
+    # The admin-rest-api configuration is actually just Python with a different
+    # file extension. Read it into a dict.
+    admin_config = {}
+    exec(compile(admin_config_text, "config.py", "exec"), admin_config)
+
+    # Try retrieving the JWT token from SSO endpoint. If it's mocked we can
+    # just nab the cookie from the response as it doesn't actually prompt
+    # the user to login.
+    #
+    # If not, just continue silently; if `BYPASS_AUTHENTICATION` is set to
+    # `True` then admin-rest-api should skip all authentication and assume
+    # the user is an admin. We should ideally remove this configuration
+    # parameter, though and rely on the mocked SSO endpoint; having a
+    # configuration switch to bypass authentication that also exists in
+    # production code is *not* a good idea.
+    response = requests.get(
+        f"{admin_config['SSO_API_URL']}/login",
+        params={"redirect_url": admin_config["SSO_API_URL"]},
+        allow_redirects=False,
+        verify=False
+    )
+    sso_cookies = response.cookies
+
+    class TestAuth(AuthBase):
+        def __init__(self):
+            pass
+
+        def __call__(self, request):
+            """
+            Check what endpoint is being called and adjust authorization
+            accordingly
+            """
+            url = request.url
+
+            # Use SSO cookies for admin-rest-api if they exist
+            if url.startswith(ADMIN_API_URL) and sso_cookies:
+                with contextlib.suppress(KeyError):
+                    # Remove existing 'Cookie' header if it's already set
+                    # or 'prepare_cookies' will be ignored
+                    del request.headers["Cookie"]
+
+                request.prepare_cookies(sso_cookies)
+
+            return request
+
+    session = requests.Session()
+    session.verify = False
+
+    session.auth = TestAuth()
+
+    return session
+
+
 @pytest.fixture(scope="function")
 def metax_client():
     configuration = configparser.ConfigParser()
@@ -232,10 +297,10 @@ def setup_e2e():
         )
 
 
-def _check_uploaded_file(name, md5):
+def _check_uploaded_file(http_client, name, md5):
     """Check that the uploaded file was saved with the expected metadata
     and update its parent directory with use category"""
-    response = REQUESTS_SESSION.get(
+    response = http_client.get(
         f"{UPLOAD_API_URL}/files/test_project/{name}",
         auth=("test", "test")
     )
@@ -247,7 +312,7 @@ def _check_uploaded_file(name, md5):
 
 
 @pytest.mark.usefixtures("setup_upload_rest_api")
-def test_preservation_local_tus(metax_client, tus_client):
+def test_preservation_local_tus(metax_client, http_client, tus_client):
     """Test the preservation workflow using upload-rest-api TUS API."""
     # Upload TIFF file to pre-ingest file storage
     test_dir_path = (
@@ -274,6 +339,7 @@ def test_preservation_local_tus(metax_client, tus_client):
         raise
 
     _check_uploaded_file(
+        http_client,
         name=f"{test_dir_path}/valid_tiff ä.tiff",
         md5="3cf7c3b90f5a52b2f817a1c5b3bfbc52"
     )
@@ -296,6 +362,7 @@ def test_preservation_local_tus(metax_client, tus_client):
         raise
 
     _check_uploaded_file(
+        http_client,
         name=f"{test_dir_path}/html_file",
         md5="31ff97b5791a2050f08f471d6205f785"
     )
@@ -327,12 +394,13 @@ def test_preservation_local_tus(metax_client, tus_client):
     logger.debug("Created dataset: %s", dataset_identifier)
 
     _track_dataset(
+        http_client=http_client,
         metax_client=metax_client,
         dataset_identifier=dataset_identifier
     )
 
 
-def test_preservation_ida(metax_client):
+def test_preservation_ida(http_client, metax_client):
     """Test the preservation workflow using IDA."""
     dataset = copy.deepcopy(DATASET)
     dataset["title"]["en"] = (
@@ -364,12 +432,13 @@ def test_preservation_ida(metax_client):
     logger.debug("Created dataset: %s", dataset_identifier)
 
     _track_dataset(
+        http_client=http_client,
         metax_client=metax_client,
         dataset_identifier=dataset_identifier
     )
 
 
-def _track_dataset(metax_client, dataset_identifier):
+def _track_dataset(http_client, metax_client, dataset_identifier):
     try:
         logger.debug(
             "Ensure that the dataset does not have preservation state"
@@ -377,7 +446,7 @@ def _track_dataset(metax_client, dataset_identifier):
         assert _get_passtate(metax_client, dataset_identifier) == DS_STATE_NONE
 
         logger.debug("Set agreement")
-        response = REQUESTS_SESSION.post(
+        response = http_client.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/agreement',
             data={
                 "identifier": "urn:uuid:abcd1234-abcd-1234-5678-abcd1234abcd"
@@ -386,7 +455,7 @@ def _track_dataset(metax_client, dataset_identifier):
         response.raise_for_status()
 
         logger.debug("Identify files")
-        response = REQUESTS_SESSION.post(
+        response = http_client.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/generate-metadata',
         )
         response.raise_for_status()
@@ -405,13 +474,13 @@ def _track_dataset(metax_client, dataset_identifier):
             == DS_STATE_TECHNICAL_METADATA_GENERATED
 
         logger.debug("Propose dataset for preservation")
-        response = REQUESTS_SESSION.post(
+        response = http_client.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/propose',
             data={'message': 'Foobar'}
         )
         response.raise_for_status()
         assert response.status_code == 202
-        response = REQUESTS_SESSION.get(
+        response = http_client.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
         )
         assert response.json()['passtateReasonDesc'] == 'Foobar'
@@ -426,7 +495,7 @@ def _track_dataset(metax_client, dataset_identifier):
             == DS_STATE_METADATA_CONFIRMED
 
         logger.debug("Preserve dataset")
-        response = REQUESTS_SESSION.post(
+        response = http_client.post(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}/preserve'
         )
         response.raise_for_status()
@@ -434,7 +503,7 @@ def _track_dataset(metax_client, dataset_identifier):
 
         # New DPRES dataset might have been created when the dataset was
         # accepted for preservation. Check for it.
-        response = REQUESTS_SESSION.get(
+        response = http_client.get(
             f'{ADMIN_API_URL}/datasets/{dataset_identifier}'
         )
         response.raise_for_status()
