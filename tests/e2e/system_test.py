@@ -312,31 +312,66 @@ def _check_uploaded_file(http_client, name, md5):
 
 
 @pytest.mark.usefixtures("setup_upload_rest_api")
-def test_preservation_local_tus(metax_client, http_client, tus_client):
+@pytest.mark.parametrize(
+    "api",
+    [
+        "files",  # Old, deprecated POST /v1/files upload API
+        "files_tus"  # New tus based upload API
+    ]
+)
+def test_preservation_pre_ingest(metax_client, http_client, tus_client, api):
     """Test the preservation workflow using upload-rest-api TUS API."""
-    # Upload TIFF file to pre-ingest file storage
+    def _upload_with_tus(dir_path, file_name, local_path):
+        """
+        Upload file to pre-ingest file storage with new tus API
+        """
+        try:
+            tus_client.uploader(
+                local_path,
+                metadata={
+                    "filename": file_name,
+                    "project_id": "test_project",
+                    "upload_path": f"{dir_path}/{file_name}",
+                    "type": "file"
+                },
+                metadata_encoding="utf-8",
+                verify_tls_cert=False
+            ).upload()
+        except tusclient.exceptions.TusCommunicationError as error:
+            logger.error(error.response_content)
+            raise
+
+    def _upload_with_old_api(dir_path, file_name, local_path):
+        """
+        Upload file to pre-ingest file storage with old deprecated upload API
+        """
+        with open(local_path, "rb") as _file:
+            response = http_client.post(
+                f"{UPLOAD_API_URL}/files/test_project/{dir_path}/{file_name}",
+                auth=("test", "test"),
+                data=_file
+            )
+        response.raise_for_status()
+
+    # Select upload function depending on the tested API
+    if api == "files":
+        upload_file = _upload_with_tus
+    elif api == "files_tus":
+        upload_file = _upload_with_old_api
+
     test_dir_path = (
-        f"e2e-test-local-tus-"
+        f"e2e-test-{api}-"
         f"{datetime.datetime.now(datetime.timezone.utc).isoformat()}"
     )
     # TODO: File validation does not tolerate '+' character. Should it?
     test_dir_path = test_dir_path.replace("+", "_")
 
-    try:
-        tus_client.uploader(
-            "tests/data/e2e_files/valid_tiff/download",
-            metadata={
-                "filename": "valid_tiff ä.tiff",
-                "project_id": "test_project",
-                "upload_path": f"{test_dir_path}/valid_tiff ä.tiff",
-                "type": "file"
-            },
-            metadata_encoding="utf-8",
-            verify_tls_cert=False
-        ).upload()
-    except tusclient.exceptions.TusCommunicationError as error:
-        logger.error(error.response_content)
-        raise
+    # Upload TIFF file
+    upload_file(
+        dir_path=test_dir_path,
+        file_name="valid_tiff ä.tiff",
+        local_path="tests/data/e2e_files/valid_tiff/download"
+    )
 
     _check_uploaded_file(
         http_client,
@@ -345,21 +380,11 @@ def test_preservation_local_tus(metax_client, http_client, tus_client):
     )
 
     # Upload HTML file
-    try:
-        tus_client.uploader(
-            "tests/data/e2e_files/html_file/download",
-            metadata={
-                "filename": "html_file",
-                "project_id": "test_project",
-                "upload_path": f"{test_dir_path}/html_file",
-                "type": "file"
-            },
-            metadata_encoding="utf-8",
-            verify_tls_cert=False
-        ).upload()
-    except tusclient.exceptions.TusCommunicationError as error:
-        logger.error(error.response_content)
-        raise
+    upload_file(
+        dir_path=test_dir_path,
+        file_name="html_file",
+        local_path="tests/data/e2e_files/html_file/download"
+    )
 
     _check_uploaded_file(
         http_client,
